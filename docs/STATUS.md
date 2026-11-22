@@ -2,6 +2,12 @@
 
 Shared memory for humans and agents. Newest entries first. Keep entries short. Mark blocked items with `BLOCKED:`.
 
+## 2026-11-22 · M0-001 · GitHub onboarding
+Done: pushed baseline `main` (`1a8e4da`) before `m0/ci-bootstrap`, opened [PR #1](https://github.com/hyvvs/lyceum/pull/1), set CODEOWNERS to `@hyvvs`, and enabled `main` branch protection requiring up-to-date Verify, Dependency audit, and Secret scan checks (also for admins).
+Verified: [PR run 45000233694](https://github.com/hyvvs/lyceum/actions/runs/45000233694) passed all three GitHub Actions jobs; local `pnpm verify` passed 30 tests. No merges were made.
+BLOCKED: owner must authorize [Renovate GitHub App](https://github.com/apps/renovate/installations/new) for `hyvvs/lyceum`; CI rejection from an intentional boundary violation still needs a disposable draft-PR demonstration before M0-001 is fully accepted.
+Next: authorize Renovate; prove negative CI boundary check in a draft PR; mark M0-001 complete once acceptance is demonstrated.
+
 ## 2026-11-22 · M0-001 · Bootstrap in progress
 Done: initialized local Git history and pushed the baseline `main` to `hyvvs/lyceum`; added SHA-pinned CI verify/audit/secret-scan jobs, Renovate config, issue templates, CODEOWNERS (`@hyvvs`), Windows-compatible validation paths, and boundary-regression tests. Updated Vitest to 5.1.1 and Zod to 4.6.7; added Vite 8.3.8 as the compatible Vitest peer; raised Node requirements to 22.12+ and CI to 22.20.0.
 Verified: local `pnpm verify` passes (30 tests, typecheck, lint, boundaries, agentcheck) using an ignored Windows Corepack shim; secret scan finds 0. `corepack pnpm audit` reports no known vulnerabilities, without advisory exclusions.
