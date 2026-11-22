@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -173,5 +173,114 @@ describe("architectural boundaries", () => {
       '\nimport "@lyceum/core/src/events";',
     );
     expect(findBoundaryViolations(root)[0]).toMatch(/illegal\.ts:2:\d+/);
+  });
+
+  it("rejects forbidden dependencies in every manifest field and gateway imports", () => {
+    const root = fixture();
+    writeFileSync(
+      join(root, "packages", "core", "package.json"),
+      JSON.stringify({
+        name: "@lyceum/core",
+        scripts: { typecheck: "tsc" },
+        dependencies: { zod: "*" },
+        devDependencies: { react: "*" },
+        optionalDependencies: { vite: "*" },
+        peerDependencies: { typescript: "*" },
+      }),
+    );
+    writeFileSync(
+      join(root, "packages", "gateway", "package.json"),
+      JSON.stringify({
+        name: "@lyceum/gateway",
+        scripts: { typecheck: "tsc" },
+        devDependencies: { "@lyceum/core": "workspace:*" },
+        optionalDependencies: { "@lyceum/ui": "workspace:*" },
+      }),
+    );
+    writeFileSync(join(root, "packages", "gateway", "src", "illegal.ts"), 'import "@lyceum/core";');
+    const problems = findBoundaryViolations(root);
+    expect(problems).toHaveLength(6);
+    expect(problems).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("core must only depend on zod, found: react"),
+        expect.stringContaining("core must only depend on zod, found: vite"),
+        expect.stringContaining("core must only depend on zod, found: typescript"),
+        expect.stringContaining("gateway must not depend on @lyceum/core"),
+        expect.stringContaining("gateway must not depend on @lyceum/ui"),
+        expect.stringContaining("gateway must not import @lyceum/core"),
+      ]),
+    );
+  });
+
+  it("rejects forbidden package dependency direction even without a manifest entry", () => {
+    const root = fixture();
+    writeFileSync(join(root, "packages", "core", "src", "illegal.ts"), 'import "@lyceum/gateway";');
+    writeFileSync(join(root, "packages", "gateway", "src", "illegal.ts"), 'import "@lyceum/core";');
+    expect(findBoundaryViolations(root)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("core must not import @lyceum/gateway"),
+        expect.stringContaining("gateway must not import @lyceum/core"),
+      ]),
+    );
+  });
+
+  it("requires typecheck scripts in application workspaces as well as packages", () => {
+    const root = fixture();
+    mkdirSync(join(root, "apps", "web"), { recursive: true });
+    writeFileSync(
+      join(root, "apps", "web", "package.json"),
+      JSON.stringify({ name: "@lyceum/web" }),
+    );
+    expect(findBoundaryViolations(root)).toEqual([
+      expect.stringContaining("apps/web: missing typecheck script"),
+    ]);
+  });
+
+  it("rejects computed and parenthesized globals and require.resolve imports", () => {
+    const root = fixture();
+    writeFileSync(
+      join(root, "packages", "core", "src", "illegal.ts"),
+      [
+        'Date["now"]();',
+        'Math["random"]();',
+        "new (Date)();",
+        'globalThis["Date"].now();',
+        'require.resolve("../../../apps/web/src/main");',
+      ].join("\n"),
+    );
+    const problems = findBoundaryViolations(root);
+    expect(problems).toHaveLength(5);
+    expect(problems[4]).toContain("packages must not import from apps/");
+  });
+
+  it("checks source outside src and rejects exports escaping the package", () => {
+    const root = fixture();
+    writeFileSync(join(root, "packages", "core", "outside.ts"), "Math.random();");
+    writeFileSync(
+      join(root, "packages", "ui", "package.json"),
+      JSON.stringify({
+        name: "@lyceum/ui",
+        scripts: { typecheck: "tsc" },
+        exports: { ".": "../../apps/web/src/app.ts" },
+      }),
+    );
+    expect(findBoundaryViolations(root)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("core/outside.ts:1:1: core must use injected Clock/Rng"),
+        expect.stringContaining("ui: export target escapes package"),
+      ]),
+    );
+  });
+
+  it.skipIf(process.platform === "win32")("rejects symlinked source code", () => {
+    const root = fixture();
+    writeFileSync(join(root, "packages", "core", "src", "actual.ts"), "Math.random();");
+    symlinkSync(
+      join(root, "packages", "core", "src", "actual.ts"),
+      join(root, "packages", "core", "src", "linked.ts"),
+    );
+    expect(findBoundaryViolations(root)).toEqual(
+      expect.arrayContaining([expect.stringContaining("source symlinks are not allowed")]),
+    );
   });
 });

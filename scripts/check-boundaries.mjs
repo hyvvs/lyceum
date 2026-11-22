@@ -5,7 +5,7 @@
  * as imports or calls.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
@@ -13,33 +13,62 @@ const read = (file) => JSON.parse(readFileSync(file, "utf8"));
 const sourceFileName = /\.[cm]?[jt]sx?$/;
 const testFileName = /\.(test|spec)\.[cm]?[jt]sx?$/;
 const relativeName = (root, file) => relative(root, file).split(sep).join("/");
+const dependencyFields = [
+  "dependencies",
+  "devDependencies",
+  "peerDependencies",
+  "optionalDependencies",
+];
+const ignoredDirs = new Set(["node_modules", "dist", "build", "coverage", ".git", ".turbo"]);
 
-function walk(dir) {
+function walk(dir, root, problems) {
   return readdirSync(dir, { withFileTypes: true })
     .sort((a, b) => a.name.localeCompare(b.name))
     .flatMap((entry) => {
       const file = join(dir, entry.name);
-      if (entry.isDirectory()) return walk(file);
+      if (ignoredDirs.has(entry.name)) return [];
+      if (entry.isSymbolicLink()) {
+        problems.push(`${relativeName(root, file)}: source symlinks are not allowed`);
+        return [];
+      }
+      if (entry.isDirectory()) return walk(file, root, problems);
       return entry.isFile() ? [file] : [];
     });
 }
 
+function unwrap(expression) {
+  let current = expression;
+  while (current && ts.isParenthesizedExpression(current)) {
+    current = current.expression;
+  }
+  return current;
+}
+
+function member(expression) {
+  const node = unwrap(expression);
+  if (ts.isPropertyAccessExpression(node)) {
+    return { target: node.expression, name: node.name.text };
+  }
+  if (ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression)) {
+    return { target: node.expression, name: node.argumentExpression.text };
+  }
+  return null;
+}
+
 function globalObject(expression, name) {
+  const node = unwrap(expression);
+  const property = member(node);
   return (
-    (ts.isIdentifier(expression) && expression.text === name) ||
-    (ts.isPropertyAccessExpression(expression) &&
-      ts.isIdentifier(expression.expression) &&
-      expression.expression.text === "globalThis" &&
-      expression.name.text === name)
+    (ts.isIdentifier(node) && node.text === name) ||
+    (property?.name === name &&
+      ts.isIdentifier(unwrap(property.target)) &&
+      unwrap(property.target).text === "globalThis")
   );
 }
 
 function globalCall(expression, owner, method) {
-  return (
-    ts.isPropertyAccessExpression(expression) &&
-    expression.name.text === method &&
-    globalObject(expression.expression, owner)
-  );
+  const property = member(expression);
+  return property?.name === method && globalObject(property.target, owner);
 }
 
 function inspectSource(root, pkg, file, problems) {
@@ -71,7 +100,11 @@ function inspectSource(root, pkg, file, problems) {
       return;
     }
     const scoped = /^@lyceum\/([^/]+)(\/.*)?$/.exec(specifier);
-    if (scoped && scoped[1] !== pkg && scoped[2]) {
+    if (scoped && pkg === "gateway" && scoped[1] !== pkg) {
+      report(node, `gateway must not import ${specifier}`);
+    } else if (scoped && pkg === "core" && scoped[1] !== pkg) {
+      report(node, `core must not import ${specifier}`);
+    } else if (scoped && scoped[1] !== pkg && scoped[2]) {
       report(node, `deep cross-package import; use @lyceum/${scoped[1]}: ${specifier}`);
     }
   }
@@ -91,7 +124,13 @@ function inspectSource(root, pkg, file, problems) {
     if (ts.isCallExpression(node)) {
       if (
         node.expression.kind === ts.SyntaxKind.ImportKeyword ||
-        (ts.isIdentifier(node.expression) && node.expression.text === "require")
+        (ts.isIdentifier(node.expression) && node.expression.text === "require") ||
+        (member(node.expression)?.name === "resolve" &&
+          ts.isIdentifier(unwrap(member(node.expression).target)) &&
+          unwrap(member(node.expression).target).text === "require") ||
+        (member(node.expression)?.name === "require" &&
+          ts.isIdentifier(unwrap(member(node.expression).target)) &&
+          unwrap(member(node.expression).target).text === "module")
       ) {
         checkImport(node.arguments[0]);
       }
@@ -146,12 +185,26 @@ function inspectSource(root, pkg, file, problems) {
 export function findBoundaryViolations(root) {
   const problems = [];
   const corePkg = read(join(root, "packages/core/package.json"));
-  for (const dep of Object.keys({ ...corePkg.dependencies, ...corePkg.peerDependencies })) {
+  const declaredDependencies = (manifest) =>
+    new Set(dependencyFields.flatMap((field) => Object.keys(manifest[field] ?? {})));
+  for (const dep of declaredDependencies(corePkg)) {
     if (dep !== "zod") problems.push(`core must only depend on zod, found: ${dep}`);
   }
   const gatewayPkg = read(join(root, "packages/gateway/package.json"));
-  for (const dep of Object.keys(gatewayPkg.dependencies ?? {})) {
+  for (const dep of declaredDependencies(gatewayPkg)) {
     if (dep.startsWith("@lyceum/")) problems.push(`gateway must not depend on ${dep}`);
+  }
+
+  function checkTypecheck(manifest, name) {
+    if (typeof manifest.scripts?.typecheck !== "string" || !manifest.scripts.typecheck.trim()) {
+      problems.push(`${name}: missing typecheck script in package.json`);
+    }
+  }
+
+  function exportTargets(value) {
+    if (typeof value === "string") return [value];
+    if (value && typeof value === "object") return Object.values(value).flatMap(exportTargets);
+    return [];
   }
 
   const packagesDir = join(root, "packages");
@@ -159,15 +212,27 @@ export function findBoundaryViolations(root) {
     const manifestPath = join(packagesDir, pkg, "package.json");
     if (!existsSync(manifestPath)) continue;
     const manifest = read(manifestPath);
-    if (typeof manifest.scripts?.typecheck !== "string" || !manifest.scripts.typecheck.trim()) {
-      problems.push(`${pkg}: missing typecheck script in package.json`);
+    checkTypecheck(manifest, pkg);
+    for (const target of exportTargets(manifest.exports)) {
+      if (!target.startsWith(".")) continue;
+      const pkgDir = join(packagesDir, pkg);
+      const outside = relative(pkgDir, resolve(pkgDir, target));
+      if (outside === ".." || outside.startsWith(`..${sep}`) || isAbsolute(outside)) {
+        problems.push(`${pkg}: export target escapes package: ${target}`);
+      }
     }
-    const src = join(packagesDir, pkg, "src");
-    if (!existsSync(src)) continue;
-    for (const file of walk(src)) {
+    for (const file of walk(join(packagesDir, pkg), root, problems)) {
       if (sourceFileName.test(file) && !file.endsWith(".d.ts")) {
         inspectSource(root, pkg, file, problems);
       }
+    }
+  }
+
+  const appsDir = join(root, "apps");
+  if (existsSync(appsDir)) {
+    for (const app of readdirSync(appsDir).sort()) {
+      const manifestPath = join(appsDir, app, "package.json");
+      if (existsSync(manifestPath)) checkTypecheck(read(manifestPath), `apps/${app}`);
     }
   }
   return problems;
