@@ -2,11 +2,17 @@
 
 Shared memory for humans and agents. Newest entries first. Keep entries short. Mark blocked items with `BLOCKED:`.
 
+## 2026-11-22 · M0-003 · Theme foundation started
+Done: on `m0/ui-theme-foundations`, added reusable spacing, rem-based type, touch-target, motion and solid-surface CSS tokens to `packages/ui/src/glass.css` without new dependencies; added system-light-mode defaults (including `data-theme=auto`), user high-contrast and transparency-off options, solid no-blur fallback preserving raised/float elevation, stronger light tertiary text, and five token-contract tests. Existing glass level/token names were preserved.
+Verified: `pnpm verify` passes 35 tests, all four package typechecks and lint; `pnpm audit` has no known advisories. CSS contract tests pass, but this is only the first slice of M0-003: there are no React components, Storybook, browser contrast or keyboard tests yet. Worst-case backdrop contrast remains unproven; do not claim WCAG AA until browser pixel tests are run.
+Decision: user authorized the proposed UI dependency stack in the 2026-11-22 follow-up; versions, licenses and audits must be checked before installation. No new font or imagery was chosen.
+Next: merge PR #4 after fresh CI and implement accessible primitives with Storybook/Playwright a11y coverage.
+
 ## 2026-11-22 · M0-002 · Boundary checker hardening
 Done: merged [M0-001 PR #1](https://github.com/hyvvs/lyceum/pull/1) into main (`1ae8592`). Extended the boundary checker using the existing TypeScript parser: block package imports from apps, deep or relative cross-package imports, forbidden core/gateway dependency edges (including dev/peer/optional dependencies), missing typecheck scripts in packages and apps, and direct nondeterministic calls in core (including computed properties), with source locations and regression fixtures. Source files outside `src` are scanned; source symlinks and escaping export paths are rejected.
 Verified: local `pnpm verify` passes 44 tests in 10 files, with one Linux-only symlink fixture skipped on Windows due to OS permission restrictions; four package typechecks, agentcheck, boundaries and lint pass. Full `pnpm audit` reports no known vulnerabilities. Checker also covers `.d.ts` imports and rejects package export targets in unscanned build directories. Added `.gitattributes` for consistent LF checkouts on Windows.
-Review decision: removed the unused exported `systemClock` convenience implementation (its `new Date()` violated the injected-clock invariant); `Clock` interface and `createRng` remain unchanged. This public export removal requires human review before merging M0-002. The existing `@lyceum/ui/glass.css` export also needs reconciliation if a future consumer imports it directly, because the package boundary policy requires the public index entry point.
-Next: independent review, commit and open M0-002 PR; then M0-003 accessible UI primitives, subject to approval of required React/Radix/Storybook/testing dependencies.
+Review decision: user authorized removal of unused exported `systemClock` convenience implementation (its `new Date()` violated the injected-clock invariant); `Clock` interface and `createRng` remain unchanged. [PR #3](https://github.com/hyvvs/lyceum/pull/3) passed all CI jobs and merged into main at `abc3cc0` on 2026-11-22. The existing `@lyceum/ui/glass.css` export needs reconciliation if a future consumer imports it directly; written policy requires index-only imports.
+Next: continue M0-003 accessible UI primitives and the Storybook/Playwright quality gates.
 
 ## 2026-11-22 · M0-001 · Acceptance checks proven
 Done: verified CI rejects forbidden subject tooling in core through disposable [draft PR #2](https://github.com/hyvvs/lyceum/pull/2); closed PR unmerged and removed its branch. M0-001 requirements and acceptance tests (including frozen fresh-checkout install, all three successful CI jobs, negative boundary check) are demonstrated.
