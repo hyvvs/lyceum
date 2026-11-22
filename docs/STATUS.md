@@ -2,6 +2,12 @@
 
 Shared memory for humans and agents. Newest entries first. Keep entries short. Mark blocked items with `BLOCKED:`.
 
+## 2026-11-22 · M0-003 · Theme foundation started
+Done: on `m0/ui-theme-foundations`, added reusable spacing, rem-based type, touch-target, motion and solid-surface CSS tokens to `packages/ui/src/glass.css` without new dependencies; added system-light-mode defaults (including `data-theme=auto`), user high-contrast and transparency-off options, solid no-blur fallback preserving raised/float elevation, stronger light tertiary text, and five token-contract tests. Existing glass level/token names were preserved.
+Verified: `pnpm verify` passes 35 tests, all four package typechecks and lint; `pnpm audit` has no known advisories. CSS contract tests pass, but this is only the first slice of M0-003: there are no React components, Storybook, browser contrast or keyboard tests yet. Worst-case backdrop contrast remains unproven; do not claim WCAG AA until browser pixel tests are run.
+BLOCKED: adding React, Radix, Storybook and Playwright/axe dependencies requires human approval under `AGENTS.md` section 11. No new font or imagery was chosen.
+Next: publish a small UI-theme PR and, after dependency approval, add accessible primitives and Storybook/Playwright a11y coverage.
+
 ## 2026-11-22 · M0-001 · Acceptance checks proven
 Done: verified CI rejects forbidden subject tooling in core through disposable [draft PR #2](https://github.com/hyvvs/lyceum/pull/2); closed PR unmerged and removed its branch. M0-001 requirements and acceptance tests (including frozen fresh-checkout install, all three successful CI jobs, negative boundary check) are demonstrated.
 Verified: [negative-control run 45003487494](https://github.com/hyvvs/lyceum/actions/runs/45003487494) failed Verify at `pnpm boundaries` with the expected error; audit and secret scan succeeded. [PR #1 CI run 45000358447](https://github.com/hyvvs/lyceum/actions/runs/45000358447) passed all three jobs.

@@ -5,7 +5,26 @@
  */
 
 :root {
+  color-scheme: dark;
   --font-sans: "Poppins", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Shared, rem-friendly spacing and type tokens; components use these only. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --type-xs: 0.75rem;
+  --type-sm: 0.875rem;
+  --type-body: 1rem;
+  --type-reading: 1.125rem;
+  --line-height-reading: 1.6;
+  --target-min: 44px;
+  --motion-fast: 150ms;
+  --motion-base: 250ms;
+  --motion-slow: 450ms;
 
   --radius-chip: 12px;
   --radius-control: 16px;
@@ -20,9 +39,15 @@
 
   --text-1: rgb(255 255 255 / 1);
   --text-2: rgb(255 255 255 / 0.72);
-  --text-3: rgb(255 255 255 / 0.52);
+  --text-3: rgb(255 255 255 / 0.78);
+  --backdrop-solid: #0b0f17;
+  --surface-solid: #101722;
+  --surface-raised-solid: #172232;
+  --surface-float-solid: #1d2a3c;
+  --surface-reading-solid: #101722;
+  --contrast-border: #b9d6f3;
 
-  /* Backdrop: pre-blurred image plus scrim; the scrim guarantees contrast on any image. */
+  /* Backdrop scrim is only a starting point; pixel contrast must be tested on every image. */
   --backdrop-scrim: rgb(8 10 16 / 0.45);
 
   --glass-fill: rgb(255 255 255 / 0.07);
@@ -40,9 +65,16 @@
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
   --text-1: rgb(15 20 30 / 1);
   --text-2: rgb(15 20 30 / 0.72);
-  --text-3: rgb(15 20 30 / 0.54);
+  --text-3: rgb(15 20 30 / 0.78);
+  --backdrop-solid: #eef3f9;
+  --surface-solid: #f5f8fc;
+  --surface-raised-solid: #ffffff;
+  --surface-float-solid: #e4ebf5;
+  --surface-reading-solid: #ffffff;
+  --contrast-border: #27364c;
   --backdrop-scrim: rgb(255 255 255 / 0.35);
   --glass-fill: rgb(255 255 255 / 0.55);
   --glass-fill-raised: rgb(255 255 255 / 0.7);
@@ -55,11 +87,37 @@
   --glass-shadow-raised: 0 16px 40px rgb(20 30 60 / 0.2);
 }
 
+/* Match system light mode unless the learner chose a theme explicitly. */
+@media (prefers-color-scheme: light) {
+  :root:is(:not([data-theme]), [data-theme="auto"]) {
+    color-scheme: light;
+    --text-1: rgb(15 20 30 / 1);
+    --text-2: rgb(15 20 30 / 0.72);
+    --text-3: rgb(15 20 30 / 0.78);
+    --backdrop-solid: #eef3f9;
+    --surface-solid: #f5f8fc;
+    --surface-raised-solid: #ffffff;
+    --surface-float-solid: #e4ebf5;
+    --surface-reading-solid: #ffffff;
+    --contrast-border: #27364c;
+    --backdrop-scrim: rgb(255 255 255 / 0.35);
+    --glass-fill: rgb(255 255 255 / 0.55);
+    --glass-fill-raised: rgb(255 255 255 / 0.7);
+    --glass-fill-float: rgb(255 255 255 / 0.62);
+    --glass-reading-fill: rgb(255 255 255 / 0.92);
+    --glass-border: rgb(255 255 255 / 0.7);
+    --glass-border-raised: rgb(255 255 255 / 0.9);
+    --glass-highlight: rgb(255 255 255 / 0.9);
+    --glass-shadow: 0 12px 32px rgb(20 30 60 / 0.14);
+    --glass-shadow-raised: 0 16px 40px rgb(20 30 60 / 0.2);
+  }
+}
+
 .lyceum-backdrop {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-color: #0b0f17;
+  background-color: var(--backdrop-solid);
   background-image: var(--backdrop-image, none);
   background-size: cover;
   background-position: center;
@@ -123,49 +181,127 @@
   border-radius: var(--radius-pill);
 }
 
-/* Fallback 1: no backdrop-filter support -> solid surfaces, same hierarchy. */
+/* Fallback 1: no blur support -> opaque but distinct surface elevations. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
-  .glass-raised,
-  .glass-float,
   .glass-tint {
-    background: var(--glass-reading-fill);
+    background: var(--surface-solid);
+  }
+  .glass-reading {
+    background: var(--surface-reading-solid);
+  }
+  .glass-raised {
+    background: var(--surface-raised-solid);
+  }
+  .glass-float {
+    background: var(--surface-float-solid);
   }
 }
 
-/* Fallback 2: user or system asks for reduced transparency. */
+/* Fallback 2: an explicit preference replaces the translucent fill, not just the blur. */
 :root[data-transparency="reduced"] .glass,
 :root[data-transparency="reduced"] .glass-raised,
 :root[data-transparency="reduced"] .glass-float,
 :root[data-transparency="reduced"] .glass-tint,
-:root[data-transparency="reduced"] .glass-reading {
+:root[data-transparency="reduced"] .glass-reading,
+:root[data-transparency="off"] .glass,
+:root[data-transparency="off"] .glass-raised,
+:root[data-transparency="off"] .glass-float,
+:root[data-transparency="off"] .glass-tint,
+:root[data-transparency="off"] .glass-reading {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  background: var(--glass-reading-fill);
+  background: var(--surface-solid);
+}
+:root[data-transparency="reduced"] .glass-raised,
+:root[data-transparency="off"] .glass-raised {
+  background: var(--surface-raised-solid);
+}
+:root[data-transparency="reduced"] .glass-float,
+:root[data-transparency="off"] .glass-float {
+  background: var(--surface-float-solid);
+}
+:root[data-transparency="reduced"] .glass-reading,
+:root[data-transparency="off"] .glass-reading {
+  background: var(--surface-reading-solid);
 }
 /* biome-ignore lint/correctness/noUnknownMediaFeatureName: emerging standard, progressive enhancement */
 @media (prefers-reduced-transparency: reduce) {
   :root:not([data-transparency="full"]) .glass,
   :root:not([data-transparency="full"]) .glass-raised,
   :root:not([data-transparency="full"]) .glass-float,
-  :root:not([data-transparency="full"]) .glass-tint {
+  :root:not([data-transparency="full"]) .glass-tint,
+  :root:not([data-transparency="full"]) .glass-reading {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background: var(--glass-reading-fill);
+    background: var(--surface-solid);
+  }
+  :root:not([data-transparency="full"]) .glass-raised {
+    background: var(--surface-raised-solid);
+  }
+  :root:not([data-transparency="full"]) .glass-float {
+    background: var(--surface-float-solid);
+  }
+  :root:not([data-transparency="full"]) .glass-reading {
+    background: var(--surface-reading-solid);
   }
 }
 
-/* Fallback 3: high contrast -> solid surfaces, strong borders, no blur. */
+/* Fallback 3: explicit or system high contrast is fully opaque. */
+:root[data-contrast="high"] .glass,
+:root[data-contrast="high"] .glass-raised,
+:root[data-contrast="high"] .glass-float,
+:root[data-contrast="high"] .glass-tint,
+:root[data-contrast="high"] .glass-reading {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--surface-solid);
+  border-color: var(--contrast-border);
+}
+:root[data-contrast="high"] .glass-raised {
+  background: var(--surface-raised-solid);
+}
+:root[data-contrast="high"] .glass-float {
+  background: var(--surface-float-solid);
+}
+:root[data-contrast="high"] .glass-reading {
+  background: var(--surface-reading-solid);
+}
 @media (prefers-contrast: more) {
-  .glass,
-  .glass-raised,
-  .glass-float,
-  .glass-tint,
-  .glass-reading {
+  :root:not([data-contrast="standard"]) .glass,
+  :root:not([data-contrast="standard"]) .glass-raised,
+  :root:not([data-contrast="standard"]) .glass-float,
+  :root:not([data-contrast="standard"]) .glass-tint,
+  :root:not([data-contrast="standard"]) .glass-reading {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background: var(--glass-reading-fill);
-    border-color: var(--text-2);
+    background: var(--surface-solid);
+    border-color: var(--contrast-border);
+  }
+  :root:not([data-contrast="standard"]) .glass-raised {
+    background: var(--surface-raised-solid);
+  }
+  :root:not([data-contrast="standard"]) .glass-float {
+    background: var(--surface-float-solid);
+  }
+  :root:not([data-contrast="standard"]) .glass-reading {
+    background: var(--surface-reading-solid);
+  }
+}
+
+/* Motion settings are inherited by forthcoming UI primitives. */
+:root[data-motion="reduced"] {
+  --motion-slow: var(--motion-fast);
+}
+:root[data-motion="off"] {
+  --motion-fast: 0ms;
+  --motion-base: 0ms;
+  --motion-slow: 0ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) {
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
   }
 }
 
