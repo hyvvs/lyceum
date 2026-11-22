@@ -2,7 +2,7 @@
 
 Roadmap reference: `docs/13-roadmap.md` M0. Spec references per card.
 
-### [~] M0-001 Repo bootstrap and CI
+### [x] M0-001 Repo bootstrap and CI
 Package: root · Depends on: none · Context: AGENTS.md sections 3 to 5, docs/14 section 8
 Requirements: GitHub Actions workflow running install (frozen), boundaries, typecheck, lint, tests; Renovate config; CODEOWNERS; issue templates; pinned action versions; `pnpm audit` and secret scan jobs.
 Acceptance: fresh clone to green `pnpm verify` in under 10 minutes; CI green on a sample PR; failing boundary rule fails CI (prove with a deliberate violation in a draft PR).
