@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { scanStoryA11y } from "./axe";
 
 const story = (name: string) => `/iframe.html?id=primitives-button--${name}&viewMode=story`;
 
@@ -125,9 +125,7 @@ test("axe scans standard, semantic, and fallback stories", async ({ page }) => {
   ]) {
     await page.goto(story(name));
     await expect(page.locator(".lyceum-button")).toBeVisible();
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-      .analyze();
+    const results = await scanStoryA11y(page);
     expect(results.violations, `axe violations for ${name}`).toEqual([]);
   }
 });
