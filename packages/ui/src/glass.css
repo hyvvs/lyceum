@@ -32,6 +32,9 @@
   --radius-pill: 999px;
 
   --accent: #3b82f6;
+  --text-on-accent: #071524;
+  --focus-ring: #bee5ff;
+  --border-control: 2px;
   --positive: #34d399;
   --caution: #f59e0b;
   --danger: #f87171;
@@ -66,6 +69,7 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
+  --focus-ring: #16467e;
   --text-1: rgb(15 20 30 / 1);
   --text-2: rgb(15 20 30 / 0.72);
   --text-3: rgb(15 20 30 / 0.78);
@@ -91,6 +95,7 @@
 @media (prefers-color-scheme: light) {
   :root:is(:not([data-theme]), [data-theme="auto"]) {
     color-scheme: light;
+    --focus-ring: #16467e;
     --text-1: rgb(15 20 30 / 1);
     --text-2: rgb(15 20 30 / 0.72);
     --text-3: rgb(15 20 30 / 0.78);
@@ -308,4 +313,89 @@
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Buttons are controls, never nested frosted glass layers. */
+.lyceum-button {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-5);
+  border: var(--border-control) solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-family: var(--font-sans);
+  font-size: var(--type-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.lyceum-button[data-variant="secondary"] {
+  background: var(--surface-raised-solid);
+  color: var(--text-1);
+  border-color: var(--contrast-border);
+}
+.lyceum-button[data-variant="ghost"] {
+  background: var(--surface-solid);
+  color: var(--text-1);
+  border-color: var(--contrast-border);
+}
+.lyceum-button[data-variant="danger"] {
+  background: var(--danger);
+  color: var(--text-on-accent);
+}
+.lyceum-button:hover:not([disabled]):not([aria-disabled="true"]) {
+  filter: brightness(1.08);
+}
+.lyceum-button:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.lyceum-button:disabled,
+.lyceum-button[aria-disabled="true"] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.lyceum-button__spinner {
+  width: var(--type-body);
+  height: var(--type-body);
+  box-sizing: border-box;
+  flex: none;
+  border: var(--border-control) solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: lyceum-spin var(--motion-slow) linear infinite;
+}
+@keyframes lyceum-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+:root[data-motion="off"] .lyceum-button__spinner {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .lyceum-button__spinner {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .lyceum-button {
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  .lyceum-button:focus-visible {
+    outline-color: Highlight;
+  }
 }

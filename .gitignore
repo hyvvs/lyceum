@@ -8,3 +8,6 @@ coverage
 *.log
 .DS_Store
 src-tauri/target
+storybook-static
+playwright-report
+test-results
