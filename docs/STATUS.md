@@ -3,10 +3,11 @@
 Shared memory for humans and agents. Newest entries first. Keep entries short. Mark blocked items with `BLOCKED:`.
 
 ## 2026-11-22 · M0-001 · Bootstrap in progress
-Done: initialized local Git history, added SHA-pinned CI verify/audit/secret-scan jobs, Renovate, issue templates, CODEOWNERS placeholder, Windows-compatible validation paths, and boundary-regression tests.
-Verified: local `pnpm verify` passes (30 tests, typecheck, lint, boundaries, agentcheck) using an ignored Windows Corepack shim; secret scan finds 0. GitHub workflow has not run because no remote is configured. `corepack pnpm audit --audit-level high` reports 3 critical and 2 high vulnerabilities in the starter lockfile.
-BLOCKED: GitHub owner/team identity needed for CODEOWNERS; remote and sample PR required to verify CI. Existing vulnerable dependencies require a separate, reviewed upgrade.
-Next: check CI on GitHub, resolve audit findings, finish M0-001 acceptance, then begin M0-003 UI primitives.
+Done: initialized local Git history; added SHA-pinned CI verify/audit/secret-scan jobs, Renovate, issue templates, CODEOWNERS placeholder, Windows-compatible validation paths, and boundary-regression tests. Updated Vitest to 5.1.1 and Zod to 4.6.7; added Vite 8.3.8 as the compatible Vitest peer; raised Node requirements to 22.12+ and CI to 22.20.0.
+Verified: local `pnpm verify` passes (30 tests, typecheck, lint, boundaries, agentcheck) using an ignored Windows Corepack shim; secret scan finds 0. `corepack pnpm audit` reports no known vulnerabilities, without advisory exclusions.
+Review note: Vite 8 brings in MPL-2.0-licensed Lightning CSS as a dev-only transitive dependency; review distribution obligations before release.
+BLOCKED: GitHub owner/team identity needed for CODEOWNERS; remote and sample PR required to verify CI.
+Next: check CI on GitHub, finish M0-001 acceptance, then begin M0-003 UI primitives.
 
 ## 2026-11-22 · Design language added
 Done: docs/18 (glass design language + Framer Motion spec) from the reference video, docs/design-reference, `packages/ui` with `glass.css` and `motion.ts` (+6 tests, 26 total), ADR-0008, task cards M0-017 to M0-020, AGENTS.md UI rules. `pnpm verify` passes.
