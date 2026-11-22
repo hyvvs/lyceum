@@ -1,0 +1,25 @@
+{
+  "name": "lyceum",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Lyceum: a local-first, model-agnostic mastery tutor for any subject.",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "boundaries": "node scripts/check-boundaries.mjs",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "verify": "pnpm boundaries && pnpm agentcheck && pnpm typecheck && pnpm test && pnpm lint",
+    "agentcheck": "node scripts/check-agent-files.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

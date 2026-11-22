@@ -1,0 +1,175 @@
+/*
+ * Lyceum glass design tokens and recipes. See docs/18-design-language-glass.md.
+ * Values are tuned starting points; contrast and performance tests set the final numbers.
+ * Never use these classes for text that fails contrast: reading surfaces use .glass-reading.
+ */
+
+:root {
+  --font-sans: "Poppins", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-chip: 12px;
+  --radius-control: 16px;
+  --radius-card: 24px;
+  --radius-pill: 999px;
+
+  --accent: #3b82f6;
+  --positive: #34d399;
+  --caution: #f59e0b;
+  --danger: #f87171;
+  --conceptual: #a78bfa;
+
+  --text-1: rgb(255 255 255 / 1);
+  --text-2: rgb(255 255 255 / 0.72);
+  --text-3: rgb(255 255 255 / 0.52);
+
+  /* Backdrop: pre-blurred image plus scrim; the scrim guarantees contrast on any image. */
+  --backdrop-scrim: rgb(8 10 16 / 0.45);
+
+  --glass-fill: rgb(255 255 255 / 0.07);
+  --glass-fill-raised: rgb(255 255 255 / 0.11);
+  --glass-fill-float: rgb(255 255 255 / 0.09);
+  --glass-reading-fill: rgb(14 18 28 / 0.88);
+  --glass-border: rgb(255 255 255 / 0.12);
+  --glass-border-raised: rgb(255 255 255 / 0.18);
+  --glass-highlight: rgb(255 255 255 / 0.14);
+  --glass-shadow: 0 12px 32px rgb(0 0 0 / 0.3);
+  --glass-shadow-raised: 0 16px 40px rgb(0 0 0 / 0.36);
+  --glass-blur: 24px;
+  --glass-blur-float: 32px;
+  --glass-blur-reading: 16px;
+}
+
+:root[data-theme="light"] {
+  --text-1: rgb(15 20 30 / 1);
+  --text-2: rgb(15 20 30 / 0.72);
+  --text-3: rgb(15 20 30 / 0.54);
+  --backdrop-scrim: rgb(255 255 255 / 0.35);
+  --glass-fill: rgb(255 255 255 / 0.55);
+  --glass-fill-raised: rgb(255 255 255 / 0.7);
+  --glass-fill-float: rgb(255 255 255 / 0.62);
+  --glass-reading-fill: rgb(255 255 255 / 0.92);
+  --glass-border: rgb(255 255 255 / 0.7);
+  --glass-border-raised: rgb(255 255 255 / 0.9);
+  --glass-highlight: rgb(255 255 255 / 0.9);
+  --glass-shadow: 0 12px 32px rgb(20 30 60 / 0.14);
+  --glass-shadow-raised: 0 16px 40px rgb(20 30 60 / 0.2);
+}
+
+.lyceum-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: #0b0f17;
+  background-image: var(--backdrop-image, none);
+  background-size: cover;
+  background-position: center;
+}
+.lyceum-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--backdrop-scrim);
+}
+
+.glass,
+.glass-raised,
+.glass-float,
+.glass-reading,
+.glass-tint {
+  color: var(--text-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+
+.glass {
+  background: var(--glass-fill);
+}
+
+.glass-raised {
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border-raised);
+  box-shadow: var(--glass-shadow-raised), inset 0 1px 0 var(--glass-highlight);
+}
+
+.glass-float {
+  background: var(--glass-fill-float);
+  border-color: var(--glass-border-raised);
+  -webkit-backdrop-filter: blur(var(--glass-blur-float)) saturate(150%);
+  backdrop-filter: blur(var(--glass-blur-float)) saturate(150%);
+  box-shadow: var(--glass-shadow-raised), inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Reading surfaces: near-opaque so text and math always pass contrast. */
+.glass-reading {
+  background: var(--glass-reading-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur-reading));
+  backdrop-filter: blur(var(--glass-blur-reading));
+}
+
+/* Category tint: set --tint to an "r g b" triplet, e.g. style="--tint: 59 130 246". */
+.glass-tint {
+  background: linear-gradient(
+      135deg,
+      rgb(var(--tint, 59 130 246) / 0.3),
+      rgb(var(--tint, 59 130 246) / 0.12)
+    ), var(--glass-fill);
+  border-color: rgb(var(--tint, 59 130 246) / 0.35);
+}
+
+.glass-pill {
+  border-radius: var(--radius-pill);
+}
+
+/* Fallback 1: no backdrop-filter support -> solid surfaces, same hierarchy. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-raised,
+  .glass-float,
+  .glass-tint {
+    background: var(--glass-reading-fill);
+  }
+}
+
+/* Fallback 2: user or system asks for reduced transparency. */
+:root[data-transparency="reduced"] .glass,
+:root[data-transparency="reduced"] .glass-raised,
+:root[data-transparency="reduced"] .glass-float,
+:root[data-transparency="reduced"] .glass-tint,
+:root[data-transparency="reduced"] .glass-reading {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--glass-reading-fill);
+}
+/* biome-ignore lint/correctness/noUnknownMediaFeatureName: emerging standard, progressive enhancement */
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-transparency="full"]) .glass,
+  :root:not([data-transparency="full"]) .glass-raised,
+  :root:not([data-transparency="full"]) .glass-float,
+  :root:not([data-transparency="full"]) .glass-tint {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--glass-reading-fill);
+  }
+}
+
+/* Fallback 3: high contrast -> solid surfaces, strong borders, no blur. */
+@media (prefers-contrast: more) {
+  .glass,
+  .glass-raised,
+  .glass-float,
+  .glass-tint,
+  .glass-reading {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--glass-reading-fill);
+    border-color: var(--text-2);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

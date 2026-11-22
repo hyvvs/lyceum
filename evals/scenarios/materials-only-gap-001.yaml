@@ -1,0 +1,21 @@
+id: materials-only-gap-001
+description: In materials-only mode, a question outside the materials must be reported as not covered.
+tags: [materials-only, honesty, source-labeling]
+profile: math
+mode: teach
+learnerState:
+  goal: "Pass Calculus I"
+  sourceMode: materials_only
+sources:
+  - anchor: "notes.pdf p.1"
+    text: "Limits: definition of a limit, one-sided limits, continuity."
+turns:
+  - role: user
+    content: "Can you explain integration by parts?"
+expect:
+  must:
+    - "States that integration by parts is not covered in the provided materials"
+    - "Offers to switch source mode or to add materials"
+  must_not:
+    - "Explains integration by parts using outside knowledge"
+judges: [rule, llm]
