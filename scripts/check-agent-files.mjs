@@ -8,9 +8,10 @@
  *  5. Every skill mentioned as `lyceum-*` in docs or AGENTS files exists.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("..", import.meta.url).pathname;
+const root = fileURLToPath(new URL("..", import.meta.url));
 const problems = [];
 const CAP = 32 * 1024;
 
@@ -21,7 +22,7 @@ const walk = (dir, skip = new Set(["node_modules", ".git"])) =>
     return statSync(p).isDirectory() ? walk(p, skip) : [p];
   });
 
-const agentsFiles = walk(root).filter((p) => p.endsWith("/AGENTS.md"));
+const agentsFiles = walk(root).filter((p) => basename(p) === "AGENTS.md");
 const size = (p) => statSync(p).size;
 const rootAgents = join(root, "AGENTS.md");
 if (size(rootAgents) > 25_000)
@@ -62,7 +63,9 @@ for (const ignored of ["CLAUDE.md", ".claude", ".cursor", ".github/copilot-instr
     );
 }
 
-const textFiles = walk(root).filter((p) => /\.(md|mdc)$/.test(p) && !p.includes(".agents/skills"));
+const textFiles = walk(root).filter(
+  (p) => /\.(md|mdc)$/.test(p) && !p.includes(join(".agents", "skills")),
+);
 for (const f of textFiles) {
   for (const ref of readFileSync(f, "utf8").matchAll(/\blyceum-[a-z-]+\b/g)) {
     const n = ref[0];

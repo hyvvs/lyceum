@@ -2,6 +2,22 @@
 
 Shared memory for humans and agents. Newest entries first. Keep entries short. Mark blocked items with `BLOCKED:`.
 
+## 2026-11-22 · M0-001 · Acceptance checks proven
+Done: verified CI rejects forbidden subject tooling in core through disposable [draft PR #2](https://github.com/hyvvs/lyceum/pull/2); closed PR unmerged and removed its branch. M0-001 requirements and acceptance tests (including frozen fresh-checkout install, all three successful CI jobs, negative boundary check) are demonstrated.
+Verified: [negative-control run 45003487494](https://github.com/hyvvs/lyceum/actions/runs/45003487494) failed Verify at `pnpm boundaries` with the expected error; audit and secret scan succeeded. [PR #1 CI run 45000358447](https://github.com/hyvvs/lyceum/actions/runs/45000358447) passed all three jobs.
+Next: merge [PR #1](https://github.com/hyvvs/lyceum/pull/1) after green checks, then implement M0-002. Separately, repository owner still must authorize the Renovate GitHub App; `.github/renovate.json` is committed.
+
+## 2026-11-22 · M0-001 · GitHub onboarding
+Done: pushed baseline `main` (`1a8e4da`) before `m0/ci-bootstrap`, opened [PR #1](https://github.com/hyvvs/lyceum/pull/1), set CODEOWNERS to `@hyvvs`, and enabled `main` branch protection requiring up-to-date Verify, Dependency audit, and Secret scan checks (also for admins).
+Verified: [PR run 45000233694](https://github.com/hyvvs/lyceum/actions/runs/45000233694) passed all three GitHub Actions jobs; local `pnpm verify` passed 30 tests. No merges were made.
+Follow-up outside M0-001's configured-file acceptance: owner must authorize [Renovate GitHub App](https://github.com/apps/renovate/installations/new) for `hyvvs/lyceum`. Negative boundary CI proof was completed in the later entry above.
+
+## 2026-11-22 · M0-001 · Bootstrap in progress
+Done: initialized local Git history and pushed the baseline `main` to `hyvvs/lyceum`; added SHA-pinned CI verify/audit/secret-scan jobs, Renovate config, issue templates, CODEOWNERS (`@hyvvs`), Windows-compatible validation paths, and boundary-regression tests. Updated Vitest to 5.1.1 and Zod to 4.6.7; added Vite 8.3.8 as the compatible Vitest peer; raised Node requirements to 22.12+ and CI to 22.20.0.
+Verified: local `pnpm verify` passes (30 tests, typecheck, lint, boundaries, agentcheck) using an ignored Windows Corepack shim; secret scan finds 0. `corepack pnpm audit` reports no known vulnerabilities, without advisory exclusions.
+Review note: Vite 8 brings in MPL-2.0-licensed Lightning CSS as a dev-only transitive dependency; review distribution obligations before release.
+Next: verify hosted CI on the bootstrap PR, configure branch protection and Renovate installation, demonstrate boundary rejection via a draft PR, and finish M0-001 acceptance before M0-003 UI primitives.
+
 ## 2026-11-22 · Design language added
 Done: docs/18 (glass design language + Framer Motion spec) from the reference video, docs/design-reference, `packages/ui` with `glass.css` and `motion.ts` (+6 tests, 26 total), ADR-0008, task cards M0-017 to M0-020, AGENTS.md UI rules. `pnpm verify` passes.
 Next: M0-017 to M0-020 (design system, motion primitives, backdrop pipeline, glass performance spike).

@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.20.0"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.20.0"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      # CI-only Apache-2.0 tool; no application or runtime dependency.
+      - run: python -m pip install --disable-pip-version-check detect-secrets==1.5.0
+      - name: Reject suspected credentials
+        shell: bash
+        run: |
+          # Scan the lockfile separately after masking ONLY integrity digests, which look like secrets.
+          detect-secrets scan --exclude-files '^pnpm-lock\.yaml$|^docs/design-reference/.*\.jpg$' > "$RUNNER_TEMP/secrets-report.json"
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          contents = Path("pnpm-lock.yaml").read_text(encoding="utf-8")
+          sanitized = re.sub(r"(integrity: sha[0-9]+-)[A-Za-z0-9+/=]+", r"\1redacted", contents)
+          (Path(os.environ["RUNNER_TEMP"]) / "lockfile-sanitized.yaml").write_text(sanitized, encoding="utf-8")
+          PY
+          detect-secrets scan --all-files "$RUNNER_TEMP/lockfile-sanitized.yaml" > "$RUNNER_TEMP/lockfile-secrets.json"
+          python -c 'import json,sys; reports=[json.load(open(p)) for p in sys.argv[1:]]; n=sum(len(v) for r in reports for v in r["results"].values()); print(f"{n} suspected secret(s)"); sys.exit(bool(n))' "$RUNNER_TEMP/secrets-report.json" "$RUNNER_TEMP/lockfile-secrets.json"

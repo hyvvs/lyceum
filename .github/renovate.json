@@ -1,0 +1,9 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": true,
+  "schedule": ["every weekend"],
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies"],
+  "pinDigests": true
+}

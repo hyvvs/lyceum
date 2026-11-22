@@ -25,7 +25,7 @@ const make = (fetchImpl: typeof fetch) =>
   new OpenAICompatibleAdapter({
     id: "test",
     baseUrl: "http://localhost:11434/v1/",
-    apiKey: "secret",
+    apiKey: "secret", // pragma: allowlist secret - local test fixture, never sent to a provider
     fetch: fetchImpl,
   });
 
