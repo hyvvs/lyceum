@@ -9,7 +9,7 @@ Acceptance: fresh clone to green `pnpm verify` in under 10 minutes; CI green on 
 Tests: boundary script has its own test (violating fixture fails).
 Ask first if: changing the required checks list.
 
-### [ ] M0-002 Boundary checker hardening
+### [x] M0-002 Boundary checker hardening
 Package: scripts · Depends on: M0-001 · Context: AGENTS.md section 2 invariants 1, 3
 Requirements: extend `scripts/check-boundaries.mjs` to also verify: no package imports from `apps/*`; cross-package imports only through `index.ts` (no deep imports); every package has `typecheck`; no `Date.now()`, `new Date()` (zero args), `Math.random()` in `packages/core` non-test source.
 Acceptance: each rule has a failing fixture and a passing case in tests; script prints actionable messages.
