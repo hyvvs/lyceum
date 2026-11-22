@@ -24,8 +24,6 @@ export interface EventStore {
   }>;
 }
 
-export const systemClock: Clock = { now: () => new Date() };
-
 /** Small, fast, seedable PRNG (mulberry32). Good enough for sampling and tests. */
 export function createRng(seed: number): Rng {
   let a = seed >>> 0;

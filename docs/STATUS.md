@@ -2,6 +2,12 @@
 
 Shared memory for humans and agents. Newest entries first. Keep entries short. Mark blocked items with `BLOCKED:`.
 
+## 2026-11-22 · M0-002 · Boundary checker hardening
+Done: merged [M0-001 PR #1](https://github.com/hyvvs/lyceum/pull/1) into main (`1ae8592`). Extended the boundary checker using the existing TypeScript parser: block package imports from apps, deep or relative cross-package imports, forbidden core/gateway dependency edges (including dev/peer/optional dependencies), missing typecheck scripts in packages and apps, and direct nondeterministic calls in core (including computed properties), with source locations and regression fixtures. Source files outside `src` are scanned; source symlinks and escaping export paths are rejected.
+Verified: local `pnpm verify` passes 44 tests in 10 files, with one Linux-only symlink fixture skipped on Windows due to OS permission restrictions; four package typechecks, agentcheck, boundaries and lint pass. Full `pnpm audit` reports no known vulnerabilities. Checker also covers `.d.ts` imports and rejects package export targets in unscanned build directories. Added `.gitattributes` for consistent LF checkouts on Windows.
+Review decision: removed the unused exported `systemClock` convenience implementation (its `new Date()` violated the injected-clock invariant); `Clock` interface and `createRng` remain unchanged. This public export removal requires human review before merging M0-002. The existing `@lyceum/ui/glass.css` export also needs reconciliation if a future consumer imports it directly, because the package boundary policy requires the public index entry point.
+Next: independent review, commit and open M0-002 PR; then M0-003 accessible UI primitives, subject to approval of required React/Radix/Storybook/testing dependencies.
+
 ## 2026-11-22 · M0-001 · Acceptance checks proven
 Done: verified CI rejects forbidden subject tooling in core through disposable [draft PR #2](https://github.com/hyvvs/lyceum/pull/2); closed PR unmerged and removed its branch. M0-001 requirements and acceptance tests (including frozen fresh-checkout install, all three successful CI jobs, negative boundary check) are demonstrated.
 Verified: [negative-control run 45003487494](https://github.com/hyvvs/lyceum/actions/runs/45003487494) failed Verify at `pnpm boundaries` with the expected error; audit and secret scan succeeded. [PR #1 CI run 45000358447](https://github.com/hyvvs/lyceum/actions/runs/45000358447) passed all three jobs.
