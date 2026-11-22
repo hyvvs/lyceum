@@ -272,6 +272,29 @@ describe("architectural boundaries", () => {
     );
   });
 
+  it("checks declaration imports and disallows exports into excluded build directories", () => {
+    const root = fixture();
+    writeFileSync(
+      join(root, "packages", "ui", "types.d.ts"),
+      'export type Hidden = import("@lyceum/core/src/events").LyceumEvent;',
+    );
+    writeFileSync(
+      join(root, "packages", "ui", "package.json"),
+      JSON.stringify({
+        name: "@lyceum/ui",
+        scripts: { typecheck: "tsc" },
+        exports: { ".": "./dist/index.js" },
+      }),
+    );
+    expect(findBoundaryViolations(root)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("types.d.ts:1:"),
+        expect.stringContaining("deep cross-package import"),
+        expect.stringContaining("ui: export target enters unscanned directory"),
+      ]),
+    );
+  });
+
   it.skipIf(process.platform === "win32")("rejects symlinked source code", () => {
     const root = fixture();
     writeFileSync(join(root, "packages", "core", "src", "actual.ts"), "Math.random();");

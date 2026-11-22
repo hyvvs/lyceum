@@ -219,10 +219,12 @@ export function findBoundaryViolations(root) {
       const outside = relative(pkgDir, resolve(pkgDir, target));
       if (outside === ".." || outside.startsWith(`..${sep}`) || isAbsolute(outside)) {
         problems.push(`${pkg}: export target escapes package: ${target}`);
+      } else if (outside.split(sep).some((part) => ignoredDirs.has(part))) {
+        problems.push(`${pkg}: export target enters unscanned directory: ${target}`);
       }
     }
     for (const file of walk(join(packagesDir, pkg), root, problems)) {
-      if (sourceFileName.test(file) && !file.endsWith(".d.ts")) {
+      if (sourceFileName.test(file)) {
         inspectSource(root, pkg, file, problems);
       }
     }
