@@ -30,6 +30,7 @@
   --radius-control: 16px;
   --radius-card: 24px;
   --radius-pill: 999px;
+  --dialog-max: 36rem;
 
   --accent: #3b82f6;
   --text-on-accent: #071524;
@@ -397,5 +398,72 @@
   }
   .lyceum-button:focus-visible {
     outline-color: Highlight;
+  }
+}
+
+/* A modal has one opaque floating reading surface, not nested blur layers. */
+.lyceum-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--backdrop-scrim);
+}
+:root[data-transparency="reduced"] .lyceum-dialog__overlay,
+:root[data-transparency="off"] .lyceum-dialog__overlay,
+:root[data-contrast="high"] .lyceum-dialog__overlay {
+  background: var(--backdrop-solid);
+}
+@media (prefers-contrast: more) {
+  :root:not([data-contrast="standard"]) .lyceum-dialog__overlay {
+    background: var(--backdrop-solid);
+  }
+}
+.lyceum-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 101;
+  box-sizing: border-box;
+  width: min(var(--dialog-max), calc(100vw - var(--space-3) - var(--space-3)));
+  max-height: calc(100dvh - var(--space-3) - var(--space-3));
+  overflow: auto;
+  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  transform: translate(-50%, -50%);
+  background: var(--surface-float-solid);
+  color: var(--text-1);
+  border: var(--border-control) solid var(--contrast-border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.lyceum-dialog__title {
+  margin: 0;
+  font-size: var(--type-reading);
+  line-height: 1.4;
+}
+.lyceum-dialog__description {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-body);
+  line-height: var(--line-height-reading);
+}
+.lyceum-dialog__body {
+  display: grid;
+  gap: var(--space-3);
+}
+@media (forced-colors: active) {
+  .lyceum-dialog__overlay {
+    background: Canvas;
+  }
+  .lyceum-dialog {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+  .lyceum-dialog__description {
+    color: CanvasText;
   }
 }
