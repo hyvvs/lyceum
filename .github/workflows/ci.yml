@@ -28,6 +28,12 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+      - name: Install UI browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Build Storybook
+        run: pnpm storybook:build
+      - name: Test UI keyboard and accessibility
+        run: pnpm test:ui
 
   audit:
     name: Dependency audit
