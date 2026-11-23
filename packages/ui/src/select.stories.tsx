@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { Button } from "./button";
+import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 
 type ContentState = "standard" | "empty" | "loading" | "error";
@@ -109,6 +110,43 @@ function SelectDemo({
   );
 }
 
+function SelectWithinDialogDemo() {
+  const [topic, setTopic] = useState("math");
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>Open study settings</Button>
+      </DialogTrigger>
+      <DialogContent
+        title="Study settings"
+        description="Choose a topic for the next practice session."
+      >
+        <div className="lyceum-select-demo">
+          <label className="lyceum-select-demo__label" htmlFor="dialog-topic-select">
+            Study topic
+          </label>
+          <Select value={topic} onValueChange={setTopic}>
+            <SelectTrigger id="dialog-topic-select">
+              <SelectValue placeholder="Choose a study topic" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="math">Mathematics</SelectItem>
+              <SelectItem value="physics">Physics</SelectItem>
+              <SelectItem value="chemistry">Chemistry</SelectItem>
+              <SelectItem value="history">History</SelectItem>
+            </SelectContent>
+          </Select>
+          <output>Selected topic: {topic}</output>
+          <Button variant="secondary" onClick={() => setTopic("math")}>
+            Reset study topic
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 const meta = {
   title: "Primitives/Select",
   component: SelectDemo,
@@ -166,3 +204,5 @@ export const LongDoubleText: Story = {
   globals: { textScale: "200%" },
   render: () => <SelectDemo longLabels />,
 };
+/** Exercises the real, independently portalled modal Dialog and Select layers together. */
+export const DialogIntegration: Story = { render: () => <SelectWithinDialogDemo /> };
