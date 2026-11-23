@@ -1,8 +1,10 @@
 # ADR-0009: Reuse Radix-owned focus lifecycles; defer a standalone focus scope
 
-- Status: proposed (the owner approved the *scope decision* on 2026-11-23; this ADR and the M0-003 card wording still require review/merge)
+- Status: proposed
 - Date: 2026-11-23
 - Deciders: Lyceum owner (deferral decision); ADR acceptance pending human review
+
+The owner approved the *scope deferral* on 2026-11-23; this proposed ADR and the revised M0-003 card still require separate human PR approval before they join main.
 
 ## Context
 
@@ -20,7 +22,7 @@ Installed `@radix-ui/react-focus-scope@1.3.1` is already transitive through Dial
 
 The owner **approved option 3**: no new standalone public `FocusScope`, private `OwnedFocusBoundary`, custom/global focus manager, extra focus trap or direct `@radix-ui/react-focus-scope` dependency is authorized now. This is an **APPROVED DEFERRAL, not an implemented FocusScope helper**. The M0-003 task card must retain an explicit traceable statement of the original FocusScope-helper requirement and the decision to defer it; the milestone stays **[~]** until its entire acceptance audit and corrective work are approved.
 
-Dialog and Select remain the sole owners of their currently implemented focus lifecycles. Do not override or disable their Radix autofocus, focus containment, return-focus, portal, or aria-hidden/inert behavior to satisfy a hypothetical future abstraction.
+Dialog and Select remain the owners of their existing **modal focus containment and restoration**. Toast independently handles its own F8 viewport and focus-origin restoration; `packages/ui/src/select.tsx` also owns the temporary background `inert` reconciliation around Radix's portal behavior. Do not override or disable these Radix/component focus, portal or accessibility behaviors to satisfy a hypothetical future abstraction.
 
 ## Consequences and revisit trigger
 
