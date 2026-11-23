@@ -10,9 +10,19 @@ interface FrameProps {
   contrast: string;
   motion: string;
   textScale: string;
+  /** A flat frame is required when the story renders its own glass layer. */
+  stageSurface: "reading" | "flat";
 }
 
-function StoryFrame({ children, theme, transparency, contrast, motion, textScale }: FrameProps) {
+function StoryFrame({
+  children,
+  theme,
+  transparency,
+  contrast,
+  motion,
+  textScale,
+  stageSurface,
+}: FrameProps) {
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = theme;
@@ -30,7 +40,13 @@ function StoryFrame({ children, theme, transparency, contrast, motion, textScale
 
   return (
     <main className="storybook-stage">
-      <div className="glass-reading storybook-surface">{children}</div>
+      <div
+        className={
+          stageSurface === "flat" ? "storybook-surface" : "glass-reading storybook-surface"
+        }
+      >
+        {children}
+      </div>
     </main>
   );
 }
@@ -70,6 +86,7 @@ const preview: Preview = {
         contrast={String(context.globals.contrast)}
         motion={String(context.globals.motion)}
         textScale={String(context.globals.textScale)}
+        stageSurface={context.parameters.stageSurface === "flat" ? "flat" : "reading"}
       >
         <Story />
       </StoryFrame>
