@@ -7,7 +7,14 @@ import { fileURLToPath } from "node:url";
 import { chromium, expect } from "@playwright/test";
 
 const outputDirectory = fileURLToPath(new URL(".", import.meta.url));
-const baseURL = process.env.STORYBOOK_URL || "http://127.0.0.1:6006";
+const previewURL = new URL(process.env.STORYBOOK_URL || "http://127.0.0.1:6006");
+if (
+  previewURL.protocol !== "http:" ||
+  !["127.0.0.1", "localhost", "[::1]"].includes(previewURL.hostname)
+) {
+  throw new Error("Screenshot capture only permits a local, unencrypted Storybook preview.");
+}
+const baseURL = previewURL.origin;
 const cases = [
   {
     story: "default",
@@ -60,12 +67,25 @@ try {
       await expect(page.locator("html")).toHaveAttribute("data-theme", entry.theme);
       await expect(page.locator("html")).toHaveAttribute("data-contrast", entry.contrast);
       await expect(page.locator("html")).toHaveCSS("font-size", entry.fontSize);
+      const surface = await page.getByRole("tooltip").evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          background: style.backgroundColor,
+          foreground: style.color,
+          backdropFilter: style.backdropFilter,
+        };
+      });
+      if (surface.backdropFilter !== "none") {
+        throw new Error(`${entry.slug} unexpectedly blurs its backdrop`);
+      }
       await page.screenshot({
         path: `${outputDirectory}tooltip-${entry.slug}.png`,
         fullPage: true,
         animations: "disabled",
       });
-      console.log(`Captured ${entry.slug}: ${entry.width}x${entry.height}`);
+      console.log(
+        `Captured ${entry.slug}: ${entry.width}x${entry.height} ${JSON.stringify(surface)}`,
+      );
     } finally {
       await page.close();
     }

@@ -82,6 +82,8 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
       onEscapeKeyDown,
       className,
       sideOffset = tooltipInteraction.sideOffsetPx,
+      collisionPadding = tooltipInteraction.collisionPaddingPx,
+      sticky = "always",
       ...props
     },
     ref,
@@ -106,6 +108,8 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
           ref={ref}
           className={["lyceum-tooltip", className].filter(Boolean).join(" ")}
           sideOffset={sideOffset}
+          collisionPadding={collisionPadding}
+          sticky={sticky}
         >
           {text}
         </TooltipPrimitive.Content>

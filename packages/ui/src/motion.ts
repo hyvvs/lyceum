@@ -18,8 +18,12 @@ export const ease = {
 
 export const duration = { fast: 0.15, base: 0.25, slow: 0.45 } as const;
 
-/** Accessible tooltip timing/placement tokens: 300ms delay, 8px offset (`--space-2`). */
-export const tooltipInteraction = { hoverDelayMs: 300, sideOffsetPx: 8 } as const;
+/** Tooltip timing/placement tokens: 300ms delay, 8px offset, 12px collision gutter. */
+export const tooltipInteraction = {
+  hoverDelayMs: 300,
+  sideOffsetPx: 8,
+  collisionPaddingPx: 12,
+} as const;
 
 /** Delay for the i-th child of a staggered group, capped so long lists never feel slow. */
 export function staggerDelay(index: number, step = 0.05, max = 0.4): number {
