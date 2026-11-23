@@ -176,3 +176,98 @@ test("dialog stories are axe clean in dark, light, high contrast and other state
     expect(results.violations, `axe violations for ${name}`).toEqual([]);
   }
 });
+
+test("portalled Dialog title, description and body use the Lyceum font stack in every theme and at 200% text", async ({
+  page,
+}) => {
+  for (const { name, viewport } of [
+    { name: "default", viewport: { width: 800, height: 520 } },
+    { name: "light", viewport: { width: 800, height: 520 } },
+    { name: "high-contrast", viewport: { width: 800, height: 520 } },
+    { name: "double-text", viewport: { width: 320, height: 256 } },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(story(name));
+    await page.getByRole("button", { name: "Open study preferences" }).click();
+    const dialog = page.getByRole("dialog", { name: "Study preferences" });
+    await expect(dialog).toBeVisible();
+    const fonts = await dialog.evaluate((element) => {
+      const stage = document.querySelector(".storybook-stage");
+      if (!stage) throw new Error("Storybook stage missing");
+      const select = (selector: string) => {
+        const target = element.querySelector(selector);
+        if (!target) throw new Error(`Missing Dialog text selector: ${selector}`);
+        return getComputedStyle(target).fontFamily;
+      };
+      return {
+        expected: getComputedStyle(stage).fontFamily,
+        portalledOutsideStage: !stage.contains(element),
+        content: getComputedStyle(element).fontFamily,
+        title: select(".lyceum-dialog__title"),
+        description: select(".lyceum-dialog__description"),
+        body: select(".lyceum-dialog__body"),
+        rootFontSize: getComputedStyle(document.documentElement).fontSize,
+      };
+    });
+    expect(fonts.portalledOutsideStage, name).toBe(true);
+    expect(fonts.expected, name).toContain("Poppins");
+    for (const part of ["content", "title", "description", "body"] as const) {
+      expect(fonts[part], `${name} ${part} font family`).toBe(fonts.expected);
+    }
+    expect(fonts.rootFontSize, name).toBe(name === "double-text" ? "32px" : "16px");
+    const bounds = await dialog.boundingBox();
+    expect(bounds, name).not.toBeNull();
+    expect(bounds?.x, name).toBeGreaterThanOrEqual(0);
+    expect((bounds?.x ?? 0) + (bounds?.width ?? 0), name).toBeLessThanOrEqual(viewport.width);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+      name,
+    ).toBeLessThanOrEqual(viewport.width);
+    const results = await scanStoryA11y(page);
+    expect(results.violations, `${name} open Dialog axe`).toEqual([]);
+  }
+});
+
+test("portalled full hint stays wrapped, scrollable and keyboard-accessible at 320x256 and 200% text", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 256 });
+  await page.goto("/iframe.html?id=primitives-tooltip--long-double-text&viewMode=story");
+  const trigger = page.getByRole("button", { name: "Read full hint" });
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog", { name: "Full hint" });
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  const metrics = await dialog.evaluate((element) => {
+    const body = element.querySelector(".lyceum-dialog__body");
+    if (!body) throw new Error("Dialog body missing");
+    return {
+      expected: getComputedStyle(document.querySelector(".storybook-stage") as Element).fontFamily,
+      dialogFont: getComputedStyle(element).fontFamily,
+      bodyFont: getComputedStyle(body).fontFamily,
+      scrollable: element.scrollHeight > element.clientHeight,
+      bodyFits: body.scrollWidth <= body.clientWidth,
+      viewportWidth: document.documentElement.scrollWidth,
+      rootFont: getComputedStyle(document.documentElement).fontSize,
+    };
+  });
+  expect(metrics.rootFont).toBe("32px");
+  expect(metrics.dialogFont).toBe(metrics.expected);
+  expect(metrics.bodyFont).toBe(metrics.expected);
+  expect(metrics.scrollable).toBe(true);
+  expect(metrics.bodyFits).toBe(true);
+  expect(metrics.viewportWidth).toBeLessThanOrEqual(320);
+  const box = await dialog.boundingBox();
+  expect(box?.y).toBeGreaterThanOrEqual(0);
+  expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(256);
+  await dialog.focus();
+  await expect(dialog).toBeFocused();
+  await page.keyboard.press("PageDown");
+  await expect.poll(() => dialog.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect(dialog).toBeVisible();
+  expect((await scanStoryA11y(page)).violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(trigger).toBeFocused();
+});
