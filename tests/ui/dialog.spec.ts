@@ -261,8 +261,8 @@ test("portalled full hint stays wrapped, scrollable and keyboard-accessible at 3
   const box = await dialog.boundingBox();
   expect(box?.y).toBeGreaterThanOrEqual(0);
   expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(256);
-  await dialog.focus();
-  await expect(dialog).toBeFocused();
+  // PageDown must scroll naturally from Radix's initial focus inside the modal,
+  // not require programmatically focusing its scroll container.
   await page.keyboard.press("PageDown");
   await expect.poll(() => dialog.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
   await expect(dialog).toBeVisible();
