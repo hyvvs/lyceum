@@ -4,12 +4,14 @@ import {
   type RefObject,
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useEffect,
   useRef,
 } from "react";
 
 const ToastFocusOrigin = createContext<RefObject<HTMLElement | null> | null>(null);
+const ToastViewportOwner = createContext<RefObject<HTMLOListElement | null> | null>(null);
 
 /** Localize both labels; Radix uses the provider label inside its single live announcer. */
 export type ToastProviderProps = Omit<
@@ -23,11 +25,11 @@ export type ToastProviderProps = Omit<
 export function ToastProvider({ label, ...props }: ToastProviderProps) {
   if (!label?.trim()) throw new Error("ToastProvider label must be nonempty.");
   const focusOrigin = useRef<HTMLElement | null>(null);
+  const viewportRef = useRef<HTMLOListElement | null>(null);
   useEffect(() => {
     // Background tabs do not consistently deliver window blur on every WebView.
     // Target Radix's own viewport pause/resume handlers, without synthesizing
     // global window blur/focus (which would affect unrelated application code).
-    const viewports = () => document.querySelectorAll<HTMLOListElement>(".lyceum-toast__viewport");
     const isInteracting = (viewport: HTMLOListElement) =>
       viewport.matches(":hover") || viewport.contains(document.activeElement);
     const pause = (viewport: HTMLOListElement) =>
@@ -37,18 +39,19 @@ export function ToastProvider({ label, ...props }: ToastProviderProps) {
         new FocusEvent("focusout", { relatedTarget: document.body }),
       );
     const onVisibilityChange = () => {
-      for (const viewport of viewports()) {
-        if (document.visibilityState === "hidden") pause(viewport);
-        else if (document.hasFocus() && !isInteracting(viewport)) resume(viewport);
-      }
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      if (document.visibilityState === "hidden") pause(viewport);
+      else if (document.hasFocus() && !isInteracting(viewport)) resume(viewport);
     };
     const onWindowFocus = () => {
       // Radix itself resumes unconditionally on native window.focus. Reassert
       // the hover/focus/hidden pause *after* its listener has run, otherwise a
       // returned tab can dismiss a notification the learner is still reading.
       queueMicrotask(() => {
-        for (const viewport of viewports()) {
-          if (document.visibilityState === "hidden" || isInteracting(viewport)) pause(viewport);
+        const viewport = viewportRef.current;
+        if (viewport && (document.visibilityState === "hidden" || isInteracting(viewport))) {
+          pause(viewport);
         }
       });
     };
@@ -61,7 +64,9 @@ export function ToastProvider({ label, ...props }: ToastProviderProps) {
   }, []);
   return (
     <ToastFocusOrigin.Provider value={focusOrigin}>
-      <ToastPrimitive.Provider {...props} label={label} duration={8000} />
+      <ToastViewportOwner.Provider value={viewportRef}>
+        <ToastPrimitive.Provider {...props} label={label} duration={8000} />
+      </ToastViewportOwner.Provider>
     </ToastFocusOrigin.Provider>
   );
 }
@@ -97,6 +102,15 @@ export const ToastViewport = forwardRef<HTMLOListElement, ToastViewportProps>(
     ref,
   ) {
     const focusOrigin = useContext(ToastFocusOrigin);
+    const viewportOwner = useContext(ToastViewportOwner);
+    const mergedRef = useCallback(
+      (node: HTMLOListElement | null) => {
+        if (viewportOwner) viewportOwner.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref, viewportOwner],
+    );
     if (
       !label?.trim() ||
       role !== undefined ||
@@ -112,7 +126,7 @@ export const ToastViewport = forwardRef<HTMLOListElement, ToastViewportProps>(
       <ToastPrimitive.Viewport
         {...props}
         label={label}
-        ref={ref}
+        ref={mergedRef}
         className={["lyceum-toast__viewport", className].filter(Boolean).join(" ")}
         onFocusCapture={(event) => {
           // F8 focuses the viewport *before* Tab reaches a Toast. Preserve the

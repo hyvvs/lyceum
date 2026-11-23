@@ -216,6 +216,9 @@ test("full transparency uses one blurred menu, opaque and high contrast none", a
 });
 
 test("all select stories remain axe clean with menu open and closed", async ({ page }) => {
+  // This fixture scans 22 separate stories twice (closed and portalled open).
+  // Allow the real Linux browser/axe matrix to finish under parallel CI load.
+  test.slow();
   for (const name of [
     "default",
     "hover",

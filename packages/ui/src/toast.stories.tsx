@@ -40,7 +40,7 @@ function ToastDemo({
   const [alsoOpen, setAlsoOpen] = useState(true);
   const [thirdOpen, setThirdOpen] = useState(true);
   const [repeats, setRepeats] = useState(0);
-  const [activity, setActivity] = useState("No action taken");
+  const [activity, setActivity] = useState("");
   const title =
     kind === "success"
       ? "Study plan saved"
@@ -61,16 +61,24 @@ function ToastDemo({
       <div className="lyceum-toast-demo" dir={dir}>
         <Button
           variant="secondary"
+          aria-label={duplicate ? "Repeat notification" : "Show notification"}
           onClick={() => {
             if (duplicate && open) setRepeats((count) => count + 1);
             else setOpen(true);
           }}
         >
-          {duplicate ? "Repeat notification" : "Show notification"}
+          <span className="lyceum-toast-demo__label-long" aria-hidden="true">
+            {duplicate ? "Repeat notification" : "Show notification"}
+          </span>
+          <span className="lyceum-toast-demo__label-short" aria-hidden="true">
+            {duplicate ? "Repeat" : "Show"}
+          </span>
         </Button>
-        <output className="lyceum-toast-demo__activity">
-          {duplicate ? `Repeated requests: ${repeats}` : activity}
-        </output>
+        {(activity.length > 0 || (duplicate && repeats > 0)) && (
+          <output className="lyceum-toast-demo__activity">
+            {duplicate ? `Repeated requests: ${repeats}` : activity}
+          </output>
+        )}
       </div>
       <Toast
         kind={kind}
@@ -157,6 +165,31 @@ function DialogSelectToastDemo() {
   );
 }
 
+function ProviderIsolationDemo() {
+  const [firstOpen, setFirstOpen] = useState(true);
+  const [secondOpen, setSecondOpen] = useState(true);
+  return (
+    <div className="lyceum-toast-demo lyceum-toast-demo--dual">
+      <ToastProvider label="First study notification">
+        <Toast open={firstOpen} onOpenChange={setFirstOpen} durationMs={8000}>
+          <ToastTitle>First notice</ToastTitle>
+          <ToastDescription>May be paused independently.</ToastDescription>
+          <ToastClose aria-label="Dismiss first notice">Dismiss</ToastClose>
+        </Toast>
+        <ToastViewport label="First notifications ({hotkey})" style={{ position: "static" }} />
+      </ToastProvider>
+      <ToastProvider label="Second study notification">
+        <Toast open={secondOpen} onOpenChange={setSecondOpen} durationMs={8000}>
+          <ToastTitle>Second notice</ToastTitle>
+          <ToastDescription>May expire while the other is hovered.</ToastDescription>
+          <ToastClose aria-label="Dismiss second notice">Dismiss</ToastClose>
+        </Toast>
+        <ToastViewport label="Second notifications ({hotkey})" style={{ position: "static" }} />
+      </ToastProvider>
+    </div>
+  );
+}
+
 const meta = {
   title: "Primitives/Toast",
   component: ToastDemo,
@@ -215,3 +248,4 @@ export const DoubleText: Story = {
   render: () => <ToastDemo long />,
 };
 export const DialogSelectIntegration: Story = { render: () => <DialogSelectToastDemo /> };
+export const ProviderIsolation: Story = { render: () => <ProviderIsolationDemo /> };

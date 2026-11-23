@@ -65,6 +65,12 @@ enforce at most three visible, bounded deterministic ordering, safe duplicate
 handling, and no silent loss of important information; any new public queue
 API requires separate owner approval. The demo is tested not to obscure its
 own essential trigger at 800×520 and narrow 320×256/200% text.
+At 320×256 the demonstration trigger has a shorter visible word while its
+accessible name remains fully descriptive; this preserves genuine 200% text
+and the focus outline on platforms with differing font metrics. A separate
+ProviderIsolation fixture checks the independent viewport timer ownership
+of two providers, not a global queue or multi-provider F8 hotkey contract;
+one provider/viewport per application root is recommended.
 
 ## Incremental bundle measurement
 

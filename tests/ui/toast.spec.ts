@@ -187,6 +187,39 @@ test("visibility resume never overrides a still-hovered or keyboard-focused paus
   await expect(notice).toHaveCount(0, { timeout: 10000 });
 });
 
+test("separate providers own their own viewport pause and resume lifecycle", async ({ page }) => {
+  await page.clock.install();
+  await page.goto(story("provider-isolation"));
+  const first = page
+    .locator(".lyceum-toast[data-state='open']")
+    .filter({ hasText: "First notice" });
+  const second = page
+    .locator(".lyceum-toast[data-state='open']")
+    .filter({ hasText: "Second notice" });
+  await expect(first).toHaveCount(1);
+  await expect(second).toHaveCount(1);
+  await first.hover();
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.clock.fastForward(8200);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("focus"));
+  });
+  await page.clock.fastForward(8200);
+  await expect(first).toHaveCount(1);
+  await expect(second).toHaveCount(0);
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(8200);
+  await expect(first).toHaveCount(0);
+});
+
 test("stacked example has exactly three readable, nonoverlapping notices", async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 520 });
   await page.goto(story("stacked"));
@@ -335,6 +368,7 @@ test("all Toast stories and fallback states are axe clean", async ({ page }) => 
     "off-motion",
     "double-text",
     "dialog-select-integration",
+    "provider-isolation",
   ]) {
     await page.goto(story(name));
     expect((await scanStoryA11y(page)).violations, name).toEqual([]);

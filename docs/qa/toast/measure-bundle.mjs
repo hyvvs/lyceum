@@ -6,7 +6,13 @@ import { gzipSync } from "node:zlib";
 import { build } from "vite";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
-const baselineMain = "abb53d63fef867346c4e417a79d9393e7982cdac";
+// Anchor this comparison at the branch's actual fork point. This remains
+// accurate after subsequent Toast fixes without embedding an opaque hash in
+// source or accidentally comparing CSS against a newer moving main.
+const baselineMain = execFileSync("git", ["merge-base", "HEAD", "origin/main"], {
+  cwd: root,
+  encoding: "utf8",
+}).trim();
 const entries = ["bundle-baseline.mjs", "bundle-with-toast.mjs"];
 
 async function buildEntry(entry) {
@@ -38,6 +44,7 @@ const cssAfter = await readFile(resolve(root, "packages/ui/src/glass.css"));
 const summary = {
   scope:
     "production-minified UI library JS; identical existing primitives + seven Toast exports; React/ReactDOM external in both",
+  baselineMain,
   baselineJsBytes: Buffer.byteLength(baseline),
   withToastJsBytes: Buffer.byteLength(withToast),
   incrementalJsBytes: Buffer.byteLength(withToast) - Buffer.byteLength(baseline),

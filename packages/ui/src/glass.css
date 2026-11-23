@@ -870,7 +870,18 @@
   margin: 0;
   color: var(--text-2);
 }
+.lyceum-toast-demo__label-short {
+  display: none;
+}
 @media (max-width: 400px) {
+  /* Real 200%-scaled text stays intact; shorten the demo trigger's visual
+     wording rather than shrinking the font or covering a focusable control. */
+  .lyceum-toast-demo__label-long {
+    display: none;
+  }
+  .lyceum-toast-demo__label-short {
+    display: inline;
+  }
   /* Reserve space for the learning surface at 200% text; scroll the notice. */
   .lyceum-toast__viewport {
     max-height: calc(
