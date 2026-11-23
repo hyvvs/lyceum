@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 /**
- * Recreate PR #7's four visual acceptance screenshots from a built Storybook preview.
+ * Recreate PR #7's four requested visual screenshots plus three narrow long-hint captures.
  * Start the preview at http://127.0.0.1:6006 before running this script.
  * These captures use original Lyceum components, not external photo assets.
  */
@@ -80,7 +80,7 @@ try {
       }
       await page.screenshot({
         path: `${outputDirectory}tooltip-${entry.slug}.png`,
-        fullPage: true,
+        fullPage: false,
         animations: "disabled",
       });
       console.log(
@@ -89,6 +89,39 @@ try {
     } finally {
       await page.close();
     }
+  }
+  const narrowPage = await browser.newPage({ viewport: { width: 320, height: 256 } });
+  try {
+    await narrowPage.goto(
+      `${baseURL}/iframe.html?id=primitives-tooltip--long-double-text&viewMode=story`,
+    );
+    await expect(narrowPage.locator("html")).toHaveCSS("font-size", "32px");
+    await narrowPage.getByRole("button", { name: "Review hint details" }).hover();
+    await expect(narrowPage.getByRole("tooltip")).toContainText("Open full hint");
+    await narrowPage.screenshot({
+      path: `${outputDirectory}tooltip-long-zoom-cue.png`,
+      fullPage: false,
+      animations: "disabled",
+    });
+    await narrowPage.getByRole("button", { name: "Read full hint" }).click();
+    const dialog = narrowPage.getByRole("dialog", { name: "Full hint" });
+    await expect(dialog).toBeVisible();
+    await narrowPage.screenshot({
+      path: `${outputDirectory}tooltip-long-zoom-dialog.png`,
+      fullPage: false,
+      animations: "disabled",
+    });
+    await dialog.focus();
+    await narrowPage.keyboard.press("PageDown");
+    await expect.poll(() => dialog.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await narrowPage.screenshot({
+      path: `${outputDirectory}tooltip-long-zoom-dialog-scrolled.png`,
+      fullPage: false,
+      animations: "disabled",
+    });
+    console.log("Captured accessible expanded long hint: 320x256, 200% text");
+  } finally {
+    await narrowPage.close();
   }
 } finally {
   await browser.close();

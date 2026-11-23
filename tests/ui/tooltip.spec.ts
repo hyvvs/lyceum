@@ -77,21 +77,50 @@ test("200% text and a 320px viewport keep tooltip within the screen", async ({ p
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
-test("long tooltip remains readable at 200% text in a 320x256 viewport", async ({ page }) => {
+test("long guidance has a readable tooltip cue and keyboard-accessible dialog at 200% in 320x256", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 320, height: 256 });
-  await page.goto(story("long-text"));
-  await page.evaluate(() => {
-    document.documentElement.style.fontSize = "200%";
-  });
+  await page.goto(story("long-double-text"));
+  await expect(page.locator("html")).toHaveCSS("font-size", "32px");
   await page.getByRole("button", { name: "Review hint details" }).hover();
   const tooltip = page.getByRole("tooltip");
   await expect(tooltip).toBeVisible();
+  await expect(tooltip).toContainText("Open full hint");
+  await expect(page.locator("html")).toHaveCSS("font-size", "32px");
   const bounds = await tooltip.boundingBox();
   expect(bounds?.x).toBeGreaterThanOrEqual(0);
   expect(bounds?.y).toBeGreaterThanOrEqual(0);
   expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(320);
   expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual(256);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  const detailsTrigger = page.getByRole("button", { name: "Read full hint" });
+  await detailsTrigger.focus();
+  await page.keyboard.press("Enter");
+  const dialog = page.getByRole("dialog", { name: "Full hint" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText(
+    "Read the question again, locate the important quantities, and decide which relationship",
+  );
+  await expect(dialog).toContainText("before calculating.");
+  const dialogBounds = await dialog.boundingBox();
+  expect(dialogBounds?.y).toBeGreaterThanOrEqual(0);
+  expect((dialogBounds?.y ?? 0) + (dialogBounds?.height ?? 0)).toBeLessThanOrEqual(256);
+  const maxScroll = await dialog.evaluate((element) => element.scrollHeight - element.clientHeight);
+  expect(maxScroll).toBeGreaterThan(0);
+  await dialog.evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  await dialog.focus();
+  await expect(dialog).toBeFocused();
+  await page.keyboard.press("PageDown");
+  await expect.poll(() => dialog.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect(dialog).toBeVisible();
+  const expandedAxe = await scanStoryA11y(page);
+  expect(expandedAxe.violations, "axe violations for expanded long hint").toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(detailsTrigger).toBeFocused();
 });
 
 test("OS reduced-motion preference disables tooltip animation without an explicit override", async ({
@@ -187,6 +216,7 @@ test("tooltip stories have no tagged WCAG violations", async ({ page }) => {
     "full-motion",
     "reduced-transparency",
     "long-text",
+    "long-double-text",
     "empty",
     "error-action",
     "rtl",

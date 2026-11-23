@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
+import { Dialog, DialogContent, DialogTrigger } from "./dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 
 type StoryState = "standard" | "loading" | "error" | "empty" | "long" | "icon";
@@ -9,11 +10,13 @@ function TooltipDemo({
   disabled = false,
   dir,
   focusTrigger = false,
+  expandedHint = false,
 }: {
   state?: StoryState;
   disabled?: boolean;
   dir?: "rtl";
   focusTrigger?: boolean;
+  expandedHint?: boolean;
 }) {
   const descriptions: Record<StoryState, string> = {
     standard: "Hints explain the next useful step.",
@@ -39,9 +42,22 @@ function TooltipDemo({
               {state === "icon" ? "?" : "Review hint details"}
             </Button>
           </TooltipTrigger>
-          <TooltipContent dir={dir} text={text} />
+          <TooltipContent dir={dir} text={expandedHint ? "Open full hint" : text} />
         </Tooltip>
       </TooltipProvider>
+      {expandedHint && (
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost">Read full hint</Button>
+          </DialogTrigger>
+          <DialogContent
+            title="Full hint"
+            description="Expanded guidance stays accessible when the viewport is small."
+          >
+            <p>{descriptions.long}</p>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -64,6 +80,10 @@ export const Loading: Story = { render: () => <TooltipDemo state="loading" /> };
 export const ErrorAction: Story = { render: () => <TooltipDemo state="error" /> };
 export const Empty: Story = { render: () => <TooltipDemo state="empty" /> };
 export const LongText: Story = { render: () => <TooltipDemo state="long" /> };
+export const LongDoubleText: Story = {
+  globals: { textScale: "200%" },
+  render: () => <TooltipDemo state="long" expandedHint />,
+};
 export const IconOnly: Story = { render: () => <TooltipDemo state="icon" /> };
 export const RTL: Story = { render: () => <TooltipDemo dir="rtl" /> };
 export const Light: Story = { globals: { theme: "light" }, render: () => <TooltipDemo /> };
