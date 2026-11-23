@@ -5,3 +5,4 @@ export * from "./tooltip";
 export * from "./tabs";
 export * from "./select";
 export * from "./toast";
+export * from "./visually-hidden";
