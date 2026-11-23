@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { tooltipInteraction } from "./motion";
+import { acquireSelectBackgroundInert, releaseSelectBackgroundInert } from "./select-inert";
 
 /** Controlled and uncontrolled single-choice selection are managed by Radix. */
 export type SelectProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Root>;
@@ -97,6 +98,9 @@ export type SelectContentProps = Omit<
   | "asChild"
   | "role"
   | "aria-hidden"
+  | "hidden"
+  | "id"
+  | "tabIndex"
   | "onEscapeKeyDown"
   | "onCloseAutoFocus"
   | "position"
@@ -107,6 +111,9 @@ export type SelectContentProps = Omit<
   asChild?: never;
   role?: never;
   "aria-hidden"?: never;
+  hidden?: never;
+  id?: never;
+  tabIndex?: never;
   onEscapeKeyDown?: never;
   onCloseAutoFocus?: never;
   position?: never;
@@ -120,6 +127,9 @@ export const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(func
     asChild,
     role,
     "aria-hidden": ariaHidden,
+    hidden,
+    id,
+    tabIndex,
     onEscapeKeyDown,
     onCloseAutoFocus,
     position,
@@ -135,8 +145,7 @@ export const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(func
   const [isOpen, setIsOpen] = useState(false);
   const markedRef = useRef(new Set<HTMLElement>());
   const releaseInert = useCallback(() => {
-    for (const element of markedRef.current) element.inert = false;
-    markedRef.current.clear();
+    releaseSelectBackgroundInert(markedRef.current);
   }, []);
   const contentRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -153,10 +162,7 @@ export const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(func
     if (!isOpen) return;
     const mark = () => {
       for (const element of document.querySelectorAll<HTMLElement>('[data-aria-hidden="true"]')) {
-        if (!element.inert) {
-          element.inert = true;
-          markedRef.current.add(element);
-        }
+        acquireSelectBackgroundInert(element, markedRef.current);
       }
     };
     mark();
@@ -175,6 +181,9 @@ export const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(func
     asChild !== undefined ||
     role !== undefined ||
     ariaHidden !== undefined ||
+    hidden !== undefined ||
+    id !== undefined ||
+    tabIndex !== undefined ||
     onEscapeKeyDown !== undefined ||
     onCloseAutoFocus !== undefined ||
     position !== undefined ||
@@ -207,13 +216,14 @@ export const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(func
 /** One native Radix option with its accessible text and selected indicator. */
 export type SelectItemProps = Omit<
   ComponentPropsWithoutRef<typeof SelectPrimitive.Item>,
-  "asChild" | "role" | "aria-hidden" | "hidden" | "aria-selected"
+  "asChild" | "role" | "aria-hidden" | "hidden" | "aria-selected" | "aria-disabled"
 > & {
   asChild?: never;
   role?: never;
   "aria-hidden"?: never;
   hidden?: never;
   "aria-selected"?: never;
+  "aria-disabled"?: never;
 };
 
 export const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(function SelectItem(
@@ -223,6 +233,7 @@ export const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(function S
     "aria-hidden": ariaHidden,
     hidden,
     "aria-selected": ariaSelected,
+    "aria-disabled": ariaDisabled,
     value,
     className,
     children,
@@ -237,7 +248,8 @@ export const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(function S
     role !== undefined ||
     ariaHidden !== undefined ||
     hidden !== undefined ||
-    ariaSelected !== undefined
+    ariaSelected !== undefined ||
+    ariaDisabled !== undefined
   ) {
     throw new Error("SelectItem requires a nonempty value and native, visible option semantics.");
   }

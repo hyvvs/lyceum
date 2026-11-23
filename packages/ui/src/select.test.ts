@@ -64,6 +64,9 @@ describe("Select native accessibility contract", () => {
       { asChild: true },
       { role: "dialog" },
       { "aria-hidden": true },
+      { hidden: true },
+      { id: "foreign-listbox" },
+      { tabIndex: 0 },
       { onEscapeKeyDown: (event: Event) => event.preventDefault() },
       { onCloseAutoFocus: (event: Event) => event.preventDefault() },
     ]) {
@@ -81,6 +84,7 @@ describe("Select native accessibility contract", () => {
       { value: "math", role: "menuitem" },
       { value: "math", "aria-hidden": true },
       { value: "math", hidden: true },
+      { value: "math", "aria-disabled": "false" },
     ]) {
       const invalid = props as SelectItemProps;
       expect(() => renderToStaticMarkup(createElement(SelectItem, invalid, "Mathematics"))).toThrow(

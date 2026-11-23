@@ -15,6 +15,7 @@ test("semantic named combobox opens portalled listbox with selected option", asy
   await expect(button).toHaveAttribute("aria-expanded", "true");
   const list = page.getByRole("listbox");
   await expect(list).toBeVisible();
+  await expect(list).toHaveAttribute("id", (await button.getAttribute("aria-controls")) ?? "");
   expect(
     await list.evaluate((node) => document.querySelector(".storybook-stage")?.contains(node)),
   ).toBe(false);
@@ -180,8 +181,8 @@ test("full transparency uses one blurred menu, opaque and high contrast none", a
       }
       return { filter: getComputedStyle(node).backdropFilter, blurredAncestors };
     });
-    // The sole frosted layer is either the menu itself or its immediate Radix positioner.
-    expect(result.blurredAncestors).toBeLessThanOrEqual(1);
+    // One frosted layer only: even the Radix positioner must not blur underneath.
+    expect(result.blurredAncestors, `nested blur in ${name}`).toBe(0);
     if (expected === "none") expect(result.filter).toBe("none");
     else expect(result.filter).toContain("blur(");
     await page.keyboard.press("Escape");
