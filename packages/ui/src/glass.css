@@ -568,6 +568,162 @@
 }
 
 /* Popovers remain solid instead of nesting another backdrop blur in glass panels. */
+.lyceum-select-demo {
+  display: grid;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: min(100%, var(--dialog-max));
+  max-width: 100%;
+}
+.lyceum-select-demo__label {
+  color: var(--text-1);
+  font-weight: 600;
+  font-size: var(--type-body);
+}
+.lyceum-select-demo__control,
+.lyceum-select-demo form {
+  display: grid;
+  gap: var(--space-3);
+}
+.lyceum-select__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-control) solid var(--contrast-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised-solid);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-sm);
+  line-height: 1.4;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.lyceum-select__trigger[data-placeholder] {
+  color: var(--text-2);
+}
+.lyceum-select__trigger:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.lyceum-select__trigger:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.lyceum-select__chevron {
+  flex: none;
+  color: var(--text-2);
+}
+.lyceum-select__content {
+  z-index: 120;
+  box-sizing: border-box;
+  width: min(var(--radix-select-trigger-width), calc(100vw - var(--space-3) - var(--space-3)));
+  min-width: min(var(--radix-select-trigger-width), calc(100vw - var(--space-3) - var(--space-3)));
+  max-width: calc(100vw - var(--space-3) - var(--space-3));
+  max-height: min(
+    var(--radix-select-content-available-height),
+    calc(100dvh - var(--space-3) - var(--space-3))
+  );
+  border: var(--border-control) solid var(--contrast-border);
+  border-radius: var(--radius-control);
+  font-family: var(--font-sans);
+  font-size: var(--type-sm);
+  line-height: 1.4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.lyceum-select__viewport {
+  max-height: calc(100dvh - var(--space-3) - var(--space-3) - var(--space-3));
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: var(--space-2);
+}
+.lyceum-select__item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-chip);
+  outline: none;
+  color: var(--text-1);
+  cursor: pointer;
+}
+.lyceum-select__item[data-highlighted] {
+  background: var(--surface-raised-solid);
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--border-control));
+}
+.lyceum-select__item[data-state="checked"] {
+  font-weight: 600;
+}
+.lyceum-select__item[data-disabled] {
+  color: var(--text-2);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.lyceum-select__indicator {
+  flex: none;
+  color: var(--text-1);
+}
+.lyceum-select__message {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--text-1);
+  font-size: var(--type-body);
+  line-height: var(--line-height-reading);
+  overflow-wrap: anywhere;
+}
+/* Keep a whole selected row readable when a 200%-text popup must open upward
+   inside a 320×256 viewport; the type token still follows the root text scale. */
+@media (max-width: 400px) {
+  .lyceum-select__trigger {
+    gap: var(--space-1);
+    padding-inline: var(--space-2);
+    font-size: var(--type-xs);
+  }
+  .lyceum-select__viewport {
+    padding: var(--space-1);
+  }
+  .lyceum-select__item {
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--type-xs);
+  }
+}
+@media (forced-colors: active) {
+  .lyceum-select__trigger {
+    background: ButtonFace;
+    color: ButtonText;
+    border-color: ButtonText;
+  }
+  .lyceum-select__content {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .lyceum-select__item[data-highlighted] {
+    color: HighlightText;
+    background: Highlight;
+    outline-color: Highlight;
+  }
+  .lyceum-select__item[data-disabled] {
+    color: GrayText;
+  }
+}
+
 .lyceum-tooltip {
   box-sizing: border-box;
   max-width: min(20rem, calc(100vw - var(--space-3) - var(--space-3)));

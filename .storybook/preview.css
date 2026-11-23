@@ -25,3 +25,28 @@ body {
   align-items: center;
   gap: var(--space-3);
 }
+
+/* QA-only, token-derived gradient. It is not a production or licensed M0-019 backdrop. */
+.storybook-stage:has(.lyceum-select-demo) {
+  grid-template-columns: minmax(0, 1fr);
+  background-image: radial-gradient(
+      ellipse at 80% 30%,
+      color-mix(in srgb, var(--accent) 28%, transparent),
+      transparent 70%
+    ), radial-gradient(ellipse at 10% 90%, var(--glass-fill-raised), transparent 65%);
+}
+
+@media (max-width: 400px) {
+  .storybook-stage:has(.lyceum-select-demo) {
+    padding: var(--space-2);
+    place-items: stretch;
+  }
+  .storybook-stage:has(.lyceum-select-demo) .storybook-surface {
+    min-width: 0;
+    padding: var(--space-2);
+  }
+  .lyceum-select-demo {
+    min-width: 0;
+    width: 100%;
+  }
+}
