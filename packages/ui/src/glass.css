@@ -23,6 +23,7 @@
   --line-height-reading: 1.6;
   --target-min: 44px;
   --motion-fast: 150ms;
+  --motion-tooltip: 120ms;
   --motion-base: 250ms;
   --motion-slow: 450ms;
 
@@ -465,5 +466,53 @@
   }
   .lyceum-dialog__description {
     color: CanvasText;
+  }
+}
+
+/* Popovers remain solid instead of nesting another backdrop blur in glass panels. */
+.lyceum-tooltip {
+  box-sizing: border-box;
+  max-width: min(20rem, calc(100vw - var(--space-3) - var(--space-3)));
+  max-height: calc(100dvh - var(--space-3) - var(--space-3));
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-control) solid var(--contrast-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-float-solid);
+  color: var(--text-1);
+  box-shadow: var(--glass-shadow);
+  font-family: var(--font-sans);
+  font-size: var(--type-sm);
+  line-height: var(--line-height-reading);
+  overflow-wrap: anywhere;
+  text-align: start;
+  z-index: 110;
+  animation: lyceum-tooltip-in var(--motion-tooltip) ease-out;
+}
+@keyframes lyceum-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+:root[data-motion="reduced"] .lyceum-tooltip,
+:root[data-motion="off"] .lyceum-tooltip {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .lyceum-tooltip {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .lyceum-tooltip {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
   }
 }
