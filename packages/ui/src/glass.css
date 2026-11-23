@@ -770,3 +770,165 @@
     box-shadow: none;
   }
 }
+
+/* Toasts are one independently floating glass layer, never nested inside a blur. */
+.lyceum-toast__viewport {
+  position: fixed;
+  z-index: 130;
+  inset-block-end: max(var(--space-3), env(safe-area-inset-bottom));
+  inset-inline-end: max(var(--space-3), env(safe-area-inset-right));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: min(26rem, calc(100vw - var(--space-3) - var(--space-3)));
+  max-height: calc(100dvh - var(--space-3) - var(--space-3));
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: none;
+}
+.lyceum-toast {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--target-min);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-control) solid var(--glass-border-raised);
+  border-radius: var(--radius-control);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-sm);
+  line-height: var(--line-height-reading);
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+  animation: lyceum-toast-in var(--motion-base) ease-out;
+}
+.lyceum-toast[data-kind="success"] {
+  border-inline-start-color: var(--positive);
+}
+.lyceum-toast[data-kind="warning"] {
+  border-inline-start-color: var(--caution);
+}
+.lyceum-toast[data-kind="error"] {
+  border-inline-start-color: var(--danger);
+}
+.lyceum-toast[data-kind="loading"] {
+  border-inline-start-color: var(--accent);
+}
+.lyceum-toast__title {
+  flex: 1 1 100%;
+  min-width: 0;
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+.lyceum-toast__description {
+  flex: 1 1 100%;
+  min-width: 0;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.lyceum-toast__action,
+.lyceum-toast__close {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-control) solid var(--contrast-border);
+  border-radius: var(--radius-chip);
+  background: var(--surface-raised-solid);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+}
+.lyceum-toast__action:focus-visible,
+.lyceum-toast__close:focus-visible,
+.lyceum-toast:focus-visible {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-1);
+}
+.lyceum-toast-demo {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 100%;
+}
+.lyceum-toast-demo__activity {
+  margin: 0;
+  color: var(--text-2);
+}
+.lyceum-toast-demo__label-short {
+  display: none;
+}
+@media (max-width: 400px) {
+  /* Real 200%-scaled text stays intact; shorten the demo trigger's visual
+     wording rather than shrinking the font or covering a focusable control. */
+  .lyceum-toast-demo__label-long {
+    display: none;
+  }
+  .lyceum-toast-demo__label-short {
+    display: inline;
+  }
+  /* Reserve space for the learning surface at 200% text; scroll the notice. */
+  .lyceum-toast__viewport {
+    max-height: calc(
+      100dvh -
+      var(--space-7) -
+      var(--space-7) -
+      var(--space-6) -
+      var(--space-6) -
+      var(--space-2)
+    );
+  }
+}
+@keyframes lyceum-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+:root[data-motion="reduced"] .lyceum-toast,
+:root[data-motion="off"] .lyceum-toast {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .lyceum-toast {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .lyceum-toast {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .lyceum-toast__action,
+  .lyceum-toast__close {
+    background: ButtonFace;
+    color: ButtonText;
+    border-color: ButtonText;
+  }
+  .lyceum-toast__description {
+    color: CanvasText;
+  }
+}

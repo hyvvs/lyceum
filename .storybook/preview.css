@@ -36,6 +36,21 @@ body {
     ), radial-gradient(ellipse at 10% 90%, var(--glass-fill-raised), transparent 65%);
 }
 
+/* Token-only QA scenery; not a licensed/original production atmosphere asset. */
+.storybook-stage:has(.lyceum-toast-demo) {
+  place-items: start center;
+  align-content: start;
+  padding: var(--space-2);
+  background-image: radial-gradient(
+      ellipse at 80% 30%,
+      color-mix(in srgb, var(--accent) 28%, transparent),
+      transparent 70%
+    ), radial-gradient(ellipse at 10% 90%, var(--glass-fill-raised), transparent 65%);
+}
+.storybook-stage:has(.lyceum-toast-demo) .storybook-surface {
+  padding: var(--space-2);
+}
+
 @media (max-width: 400px) {
   .storybook-stage:has(.lyceum-select-demo) {
     padding: var(--space-2);
