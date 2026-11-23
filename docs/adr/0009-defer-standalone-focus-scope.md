@@ -1,10 +1,11 @@
 # ADR-0009: Reuse Radix-owned focus lifecycles; defer a standalone focus scope
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-23
-- Deciders: Lyceum owner (deferral decision); ADR acceptance pending human review
+- Accepted: 2026-11-23
+- Deciders: Lyceum owner (deferral decision and explicit ADR acceptance)
 
-The owner approved the *scope deferral* on 2026-11-23; this proposed ADR and the revised M0-003 card still require separate human PR approval before they join main.
+The owner explicitly accepted this ADR and the existing architectural *scope deferral* on 2026-11-23. Accepting the ADR does not implement a FocusScope helper or complete M0-003.
 
 ## Context
 
@@ -27,9 +28,9 @@ Dialog and Select remain the owners of their existing **modal focus containment 
 ## Consequences and revisit trigger
 
 - Positive: no duplicate focus owner, public interface expansion, direct dependency or untested trap. The existing Dialog + Select integration and Toast composition remain under CI.
-- Limitation: no standalone FocusScope helper is available or claimed as complete; this is an intentional owner-approved scope exception to the original task card, pending formal acceptance of this ADR/task-card reconciliation PR.
+- Limitation: no standalone FocusScope helper is available or claimed as complete; this is an intentional owner-approved scope exception to the original task card.
 - **Revisit only when a concrete, reviewed Lyceum component actually needs focus containment that the existing Dialog/Select APIs cannot provide.** File a narrowly scoped proposal identifying the consumer, why existing modal primitives cannot serve it, the focus owner, initial/return targets, cleanup, portal boundaries, accessible fallback, and alternatives. Obtain explicit separate approval before adding any direct dependency or internal/public interface.
 - Tests first for any later approval: mount/unmount focus movements; Tab/Shift+Tab first/last/empty; `loop` versus `trapped`; pointer and programmatic outside focus; nested pause/resume and closing order; StrictMode mount/unmount/remount; removed/hidden trigger restoration; portalled descendants; real Dialog + Select + Toast composition; no stale `aria-hidden`/`inert`; Chromium keyboard/axe, 320×256 true 200% text, RTL, forced colors, reduced motion and solid fallbacks. Never introduce an unreviewed global focus manager or relax existing checks.
 - **No change to ADR-0008** or Glassy Dashboard V5 fidelity gates. M0-017 must show atmospheric layered glass, real floating pill nav/dock, tinted panels and polished opaque variants; M0-018/019/020 retain separate motion, licensed imagery/rendered-pixel contrast and per-WebView performance gates.
 
-This proposed ADR records a decision already made by the owner; only the human lead can formally accept the ADR in the project history.
+This accepted ADR records the owner's explicit architectural decision. Reopening or expanding the scope requires separate approval.
