@@ -471,6 +471,112 @@
   }
 }
 
+/* The tablist floats beside a solid reading panel; neither nests backdrop blur. */
+.lyceum-tabs {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--font-sans);
+}
+.lyceum-tabs__list {
+  display: flex;
+  box-sizing: border-box;
+  gap: var(--space-2);
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+.lyceum-tabs__list[aria-orientation="vertical"] {
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.lyceum-tabs__trigger {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-control) solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: var(--type-sm);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--motion-base) ease-out;
+}
+.lyceum-tabs__trigger[data-state="active"] {
+  background: var(--surface-raised-solid);
+  border-color: var(--contrast-border);
+}
+.lyceum-tabs__trigger:hover:not(:disabled):not([data-state="active"]) {
+  background: var(--glass-fill-raised);
+}
+:root[data-transparency="reduced"] .lyceum-tabs__trigger:hover:not(:disabled),
+:root[data-transparency="off"] .lyceum-tabs__trigger:hover:not(:disabled),
+:root[data-contrast="high"] .lyceum-tabs__trigger:hover:not(:disabled) {
+  background: var(--surface-raised-solid);
+}
+.lyceum-tabs__trigger:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.lyceum-tabs__trigger:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.lyceum-tabs__content {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-5);
+  overflow-wrap: anywhere;
+  /* Reading content is solid to avoid nested blur in parent glass layouts. */
+  background: var(--surface-reading-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  line-height: var(--line-height-reading);
+}
+:root[data-motion="reduced"] .lyceum-tabs__trigger,
+:root[data-motion="off"] .lyceum-tabs__trigger {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .lyceum-tabs__trigger {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .lyceum-tabs__trigger {
+    color: ButtonText;
+    border-color: ButtonText;
+  }
+  .lyceum-tabs__trigger[data-state="active"] {
+    background: Highlight;
+    color: HighlightText;
+  }
+  .lyceum-tabs__content {
+    background: Canvas;
+    color: CanvasText;
+  }
+}
+
 /* Popovers remain solid instead of nesting another backdrop blur in glass panels. */
 .lyceum-tooltip {
   box-sizing: border-box;
