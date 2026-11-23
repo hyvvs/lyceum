@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { scanStoryA11y } from "./axe";
+import { scanIndexedStory, storySlug } from "./axe-story-gate";
+import { assertStoryScanCoverage, storiesForFamily } from "./story-inventory";
 
 const story = (name: string) => `/iframe.html?id=primitives-visuallyhidden--${name}&viewMode=story`;
 
@@ -107,30 +109,17 @@ test("native forced colors retains focus, label and screen-reader positioning", 
   expect(result.violations).toEqual([]);
 });
 
-test("axe scans all relevant semantic, localization, scaled and theme stories", async ({
+test("axe scans every generated semantic, localization, scaled and theme story", async ({
   page,
 }) => {
   test.slow();
-  for (const name of [
-    "default",
-    "hover",
-    "focus",
-    "disabled",
-    "loading",
-    "error-action",
-    "empty",
-    "long-text",
-    "numeric-zero",
-    "rtl",
-    "double-text",
-    "light",
-    "high-contrast",
-    "opaque",
-    "reduced-motion",
-  ]) {
-    await page.goto(story(name));
+  const stories = storiesForFamily("VisuallyHidden");
+  const scanned: string[] = [];
+  for (const entry of stories) {
+    const name = storySlug(entry);
+    await page.goto(`/iframe.html?id=${entry.id}&viewMode=story`);
     await expect(page.locator("#hint-action-label")).toHaveCount(1);
-    const results = await scanStoryA11y(page);
-    expect(results.violations, `axe violations for ${name}`).toEqual([]);
+    scanned.push(await scanIndexedStory(page, entry, name));
   }
+  assertStoryScanCoverage(stories, scanned);
 });

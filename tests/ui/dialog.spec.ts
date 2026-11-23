@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { scanStoryA11y } from "./axe";
+import { scanIndexedStory, storySlug } from "./axe-story-gate";
+import { assertStoryScanCoverage, storiesForFamily } from "./story-inventory";
 
 const story = (name: string) => `/iframe.html?id=primitives-dialog--${name}&viewMode=story`;
 
@@ -145,26 +147,13 @@ test("dialog description text meets 4.5:1 on opaque dark and light surfaces", as
   }
 });
 
-test("dialog stories are axe clean in dark, light, high contrast and other states", async ({
-  page,
-}) => {
-  for (const name of [
-    "default",
-    "hover",
-    "focus",
-    "light",
-    "high-contrast",
-    "double-text",
-    "reduced-motion",
-    "reduced-transparency",
-    "long-content",
-    "empty",
-    "error-action",
-    "rtl",
-    "loading",
-    "disabled",
-  ]) {
-    await page.goto(story(name));
+test("every generated Dialog story is axe clean in its open state", async ({ page }) => {
+  test.slow();
+  const stories = storiesForFamily("Dialog");
+  const scanned: string[] = [];
+  for (const entry of stories) {
+    const name = storySlug(entry);
+    await page.goto(`/iframe.html?id=${entry.id}&viewMode=story`);
     const trigger = page.getByRole("button", { name: "Open study preferences" });
     if (name === "disabled") {
       await expect(trigger).toBeDisabled();
@@ -172,9 +161,11 @@ test("dialog stories are axe clean in dark, light, high contrast and other state
       await trigger.click();
       await expect(page.getByRole("dialog", { name: "Study preferences" })).toBeVisible();
     }
-    const results = await scanStoryA11y(page);
-    expect(results.violations, `axe violations for ${name}`).toEqual([]);
+    scanned.push(
+      await scanIndexedStory(page, entry, name === "disabled" ? "disabled" : "dialog-open"),
+    );
   }
+  assertStoryScanCoverage(stories, scanned);
 });
 
 test("portalled Dialog title, description and body use the Lyceum font stack in every theme and at 200% text", async ({

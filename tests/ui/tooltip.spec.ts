@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { scanStoryA11y } from "./axe";
+import { scanIndexedStory, storySlug } from "./axe-story-gate";
+import { assertStoryScanCoverage, storiesForFamily } from "./story-inventory";
 
 const story = (name: string) => `/iframe.html?id=primitives-tooltip--${name}&viewMode=story`;
 
@@ -203,33 +205,20 @@ test("RTL tooltip content follows the local trigger direction across the portal"
   await expect(tooltip).toContainText("توضح التلميحات الخطوة المفيدة التالية.");
 });
 
-test("tooltip stories have no tagged WCAG violations", async ({ page }) => {
-  for (const name of [
-    "default",
-    "hover",
-    "focus",
-    "light",
-    "high-contrast",
-    "double-text",
-    "reduced-motion",
-    "off-motion",
-    "full-motion",
-    "reduced-transparency",
-    "long-text",
-    "long-double-text",
-    "empty",
-    "error-action",
-    "rtl",
-    "loading",
-    "icon-only",
-    "disabled",
-  ]) {
-    await page.goto(story(name));
+test("every generated Tooltip story has no tagged WCAG violations", async ({ page }) => {
+  test.slow();
+  const stories = storiesForFamily("Tooltip");
+  const scanned: string[] = [];
+  for (const entry of stories) {
+    const name = storySlug(entry);
+    await page.goto(`/iframe.html?id=${entry.id}&viewMode=story`);
     if (name !== "disabled") {
       await page.getByRole("button", { name: /Review hint details|Hint information/ }).focus();
       await expect(page.getByRole("tooltip")).toBeVisible();
     }
-    const results = await scanStoryA11y(page);
-    expect(results.violations, `axe violations for ${name}`).toEqual([]);
+    scanned.push(
+      await scanIndexedStory(page, entry, name === "disabled" ? "disabled" : "tooltip-open"),
+    );
   }
+  assertStoryScanCoverage(stories, scanned);
 });

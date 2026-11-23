@@ -1,5 +1,7 @@
 import { type Page, expect, test } from "@playwright/test";
 import { scanStoryA11y } from "./axe";
+import { scanIndexedStory, storySlug } from "./axe-story-gate";
+import { assertStoryScanCoverage, storiesForFamily } from "./story-inventory";
 
 const story = (name: string) => `/iframe.html?id=primitives-toast--${name}&viewMode=story`;
 const toast = (page: Page) => page.locator(".lyceum-toast[data-state='open']");
@@ -342,35 +344,43 @@ test("real Dialog + Select portal compose with Toast and restore all background 
   await expect(initial).toBeFocused();
 });
 
-test("all Toast stories and fallback states are axe clean", async ({ page }) => {
+test("all generated Toast stories, including timed notices, are axe clean", async ({ page }) => {
   test.slow();
-  for (const name of [
-    "default",
-    "foreground",
-    "success",
-    "warning",
-    "error-action",
-    "loading",
-    "action",
-    "empty",
-    "stacked",
-    "duplicate",
-    "persistent",
-    "long-text",
-    "rtl",
-    "light",
-    "dark",
-    "high-contrast",
-    "full-transparency",
-    "reduced-transparency",
-    "opaque",
-    "reduced-motion",
-    "off-motion",
-    "double-text",
-    "dialog-select-integration",
-    "provider-isolation",
-  ]) {
-    await page.goto(story(name));
-    expect((await scanStoryA11y(page)).violations, name).toEqual([]);
+  const stories = storiesForFamily("Toast");
+  const scanned: string[] = [];
+  for (const entry of stories) {
+    const name = storySlug(entry);
+    const timed = name === "timed-default" || name === "timed-short";
+    if (timed) await page.clock.install();
+    await page.goto(`/iframe.html?id=${entry.id}&viewMode=story`);
+    if (name === "dialog-select-integration") {
+      await page.getByRole("button", { name: "Open study settings" }).click();
+      await expect(page.getByRole("dialog", { name: "Study settings" })).toBeVisible();
+      await page.getByRole("combobox", { name: "Study topic" }).click();
+      await expect(page.getByRole("listbox")).toBeVisible();
+      await scanIndexedStory(page, entry, "dialog-select-open");
+      await page.keyboard.press("Escape");
+      await page.getByRole("button", { name: "Save study settings" }).click();
+      await expect(toast(page)).toHaveCount(1);
+      scanned.push(await scanIndexedStory(page, entry, "saved-toast-visible"));
+    } else {
+      if (name === "empty") {
+        await expect(page.getByText("No notifications. Continue practicing.")).toBeVisible();
+      } else {
+        await expect(toast(page)).toHaveCount(
+          name === "stacked" ? 3 : name === "provider-isolation" ? 2 : 1,
+        );
+      }
+      if (timed) {
+        // Pause the real Radix timer via the user's supported hover interaction.
+        // Fast-forward beyond expiry to prove the notice remains present for axe.
+        await toast(page).hover();
+        await page.clock.fastForward(name === "timed-short" ? 2200 : 8500);
+        await expect(toast(page)).toHaveCount(1);
+      }
+      scanned.push(await scanIndexedStory(page, entry, name));
+      if (timed) await expect(toast(page)).toHaveCount(1);
+    }
   }
+  assertStoryScanCoverage(stories, scanned);
 });

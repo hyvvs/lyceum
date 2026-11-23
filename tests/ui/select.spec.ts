@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { scanStoryA11y } from "./axe";
+import { scanIndexedStory, storySlug } from "./axe-story-gate";
+import { assertStoryScanCoverage, storiesForFamily } from "./story-inventory";
 
 const story = (name: string) => `/iframe.html?id=primitives-select--${name}&viewMode=story`;
 const trigger = (page: import("@playwright/test").Page) =>
@@ -215,41 +217,33 @@ test("full transparency uses one blurred menu, opaque and high contrast none", a
   }
 });
 
-test("all select stories remain axe clean with menu open and closed", async ({ page }) => {
-  // This fixture scans 22 separate stories twice (closed and portalled open).
-  // Allow the real Linux browser/axe matrix to finish under parallel CI load.
+test("every generated Select story is axe clean with menu open and closed", async ({ page }) => {
   test.slow();
-  for (const name of [
-    "default",
-    "hover",
-    "focus",
-    "dark",
-    "light",
-    "high-contrast",
-    "full-transparency",
-    "reduced-transparency",
-    "opaque",
-    "reduced-motion",
-    "off-motion",
-    "disabled",
-    "disabled-option",
-    "empty",
-    "loading",
-    "error-action",
-    "rtl",
-    "controlled",
-    "form-safe",
-    "long-labels",
-    "double-text",
-    "long-double-text",
-  ]) {
-    await page.goto(story(name));
-    await expect(trigger(page)).toBeVisible();
-    expect((await scanStoryA11y(page)).violations, `closed state ${name}`).toEqual([]);
-    if (name !== "disabled") {
-      await trigger(page).click();
-      await expect(page.getByRole("listbox")).toBeVisible();
-      expect((await scanStoryA11y(page)).violations, `open state ${name}`).toEqual([]);
+  const stories = storiesForFamily("Select");
+  const scanned: string[] = [];
+  for (const entry of stories) {
+    const name = storySlug(entry);
+    await page.goto(`/iframe.html?id=${entry.id}&viewMode=story`);
+    const selectTrigger =
+      name === "dialog-integration"
+        ? page.locator("#dialog-topic-select.lyceum-select__trigger")
+        : trigger(page);
+    if (name === "dialog-integration") {
+      await page.getByRole("button", { name: "Open study settings" }).click();
+      await expect(page.getByRole("dialog", { name: "Study settings" })).toBeVisible();
     }
+    await expect(selectTrigger).toBeVisible();
+    const closedScan = await scanIndexedStory(
+      page,
+      entry,
+      name === "dialog-integration" ? "dialog-open" : "closed",
+    );
+    if (name !== "disabled") {
+      await selectTrigger.click();
+      await expect(page.getByRole("listbox")).toBeVisible();
+      await scanIndexedStory(page, entry, "select-open");
+    }
+    scanned.push(closedScan);
   }
+  assertStoryScanCoverage(stories, scanned);
 });
