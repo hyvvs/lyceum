@@ -41,12 +41,25 @@ try {
         backdropFilter: getComputedStyle(node).backdropFilter,
         background: getComputedStyle(node).backgroundColor,
         documentWidth: document.documentElement.scrollWidth,
+        blurredAncestor: (() => {
+          let parent = node.parentElement;
+          while (parent) {
+            if (getComputedStyle(parent).backdropFilter !== "none") {
+              return parent.className;
+            }
+            parent = parent.parentElement;
+          }
+          return null;
+        })(),
       }));
       if (metrics.documentWidth > viewport.width) {
         throw new Error(`Horizontal page overflow in ${entry.name}: ${metrics.documentWidth}`);
       }
       if (entry.transparency === "full" && !metrics.backdropFilter.includes("blur(")) {
         throw new Error("Full-transparency story did not use backdrop blur.");
+      }
+      if (metrics.blurredAncestor !== null) {
+        throw new Error(`Nested backdrop blur found in ${entry.name}: ${metrics.blurredAncestor}`);
       }
       if (entry.transparency === "off" && metrics.backdropFilter !== "none") {
         throw new Error("Opaque fallback still used backdrop blur.");

@@ -1,6 +1,6 @@
 # M0-003: accessible Tabs — real Storybook screenshot evidence
 
-These seven images come from actual local Chromium rendering of `m0/ui-tabs` Storybook, not generated mockups. The capture script checks theme, transparency, root text scale and absence of page horizontal overflow before saving **viewport-only** PNGs. It checks that the full-transparency story has an actual `backdrop-filter` and that opaque states disable it.
+These seven images come from actual local Chromium rendering of `m0/ui-tabs` Storybook, not generated mockups. The capture script checks theme, transparency, root text scale and absence of page horizontal overflow before saving **viewport-only** PNGs. It checks that the full-transparency story has an actual `backdrop-filter` and that opaque states disable it. The Tabs story uses a **flat, unblurred Storybook frame** so the live-glass tablist is never nested inside another blurred layer.
 
 | Story | Image | Viewport and key setting |
 | --- | --- | --- |

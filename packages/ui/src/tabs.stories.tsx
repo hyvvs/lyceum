@@ -88,7 +88,8 @@ const meta = {
   title: "Primitives/Tabs",
   component: TabsDemo,
   tags: ["autodocs"],
-  parameters: { a11y: { test: "error" } },
+  // The list itself is blurred glass; never put it inside another blurred Storybook surface.
+  parameters: { a11y: { test: "error" }, stageSurface: "flat" },
 } satisfies Meta<typeof TabsDemo>;
 
 export default meta;

@@ -519,7 +519,6 @@
   white-space: normal;
   text-align: center;
   cursor: pointer;
-  transition: background-color var(--motion-base) ease-out;
 }
 .lyceum-tabs__trigger[data-state="active"] {
   background: var(--surface-raised-solid);
@@ -552,15 +551,6 @@
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   line-height: var(--line-height-reading);
-}
-:root[data-motion="reduced"] .lyceum-tabs__trigger,
-:root[data-motion="off"] .lyceum-tabs__trigger {
-  transition: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion="full"]) .lyceum-tabs__trigger {
-    transition: none;
-  }
 }
 @media (forced-colors: active) {
   .lyceum-tabs__trigger {

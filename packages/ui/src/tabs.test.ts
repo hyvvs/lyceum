@@ -62,6 +62,29 @@ describe("Tabs semantic contract", () => {
     ).toThrow("TabsList must render a native tablist.");
   });
 
+  it("rejects hidden or aria-hidden overrides that could remove active tabs from accessibility", () => {
+    for (const unsafe of [{ "aria-hidden": true }, { hidden: true }]) {
+      const list = { "aria-label": "Study sections", ...unsafe } as unknown as TabsListProps;
+      expect(() =>
+        renderToStaticMarkup(
+          createElement(Tabs, { defaultValue: "review" }, createElement(TabsList, list)),
+        ),
+      ).toThrow("TabsList must render a native tablist.");
+      const trigger = { value: "review", ...unsafe } as unknown as TabsTriggerProps;
+      expect(() =>
+        renderToStaticMarkup(
+          createElement(Tabs, { defaultValue: "review" }, createElement(TabsTrigger, trigger)),
+        ),
+      ).toThrow("TabsTrigger must render a native button.");
+      const content = { value: "review", ...unsafe } as unknown as TabsContentProps;
+      expect(() =>
+        renderToStaticMarkup(
+          createElement(Tabs, { defaultValue: "review" }, createElement(TabsContent, content)),
+        ),
+      ).toThrow("TabsContent must render a native tab panel.");
+    }
+  });
+
   it("rejects replacing the associated tab panel with a slotted element", () => {
     const invalid = { value: "review", asChild: true } as unknown as TabsContentProps;
     expect(() =>

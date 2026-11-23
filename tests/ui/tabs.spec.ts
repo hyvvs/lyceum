@@ -155,7 +155,34 @@ test("full glass, opaque and high contrast settings honor their separate renderi
   }
 });
 
-test("reduced and off motion remove tab background transitions", async ({ page }) => {
+test("full-transparency tablist has no blurred ancestor and preserves one live glass layer", async ({
+  page,
+}) => {
+  await page.goto(story("full-transparency"));
+  const list = page.getByRole("tablist");
+  await expect(page.locator("html")).toHaveAttribute("data-transparency", "full");
+  const nested = await list.evaluate((node) => {
+    let parent = node.parentElement;
+    while (parent) {
+      if (getComputedStyle(parent).backdropFilter !== "none") return parent.className;
+      parent = parent.parentElement;
+    }
+    return null;
+  });
+  expect(nested, "nested blurred ancestor of floating tablist").toBeNull();
+});
+
+test("even full-motion Tabs never animates background-color", async ({ page }) => {
+  await page.goto(story("default"));
+  await page.locator("html").evaluate((root) => {
+    root.dataset.motion = "full";
+  });
+  await expect(page.getByRole("tab", { name: "Review" })).toHaveCSS("transition-duration", "0s");
+});
+
+test("reduced and off motion keep tab colors static with visible keyboard focus", async ({
+  page,
+}) => {
   for (const [name, setting] of [
     ["reduced-motion", "reduced"],
     ["off-motion", "off"],
