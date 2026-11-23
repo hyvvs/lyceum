@@ -39,7 +39,21 @@ export function Tooltip({ disableHoverableContent, ...props }: TooltipProps) {
 }
 
 /** Prefer `asChild` with a semantic Button; do not use disabled buttons as the only hint target. */
-export const TooltipTrigger = TooltipPrimitive.Trigger;
+export type TooltipTriggerProps = ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>;
+
+/** Native tooltip triggers must never implicitly submit a surrounding form. */
+export const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(
+  function TooltipTrigger({ asChild, type, ...props }, ref) {
+    return (
+      <TooltipPrimitive.Trigger
+        {...props}
+        ref={ref}
+        asChild={asChild}
+        type={asChild ? type : (type ?? "button")}
+      />
+    );
+  },
+);
 
 export type TooltipContentProps = Omit<
   ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>,

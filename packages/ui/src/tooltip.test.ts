@@ -22,6 +22,22 @@ describe("Tooltip semantic contract", () => {
     );
     expect(markup).toContain("Review hint details");
     expect(markup).toContain("<button");
+    expect(markup).toContain('type="button"');
+  });
+
+  it("uses a non-submitting native button even when nested inside a form", () => {
+    const markup = renderToStaticMarkup(
+      createElement(
+        "form",
+        null,
+        createElement(
+          TooltipProvider,
+          null,
+          createElement(Tooltip, null, createElement(TooltipTrigger, null, "Help")),
+        ),
+      ),
+    );
+    expect(markup).toMatch(/<form><button[^>]*type="button"[^>]*>Help<\/button><\/form>/);
   });
 
   it("requires nonblank tooltip text even for untyped callers", () => {

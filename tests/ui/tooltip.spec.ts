@@ -77,6 +77,42 @@ test("200% text and a 320px viewport keep tooltip within the screen", async ({ p
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
+test("long tooltip remains readable at 200% text in a 320x256 viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 256 });
+  await page.goto(story("long-text"));
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%";
+  });
+  await page.getByRole("button", { name: "Review hint details" }).hover();
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toBeVisible();
+  const bounds = await tooltip.boundingBox();
+  expect(bounds?.x).toBeGreaterThanOrEqual(0);
+  expect(bounds?.y).toBeGreaterThanOrEqual(0);
+  expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(320);
+  expect((bounds?.y ?? 0) + (bounds?.height ?? 0)).toBeLessThanOrEqual(256);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
+test("OS reduced-motion preference disables tooltip animation without an explicit override", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(story("full-motion"));
+  expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(
+    true,
+  );
+  await page.getByRole("button", { name: "Review hint details" }).hover();
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toBeVisible();
+  // Storybook always sets an explicit motion override; remove it after mounting to test the
+  // CSS fallback that real app users get when they have not chosen an explicit override.
+  await page.evaluate(() => {
+    document.documentElement.removeAttribute("data-motion");
+  });
+  await expect(tooltip).toHaveCSS("animation-name", "none");
+});
+
 test("opaque tooltip text meets contrast; reduced and off motion remove entrance animation", async ({
   page,
 }) => {
