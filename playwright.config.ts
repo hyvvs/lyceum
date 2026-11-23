@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: "./tests/ui",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  reporter: [[process.env.CI ? "github" : "list"], ["./tests/ui/story-coverage-reporter.ts"]],
   use: {
     baseURL: "http://127.0.0.1:6006",
     browserName: "chromium",

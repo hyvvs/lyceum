@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { scanStoryA11y } from "./axe";
+import { scanIndexedStory, storySlug } from "./axe-story-gate";
+import { assertStoryScanCoverage, storiesForFamily } from "./story-inventory";
 
 const story = (name: string) => `/iframe.html?id=primitives-tabs--${name}&viewMode=story`;
 
@@ -196,38 +198,19 @@ test("reduced and off motion keep tab colors static with visible keyboard focus"
   }
 });
 
-test("all Tabs Storybook states remain axe-clean", async ({ page }) => {
-  for (const name of [
-    "default",
-    "hover",
-    "focus",
-    "dark",
-    "light",
-    "high-contrast",
-    "full-transparency",
-    "reduced-transparency",
-    "opaque",
-    "reduced-motion",
-    "off-motion",
-    "disabled",
-    "empty",
-    "loading",
-    "error-action",
-    "rtl",
-    "vertical",
-    "manual",
-    "controlled",
-    "long-labels",
-    "double-text",
-    "long-double-text",
-  ]) {
-    await page.goto(story(name));
+test("every generated Tabs Storybook state remains axe-clean", async ({ page }) => {
+  test.slow();
+  const stories = storiesForFamily("Tabs");
+  const scanned: string[] = [];
+  for (const entry of stories) {
+    const name = storySlug(entry);
+    await page.goto(`/iframe.html?id=${entry.id}&viewMode=story`);
     await expect(page.getByRole("tablist")).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme",
       name === "light" ? "light" : "dark",
     );
-    const result = await scanStoryA11y(page);
-    expect(result.violations, `axe violations in ${name}`).toEqual([]);
+    scanned.push(await scanIndexedStory(page, entry, name));
   }
+  assertStoryScanCoverage(stories, scanned);
 });

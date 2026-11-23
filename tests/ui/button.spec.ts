@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { scanStoryA11y } from "./axe";
+import { scanIndexedStory, storySlug } from "./axe-story-gate";
+import { assertStoryScanCoverage, storiesForFamily } from "./story-inventory";
 
 const story = (name: string) => `/iframe.html?id=primitives-button--${name}&viewMode=story`;
 
@@ -110,22 +112,15 @@ test("slotted native buttons compose child and parent click handlers once", asyn
   await expect(button).toBeFocused();
 });
 
-test("axe scans standard, semantic, and fallback stories", async ({ page }) => {
-  for (const name of [
-    "default",
-    "disabled",
-    "loading",
-    "error-action",
-    "empty",
-    "light",
-    "high-contrast",
-    "double-text",
-    "as-child-link",
-    "as-child-interactive",
-  ]) {
-    await page.goto(story(name));
+test("axe scans every generated Button story", async ({ page }) => {
+  test.slow();
+  const stories = storiesForFamily("Button");
+  const scanned: string[] = [];
+  for (const entry of stories) {
+    const name = storySlug(entry);
+    await page.goto(`/iframe.html?id=${entry.id}&viewMode=story`);
     await expect(page.locator(".lyceum-button")).toBeVisible();
-    const results = await scanStoryA11y(page);
-    expect(results.violations, `axe violations for ${name}`).toEqual([]);
+    scanned.push(await scanIndexedStory(page, entry, name));
   }
+  assertStoryScanCoverage(stories, scanned);
 });
