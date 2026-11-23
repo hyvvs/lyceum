@@ -20,15 +20,34 @@ export function acquireSelectBackgroundInert(
   element.inert = true;
 }
 
-export function releaseSelectBackgroundInert(heldByThisSelect: Set<HTMLElement>): void {
-  for (const element of heldByThisSelect) {
-    const owners = backgroundOwners.get(element);
-    if (!owners) continue;
-    owners.count--;
-    if (owners.count === 0) {
-      element.inert = owners.originallyInert;
-      backgroundOwners.delete(element);
-    }
+function releaseOneSelectBackgroundInert(
+  element: HTMLElement,
+  heldByThisSelect: Set<HTMLElement>,
+): void {
+  if (!heldByThisSelect.delete(element)) return;
+  const owners = backgroundOwners.get(element);
+  if (!owners) return;
+  owners.count--;
+  if (owners.count === 0) {
+    element.inert = owners.originallyInert;
+    backgroundOwners.delete(element);
   }
-  heldByThisSelect.clear();
+}
+
+/** Match only the nodes *currently* hidden by Radix, including on marker removal. */
+export function reconcileSelectBackgroundInert(
+  currentlyHidden: Iterable<HTMLElement>,
+  heldByThisSelect: Set<HTMLElement>,
+): void {
+  const hidden = new Set(currentlyHidden);
+  for (const element of hidden) acquireSelectBackgroundInert(element, heldByThisSelect);
+  for (const element of [...heldByThisSelect]) {
+    if (!hidden.has(element)) releaseOneSelectBackgroundInert(element, heldByThisSelect);
+  }
+}
+
+export function releaseSelectBackgroundInert(heldByThisSelect: Set<HTMLElement>): void {
+  for (const element of [...heldByThisSelect]) {
+    releaseOneSelectBackgroundInert(element, heldByThisSelect);
+  }
 }

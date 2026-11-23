@@ -85,6 +85,8 @@ describe("Select native accessibility contract", () => {
       { value: "math", "aria-hidden": true },
       { value: "math", hidden: true },
       { value: "math", "aria-disabled": "false" },
+      { value: "math", "aria-labelledby": "foreign-label" },
+      { value: "math", tabIndex: 0 },
     ]) {
       const invalid = props as SelectItemProps;
       expect(() => renderToStaticMarkup(createElement(SelectItem, invalid, "Mathematics"))).toThrow(

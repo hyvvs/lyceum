@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { tooltipInteraction } from "./motion";
-import { acquireSelectBackgroundInert, releaseSelectBackgroundInert } from "./select-inert";
+import { reconcileSelectBackgroundInert, releaseSelectBackgroundInert } from "./select-inert";
 
 /** Controlled and uncontrolled single-choice selection are managed by Radix. */
 export type SelectProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Root>;
@@ -161,9 +161,10 @@ export const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(func
   useEffect(() => {
     if (!isOpen) return;
     const mark = () => {
-      for (const element of document.querySelectorAll<HTMLElement>('[data-aria-hidden="true"]')) {
-        acquireSelectBackgroundInert(element, markedRef.current);
-      }
+      reconcileSelectBackgroundInert(
+        document.querySelectorAll<HTMLElement>('[data-aria-hidden="true"]'),
+        markedRef.current,
+      );
     };
     mark();
     const observer = new MutationObserver(mark);
@@ -216,7 +217,14 @@ export const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(func
 /** One native Radix option with its accessible text and selected indicator. */
 export type SelectItemProps = Omit<
   ComponentPropsWithoutRef<typeof SelectPrimitive.Item>,
-  "asChild" | "role" | "aria-hidden" | "hidden" | "aria-selected" | "aria-disabled"
+  | "asChild"
+  | "role"
+  | "aria-hidden"
+  | "hidden"
+  | "aria-selected"
+  | "aria-disabled"
+  | "aria-labelledby"
+  | "tabIndex"
 > & {
   asChild?: never;
   role?: never;
@@ -224,6 +232,8 @@ export type SelectItemProps = Omit<
   hidden?: never;
   "aria-selected"?: never;
   "aria-disabled"?: never;
+  "aria-labelledby"?: never;
+  tabIndex?: never;
 };
 
 export const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(function SelectItem(
@@ -234,6 +244,8 @@ export const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(function S
     hidden,
     "aria-selected": ariaSelected,
     "aria-disabled": ariaDisabled,
+    "aria-labelledby": ariaLabelledBy,
+    tabIndex,
     value,
     className,
     children,
@@ -249,7 +261,9 @@ export const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(function S
     ariaHidden !== undefined ||
     hidden !== undefined ||
     ariaSelected !== undefined ||
-    ariaDisabled !== undefined
+    ariaDisabled !== undefined ||
+    ariaLabelledBy !== undefined ||
+    tabIndex !== undefined
   ) {
     throw new Error("SelectItem requires a nonempty value and native, visible option semantics.");
   }

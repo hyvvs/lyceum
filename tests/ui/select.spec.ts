@@ -57,6 +57,32 @@ test("portalled listbox inert-locks hidden background only until focus returns",
   await expect(button).toBeFocused();
 });
 
+test("inert background follows aria-hidden marker changes while Select remains open", async ({
+  page,
+}) => {
+  await page.goto(story("default"));
+  const button = trigger(page);
+  await button.click();
+  const root = page.locator("#storybook-root");
+  await expect(root).toHaveAttribute("data-aria-hidden", "true");
+  await expect(root).toHaveAttribute("inert", "");
+  // Mimic the uppermost overlay closing and clearing a hideOthers marker while
+  // this Select still owns its portal. Lock ownership must reconcile live.
+  await root.evaluate((element) => {
+    element.removeAttribute("data-aria-hidden");
+    element.removeAttribute("aria-hidden");
+  });
+  await expect(root).not.toHaveAttribute("inert", "");
+  await root.evaluate((element) => {
+    element.setAttribute("data-aria-hidden", "true");
+    element.setAttribute("aria-hidden", "true");
+  });
+  await expect(root).toHaveAttribute("inert", "");
+  await page.keyboard.press("Escape");
+  await expect(root).not.toHaveAttribute("inert", "");
+  await expect(button).toBeFocused();
+});
+
 test("keyboard arrow navigation, typeahead, disabled skipping and Escape return focus", async ({
   page,
 }) => {
