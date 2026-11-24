@@ -647,6 +647,18 @@
   overscroll-behavior: contain;
   padding: var(--space-2);
 }
+/* Keep a Select trigger anchored inside a scrollable Dialog while its separately
+   portalled listbox is open and text scaling changes the Dialog's layout.
+   Radix can then measure a visible trigger and choose top/bottom collisions
+   itself, rather than having its Popper child shifted after positioning. */
+@media (max-height: 320px) {
+  .lyceum-dialog:has(.lyceum-select__trigger:is([data-state="open"], :focus)) .lyceum-dialog__body {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    background: var(--surface-float-solid);
+  }
+}
 .lyceum-select__item {
   box-sizing: border-box;
   display: flex;
@@ -715,8 +727,11 @@
     box-shadow: none;
   }
   .lyceum-select__item[data-highlighted] {
-    color: HighlightText;
-    background: Highlight;
+    /* Chromium forced-colors can rasterize HighlightText as an opaque
+       text-sized rectangle over Highlight. A Canvas/CanvasText row retains
+       the user's system palette and uses Highlight for the focus outline. */
+    color: CanvasText;
+    background: Canvas;
     outline-color: Highlight;
   }
   .lyceum-select__item[data-disabled] {
