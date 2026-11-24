@@ -235,8 +235,14 @@ test("320x256 with true 200% text and native forced colors preserve the mounted 
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.y).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(320);
-  // Hosted Linux positions the popup frame 9px beyond 256px. Do not claim
-  // full-frame fit; ensure real keyboard access brings the last option into view.
+  // Regression: Linux previously placed the same mounted popup's bottom at
+  // 265px in a 256px viewport, obscuring the last option. Require full fit.
+  await expect
+    .poll(async () => {
+      const box = await listbox.boundingBox();
+      return box ? box.y + box.height : Number.POSITIVE_INFINITY;
+    })
+    .toBeLessThanOrEqual(256);
   console.info(`NARROW_ACTIVE_POPUP_BOUNDS ${JSON.stringify(bounds)}`);
   await page.keyboard.press("End");
   const lastOption = page.getByRole("option", { name: "History" });
