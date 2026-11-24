@@ -235,6 +235,27 @@ test("320x256 with true 200% text and native forced colors preserve the mounted 
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.y).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(320);
+  console.info(
+    "NARROW_ACTIVE_POPUP_LAYOUT",
+    JSON.stringify(
+      await page.locator(".lyceum-select__content").evaluate((content) => ({
+        contentRect: {
+          y: content.getBoundingClientRect().y,
+          height: content.getBoundingClientRect().height,
+        },
+        contentMaxHeight: getComputedStyle(content).maxHeight,
+        listboxRect: {
+          y: (content.querySelector('[role="listbox"]') ?? content).getBoundingClientRect().y,
+          height: (content.querySelector('[role="listbox"]') ?? content).getBoundingClientRect()
+            .height,
+        },
+        viewportMaxHeight: getComputedStyle(
+          content.querySelector(".lyceum-select__viewport") ?? content,
+        ).maxHeight,
+        viewportHeight: innerHeight,
+      })),
+    ),
+  );
   // Regression: Linux previously placed the same mounted popup's bottom at
   // 265px in a 256px viewport, obscuring the last option. Require full fit.
   await expect

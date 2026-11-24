@@ -657,6 +657,17 @@
       calc(100dvh - var(--space-3) - var(--space-3) - var(--space-3) - var(--space-3))
     );
   }
+  .lyceum-select__viewport {
+    box-sizing: border-box;
+    max-height: calc(
+      100dvh -
+      var(--space-3) -
+      var(--space-3) -
+      var(--space-3) -
+      var(--space-3) -
+      var(--space-3)
+    );
+  }
 }
 .lyceum-select__item {
   box-sizing: border-box;
