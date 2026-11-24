@@ -49,6 +49,15 @@ const extraTopics = [
   ["literature", "Literature"],
 ] as const;
 
+// Real reading content within DialogContent's children (not its description).
+// It intentionally comes before the first Select in the native scroll flow.
+const studyPreparationNotes = [
+  "Review the study goals and mark concepts that still need practice.",
+  "Check the next checkpoint and which materials remain available offline.",
+  "Read earlier feedback and identify the weakest topic for this session.",
+  "Keep the plan editable when new results reveal a learning gap.",
+] as const;
+
 const accepted: { [K in keyof Preferences]: readonly Preferences[K][] } = {
   theme: ["dark", "light"],
   contrast: ["standard", "high"],
@@ -66,6 +75,11 @@ function RuntimePreferencesFixture() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [copyMode, setCopyMode] = useState<"short" | "long">("short");
   const [optionMode, setOptionMode] = useState<"short" | "long">("short");
+  const [compositionMode, setCompositionMode] = useState<"compact" | "tall">("compact");
+  const [directionMode, setDirectionMode] = useState<"ltr" | "rtl">("ltr");
+  const [reviewedNotes, setReviewedNotes] = useState(false);
+  const [studyPace, setStudyPace] = useState("steady");
+  const [saved, setSaved] = useState(false);
   const mountId = useRef(0);
   if (mountId.current === 0) mountId.current = ++nextMountId;
 
@@ -98,6 +112,12 @@ function RuntimePreferencesFixture() {
       const detail = event.detail as Record<string, unknown>;
       if (detail.copy === "short" || detail.copy === "long") setCopyMode(detail.copy);
       if (detail.options === "short" || detail.options === "long") setOptionMode(detail.options);
+      if (detail.composition === "compact" || detail.composition === "tall") {
+        setCompositionMode(detail.composition);
+      }
+      if (detail.direction === "ltr" || detail.direction === "rtl") {
+        setDirectionMode(detail.direction);
+      }
     };
     window.addEventListener("lyceum:qa-variant-change", changeVariant);
     return () => window.removeEventListener("lyceum:qa-variant-change", changeVariant);
@@ -135,12 +155,25 @@ function RuntimePreferencesFixture() {
         <DialogContent
           title="Settings"
           description={copyMode === "long" ? longDescription : "Choose a topic."}
+          dir={directionMode}
         >
           <div className="lyceum-select-demo">
+            {compositionMode === "tall" && (
+              <>
+                <section data-qa-tall-reading aria-label="Study preparation notes">
+                  {studyPreparationNotes.map((note) => (
+                    <p key={note}>{note}</p>
+                  ))}
+                </section>
+                <Button variant="secondary" onClick={() => setReviewedNotes((value) => !value)}>
+                  {reviewedNotes ? "Notes acknowledged" : "Acknowledge study notes"}
+                </Button>
+              </>
+            )}
             <label className="lyceum-select-demo__label" htmlFor="qa-runtime-topic">
               Study topic
             </label>
-            <Select value={topic} onValueChange={setTopic}>
+            <Select dir={directionMode} value={topic} onValueChange={setTopic}>
               <SelectTrigger id="qa-runtime-topic">
                 <SelectValue placeholder="Choose a study topic" />
               </SelectTrigger>
@@ -158,6 +191,26 @@ function RuntimePreferencesFixture() {
               </SelectContent>
             </Select>
             <p>Selected topic: {topic}</p>
+            {compositionMode === "tall" && (
+              <>
+                <Button variant="secondary" onClick={() => setSaved((value) => !value)}>
+                  {saved ? "Study settings saved" : "Save study settings"}
+                </Button>
+                <label className="lyceum-select-demo__label" htmlFor="qa-runtime-pace">
+                  Study pace
+                </label>
+                <Select dir={directionMode} value={studyPace} onValueChange={setStudyPace}>
+                  <SelectTrigger id="qa-runtime-pace">
+                    <SelectValue placeholder="Choose a study pace" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="steady">Steady</SelectItem>
+                    <SelectItem value="focused">Focused</SelectItem>
+                    <SelectItem value="intensive">Intensive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>

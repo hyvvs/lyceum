@@ -1,5 +1,15 @@
 # M0-003 second corrective slice — same-mounted runtime preferences and axe-incomplete triage
 
+**New 2026-11-24 tall-body limitation:** The owner-authorized realistic
+multi-control Dialog investigation revealed two red-first, normal-user-flow
+failures (initial Radix autofocus offscreen and live 100%→200% reflow of a
+still-open portalled Select), with explicit diagnostic-only screenshots,
+geometry, permitted alternatives and a STOP-before-architecture proposal in
+[tall-body-investigation.md](tall-body-investigation.md). This supersedes any
+suggestion below that the earlier compact-body CSS fixes arbitrary long
+Dialog *body* content. The previous screenshots and green exact-head CI
+apply to the earlier commit; PR #16 is still DRAFT/UNMERGED.
+
 ## 2026-11-24 independent-audit follow-up — corrected production Select behavior
 
 **Current result:** PR #16 remains **DRAFT / UNMERGED** pending a new explicit owner review. The owner authorized **narrowly scoped Select CSS remediation** of the three independently audited defects; this does **not** authorize public API/focus manager changes, a PR merge, or M0-003 completion. Everything below supersedes the dated 2026-11-23 observations where those describe earlier unresolved bugs. M0-003 stays **`[~]`**; ADR-0009 remains an **APPROVED DEFERRAL**.
