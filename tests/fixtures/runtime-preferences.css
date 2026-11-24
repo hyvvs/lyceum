@@ -1,5 +1,15 @@
 /* QA-only complex-Dialog consumer contract. Nothing here changes the public
    Lyceum Dialog or Select primitives, Radix's Popper or focus ownership. */
+.lyceum-dialog.qa-bounded-dialog {
+  /* Keep native keyboard scrolling clear of the dialog's clipped edges so
+     external trigger/button focus indicators remain entirely perceivable. */
+  scroll-padding-block: var(--space-3);
+}
+
+.qa-bounded-controls :is(.lyceum-button, .lyceum-select__trigger) {
+  scroll-margin-block: var(--space-2);
+}
+
 .qa-bounded-dialog .lyceum-dialog__body {
   position: static;
   bottom: auto;

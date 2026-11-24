@@ -11,6 +11,15 @@ scrolling on live preference reflow; the former failing
 pixels and precise acceptance boundaries](tall-body-investigation.md).
 No shared production Dialog/Select API/CSS, dependency, FocusScope, Popper,
 portal or global positioning manager changed in this proof of concept.
+**Hosted Linux exception (2026-11-24):** exact-head [CI 45474734072](https://github.com/hyvvs/lyceum/actions/runs/45474734072)
+at `c719ead` failed Verify (**85 Chromium passed / 3 fractional-focus
+intersection failures**, including retry), although Dependency audit,
+Secret scan and the 141/164 axe reporter passed. The fixture-only follow-up
+adds token-based native scroll clearance for control outlines and actual
+Home-focused glyph/ring pixel evidence, **not relaxed visibility thresholds**.
+Its final exact-head Linux acceptance is still pending; see the
+[investigation](tall-body-investigation.md). **DO NOT MERGE** before it passes
+and the owner separately approves.
 Latest full **local** verification: frozen install/verify/audit/Storybook
 **PASS**, Chromium **88 passed / 0 failed**, original 141/141 stories and
 164/164 required axe states executed. Independent read-only UX, architecture

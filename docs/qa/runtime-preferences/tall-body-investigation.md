@@ -2,6 +2,25 @@
 
 ## 2026-11-24 · audit #17 owner-approved consumer proof of concept (newer evidence)
 
+**First exact-head hosted Linux cross-check was RED:** [run
+45474734072](https://github.com/hyvvs/lyceum/actions/runs/45474734072)
+at `c719ead7405dda1a3db421100c25fb17e5f5ddc2` passed frozen install,
+`pnpm verify`, Storybook build, Dependency audit and Secret scan, plus
+`AXE_COVERAGE_VERIFIED unique_stories=141 required_states=164 executed_states=164`,
+but its full Chromium run **failed 3/88 (85 passed), each on retry**.
+Actual natural-keyboard focus existed, but Chromium Linux returned only
+**99.7274%** element intersection for Shift+Tab Acknowledge, **99.4673%**
+for the initial 100%-scale Select trigger and **99.3253%** for Home-focused
+Mathematics. The failure is an acceptance blocker even though fractional
+intersection alone does not prove unreadable glyphs. The follow-up adds
+**QA-consumer-only** token-based native scroll clearance for focused control
+external outlines, an explicit computed outline+scrollport geometry check,
+and the existing actual screenshot glyph/focus-ring proof for Home-focused
+Mathematics (instead of blanket 100%-row intersection or a lowered ratio).
+The remaining strict control geometry, Popper alignment, keyboard paths,
+44px targets and all earlier scenarios remain. **New exact-head hosted Linux
+Verify is still required; this entry is not a green Linux claim.**
+
 Owner **approved a QA-consumer-specific bounded reading/controls layout and use
 of the existing DialogContent.onOpenAutoFocus hook**, but **did not authorize
 merging, new Dialog/Select public APIs, dependencies, custom focus ownership,
@@ -35,7 +54,13 @@ glyph-by-glyph reading-contrast certification.
 `tests/fixtures/runtime-preferences.css` is **test-fixture only**. It
 separates `qa-bounded-reading` from `qa-bounded-controls`, uses existing
 Lyceum spacing/color/target tokens, and specifically overrides the
-short-height **whole-body sticky** CSS for this bounded composition. It
+short-height **whole-body sticky** CSS for this bounded composition. To
+protect naturally focused controls' **external 3px outline plus offset**
+from fractional Linux/Dialog scroll clipping, the bounded Dialog alone uses
+logical native `scroll-padding-block: var(--space-3)` and its own
+buttons/Select triggers use `scroll-margin-block: var(--space-2)`.
+These are scroll clearance tokens for this one consumer, **not** hard-coded
+popup translations or Radix positioning overrides. It
 does not alter `packages/ui/src/glass.css` or any production component.
 When the user's preference state reflows an open Select, a fixture-local
 `useLayoutEffect` locates the **actual open trigger within that Dialog** and
@@ -55,18 +80,24 @@ DOM mutations, mobile virtual keyboards and every custom Dialog layout are
 | State | Previous unbounded screenshot | Approved bounded consumer screenshot |
 | --- | --- | --- |
 | Keyboard-open 320×256 | [Acknowledge focused offscreen](tall-initial-focus-before.png): y1203.6–1302 | [Reading-start focus visible](tall-bounded-initial-256.png): heading y171.6–218.8; its separate scroll region begins at y230.8 and becomes available through forward Tab |
-| Keyboard-open 320×190 | Prior unbounded long-body offscreen initial focus (same root cause) | [Reading-start focus visible](tall-bounded-initial-190.png): heading y128.6–175.8, with natural Dialog scrolling to reveal its focus; reading is reachable by subsequent Tab |
+| Keyboard-open 320×190 | Prior unbounded long-body offscreen initial focus (same root cause) | [Reading-start focus visible](tall-bounded-initial-190.png): heading y71.6–118.8, Dialog scrollTop 100, with native clearance and reading frame beginning y130.8; reachable by forward Tab |
 | Open portalled Select live 100%→200% at 320×256 | [Popup/focus entirely offscreen](tall-live-scale-before.png): popup y693–925, last focus y875–919 | [Same-node live popup visible](tall-bounded-live-scale-256.png): Radix popup **and wrapper** y162–243.6, focused Literature y194–238, actual trigger y100.8–154.4 |
-| Reading end at 320×256 | Previously all 1,020px reading flowed unbounded before controls | [Last paragraph via internal native scroll](tall-bounded-reading-end-256.png): reading scrollTop 1,157 of max 1,157; last text shown with a distinct thicker focus ring |
+| Reading end at 320×256 | Previously all 1,020px reading flowed unbounded before controls | [Last paragraph via internal native scroll](tall-bounded-reading-end-256.png): reading scrollTop 1,157 of max 1,157, frame y91.8–163.4; last text shown with a distinct thicker focus ring |
 | ArrowDown at 320×256/200% | Prior hosted Linux at old unbounded head saw 99.0057% option area visible | [Rendered Physics glyph and focus ring](tall-bounded-arrow-focus-256.png): active row y198–242 in the after screenshot; a separate automated actual-pixel test also checks glyph and inset ring visibility before and after live text scaling, without assuming complete list visibility |
 | Forced colors and RTL | Native platforms not tested | [Chromium-emulated forced colors](tall-bounded-forced-colors-256.png): selected label and purple system Highlight focus ring readable; [800×256 RTL](tall-bounded-rtl-800.png): right-aligned glyphs and visible final option |
 
-The pixel check uses the actual Chromium screenshot, checks item text glyph
-bounds against its scrollport and viewport, verifies that the text is
-hit-testable, samples contrasting glyph strokes and the **inset** focus outline,
-and logs the exact subpixel row-edge clipping. It replaces only the overly
-strong 100%-intersection assumption for the ArrowDown-focused row; the
-End/Home assertions, 44px option targets, and focus usability requirement
+The pixel check now also covers Home-focused **Mathematics** for each 320×190,
+320×256 and 800×256 scale/direction matrix case, in addition to the original
+ArrowDown Physics checks. It uses the actual Chromium screenshot, checks item text
+bounds in **both axes** against its real option scrollport, popup and viewport,
+requires hit-testable text, samples **both** contrasting glyph pixels and
+background pixels within the selected text box (rejecting an opaque solid
+rectangle), samples the defined **inset** focus-ring stroke, and logs exact
+subpixel row-edge clipping. This sampled paint evidence is not OCR or
+glyph-by-glyph contrast certification. It replaces only the overly
+strong 100%-intersection assumption for the fractionally clipped **option rows**;
+the End strict visibility and Home actual text/ring proof, 44px option targets,
+strict full-control and external-focus-ring visibility, and usability requirement
 are retained. This means a marginal subpixel intersection on Linux will be
 assessed by actual rendered glyph/ring evidence, not hand-waved as accessible.
 

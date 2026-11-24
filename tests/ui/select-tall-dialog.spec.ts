@@ -148,6 +148,40 @@ async function expectActuallyVisible(page: Page, selector: string, stage: string
   expect(hit, `${stage}: not masked by a sticky Dialog sibling or another portal`).toBe(true);
 }
 
+async function expectBoundedExternalFocusRingVisible(page: Page, selector: string, stage: string) {
+  const geometry = await page.locator(selector).evaluate((element) => {
+    const scrollport = element.closest(".lyceum-dialog");
+    if (!scrollport) throw new Error("Focused control is not within a Dialog scrollport");
+    const control = element.getBoundingClientRect();
+    const dialog = scrollport.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    // Use the actual scrollport client edges, not the outer bordered box.
+    const clipTop = dialog.top + scrollport.clientTop;
+    const clipLeft = dialog.left + scrollport.clientLeft;
+    return {
+      keyboardFocusVisible: element.matches(":focus-visible"),
+      outlineStyle: style.outlineStyle,
+      ringOutset: Number.parseFloat(style.outlineWidth) + Number.parseFloat(style.outlineOffset),
+      topClearance: control.top - Math.max(clipTop, 0),
+      bottomClearance: Math.min(clipTop + scrollport.clientHeight, innerHeight) - control.bottom,
+      leftClearance: control.left - Math.max(clipLeft, 0),
+      rightClearance: Math.min(clipLeft + scrollport.clientWidth, innerWidth) - control.right,
+    };
+  });
+  expect(geometry.keyboardFocusVisible, `${stage}: genuine keyboard focus indicator`).toBe(true);
+  expect(geometry.outlineStyle, `${stage}: painted external outline`).toBe("solid");
+  expect(geometry.ringOutset, `${stage}: external control focus outline`).toBeGreaterThanOrEqual(5);
+  expect(
+    Math.min(
+      geometry.topClearance,
+      geometry.bottomClearance,
+      geometry.leftClearance,
+      geometry.rightClearance,
+    ),
+    `${stage}: real external focus outline fits within Dialog clip ${JSON.stringify(geometry)}`,
+  ).toBeGreaterThanOrEqual(geometry.ringOutset);
+}
+
 /** The Linux 99%-row regression must be judged by actual glyph/ring pixels,
  * not by lowering an IntersectionObserver ratio alone. */
 async function expectFocusedOptionRendered(page: Page, stage: string) {
@@ -179,12 +213,14 @@ async function expectFocusedOptionRendered(page: Page, stage: string) {
     const ringColor = parseRgb(style.outlineColor);
     let glyphStrokes = 0;
     let glyphPixels = 0;
+    let backgroundPixels = 0;
     for (let y = Math.ceil(glyph.top); y < Math.floor(glyph.bottom); y++) {
       for (let x = Math.ceil(glyph.left); x < Math.floor(glyph.right); x++) {
         if (x < 0 || y < 0 || x >= bitmap.width || y >= bitmap.height) continue;
         const color = ctx.getImageData(x, y, 1, 1).data;
         const matches = background.every((value, i) => Math.abs(value - (color[i] ?? 0)) <= 16);
         if (!matches) glyphStrokes++;
+        else backgroundPixels++;
         glyphPixels++;
       }
     }
@@ -205,6 +241,8 @@ async function expectFocusedOptionRendered(page: Page, stage: string) {
     }
     const topLimit = Math.max(0, list.top, content.top);
     const bottomLimit = Math.min(innerHeight, list.bottom, content.bottom);
+    const leftLimit = Math.max(0, list.left, content.left);
+    const rightLimit = Math.min(innerWidth, list.right, content.right);
     const point = document.elementFromPoint(
       glyph.left + glyph.width / 2,
       glyph.top + glyph.height / 2,
@@ -219,10 +257,15 @@ async function expectFocusedOptionRendered(page: Page, stage: string) {
         isHighlighted: item.hasAttribute("data-highlighted"),
       },
       clippedRowPixels: Math.max(0, topLimit - frame.top) + Math.max(0, frame.bottom - bottomLimit),
-      glyphFullyVisible: glyph.top >= topLimit && glyph.bottom <= bottomLimit,
+      glyphFullyVisible:
+        glyph.top >= topLimit &&
+        glyph.bottom <= bottomLimit &&
+        glyph.left >= leftLimit &&
+        glyph.right <= rightLimit,
       textHit: point === span || !!(point && span.contains(point)),
       glyphPixels,
       glyphStrokes,
+      backgroundPixels,
       ringSamples,
       ringPixels,
     };
@@ -241,6 +284,10 @@ async function expectFocusedOptionRendered(page: Page, stage: string) {
     measured.glyphStrokes / measured.glyphPixels,
     `${stage}: actual glyph pixels`,
   ).toBeGreaterThan(0.05);
+  expect(
+    measured.backgroundPixels / measured.glyphPixels,
+    `${stage}: avoid an opaque text-sized rectangle hiding selected glyphs`,
+  ).toBeGreaterThan(0.1);
   expect(measured.ringPixels, `${stage}: painted inset focus ring pixels`).toBeGreaterThan(3);
 }
 
@@ -334,6 +381,11 @@ test("tall real Dialog body: natural Tab keeps two Selects, options and sibling 
     page,
     'button:has-text("Acknowledge study notes")',
     "Shift+Tab back to preceding control",
+  );
+  await expectBoundedExternalFocusRingVisible(
+    page,
+    'button:has-text("Acknowledge study notes")',
+    "Shift+Tab Acknowledge external ring",
   );
   await page.keyboard.press("Tab");
   await expect(selectTrigger).toBeFocused();
@@ -560,7 +612,10 @@ test("all supported short viewport scales, RTL and compact long-description keep
     await expectRealPopperInViewport(page, `${width}x${height}/${scale} end`);
     await page.keyboard.press("Home");
     await expect(page.getByRole("option", { name: "Mathematics" })).toBeFocused();
-    await expectActuallyVisible(page, '[role="option"]:focus', "variant first option");
+    // Linux can clip a fraction of the outer option row during Radix scroll
+    // positioning. Require actual unobscured text glyphs and inset focus-ring
+    // pixels rather than treating a 0.x-pixel row edge as unreadable focus.
+    await expectFocusedOptionRendered(page, `${width}x${height}/${scale} Home Mathematics`);
     await page.keyboard.press("Escape");
     await expectActuallyVisible(page, "#qa-runtime-topic", "variant Select return");
     if (height === 190 || dir === "rtl") {
@@ -584,6 +639,11 @@ test("tall body live 100%-to-200% change leaves the same portalled focused optio
   await keyboardOpenDialog(page);
   await keyboardTabTo(page, "#qa-runtime-topic");
   await expectActuallyVisible(page, "#qa-runtime-topic", "100% tall body trigger");
+  await expectBoundedExternalFocusRingVisible(
+    page,
+    "#qa-runtime-topic",
+    "100% Select external ring",
+  );
   await page.keyboard.press("Enter");
   // Radix makes the parent Dialog inert while the separately portalled Select
   // is open; its DOM identity remains stable though its role is hidden.
