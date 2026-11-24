@@ -18,8 +18,21 @@ external outlines, an explicit computed outline+scrollport geometry check,
 and the existing actual screenshot glyph/focus-ring proof for Home-focused
 Mathematics (instead of blanket 100%-row intersection or a lowered ratio).
 The remaining strict control geometry, Popper alignment, keyboard paths,
-44px targets and all earlier scenarios remain. **New exact-head hosted Linux
-Verify is still required; this entry is not a green Linux claim.**
+44px targets and all earlier scenarios remain. This first run is **not**
+green Linux evidence; the successful corrective run is recorded next.
+
+**Correction VERIFIED at exact implementation head:** [hosted Linux run
+45477004366](https://github.com/hyvvs/lyceum/actions/runs/45477004366)
+checked commit [`ca8d4d8e97cfb334238138955d33306a2d62ee7a`](https://github.com/hyvvs/lyceum/commit/ca8d4d8e97cfb334238138955d33306a2d62ee7a)
+and passed **all three jobs: Verify, Dependency audit and Secret scan**.
+Linux Chromium finished **88 passed / 0 failed** and retained
+`AXE_COVERAGE_VERIFIED unique_stories=141 required_states=164 executed_states=164`.
+The full native keyboard, RTL, preference scaling, two-Select, reading scroll,
+popup geometry and option pixel scenarios ran with no skipped/quarantined
+accessibility regressions. This verifies only the bounded QA consumer at that
+exact commit, **not** the intentionally broken arbitrary unbounded mode,
+native AT/real OS forced colors, or a documentation-only successor without
+fresh exact-head verification.
 
 Owner **approved a QA-consumer-specific bounded reading/controls layout and use
 of the existing DialogContent.onOpenAutoFocus hook**, but **did not authorize
@@ -147,9 +160,10 @@ The isolated scenario passed. The test now uses **native Home**, awaiting
 zero scroll before a real pointer-wheel action; the subsequent **complete**
 suite passed **88/88**, retaining last-paragraph, focus and axe requirements.
 
-**Still pending separate acceptance:** exact-head hosted Linux
-Verify/Dependency audit/Secret scan, owner review and a separate merge
-decision. Fresh independent read-only **UX, architecture and security**
+**Still pending separate acceptance:** an exact-head hosted rerun for any
+subsequent documentation-only update, owner review and a separate merge
+decision. The corrected implementation itself passed all hosted jobs in
+the exact-head run above. Fresh independent read-only **UX, architecture and security**
 reviews, plus follow-up reviews of the small final QA changes, reported **no
 blockers**; these are not formal GitHub review approvals. No automatic merge
 is approved. This proof does **not**

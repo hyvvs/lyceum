@@ -17,15 +17,20 @@ intersection failures**, including retry), although Dependency audit,
 Secret scan and the 141/164 axe reporter passed. The fixture-only follow-up
 adds token-based native scroll clearance for control outlines and actual
 Home-focused glyph/ring pixel evidence, **not relaxed visibility thresholds**.
-Its final exact-head Linux acceptance is still pending; see the
-[investigation](tall-body-investigation.md). **DO NOT MERGE** before it passes
-and the owner separately approves.
+The corrected implementation commit
+[`ca8d4d8`](https://github.com/hyvvs/lyceum/commit/ca8d4d8e97cfb334238138955d33306a2d62ee7a)
+passed exact-head [hosted Linux run 45477004366](https://github.com/hyvvs/lyceum/actions/runs/45477004366):
+**Verify / Dependency audit / Secret scan passed, 88 Chromium passed / 0
+failed, 141 stories / 164 of 164 required axe states**. See the
+[investigation](tall-body-investigation.md); this does not certify arbitrary
+Dialog DOM layouts. **DO NOT MERGE** without the owner's separate approval.
 Latest full **local** verification: frozen install/verify/audit/Storybook
 **PASS**, Chromium **88 passed / 0 failed**, original 141/141 stories and
 164/164 required axe states executed. Independent read-only UX, architecture
 and security reviews (including the final minor QA-only delta) report no
-blockers. **Exact-head hosted Linux Verify, Dependency audit and Secret scan
-remain pending**; PR #16 remains **DRAFT/UNMERGED**.
+blockers. Any documentation-only follow-up commit must also be verified at
+its own exact head; [PR #16](https://github.com/hyvvs/lyceum/pull/16)
+remains **DRAFT/UNMERGED** until the owner explicitly authorizes merge.
 
 **New 2026-11-24 tall-body limitation:** The owner-authorized realistic
 multi-control Dialog investigation revealed two red-first, normal-user-flow
