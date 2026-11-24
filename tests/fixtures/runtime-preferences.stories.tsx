@@ -34,6 +34,21 @@ const defaults: Preferences = {
   textScale: "100%",
 };
 
+const longDescription =
+  "Before choosing a topic, review the study plan, available materials, upcoming checkpoints, " +
+  "the notes from the last session, and the detailed guidance for selecting a subject. " +
+  "The description is deliberately long so its real 200% text layout must coexist with an " +
+  "already-open, separately portalled topic selector inside a scrollable modal Dialog.";
+
+const extraTopics = [
+  ["geography", "Geography"],
+  ["biology", "Biology"],
+  ["art", "Art"],
+  ["music", "Music"],
+  ["astronomy", "Astronomy"],
+  ["literature", "Literature"],
+] as const;
+
 const accepted: { [K in keyof Preferences]: readonly Preferences[K][] } = {
   theme: ["dark", "light"],
   contrast: ["standard", "high"],
@@ -49,6 +64,8 @@ function RuntimePreferencesFixture() {
   const [preferences, setPreferences] = useState<Preferences>(defaults);
   const [topic, setTopic] = useState("math");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [copyMode, setCopyMode] = useState<"short" | "long">("short");
+  const [optionMode, setOptionMode] = useState<"short" | "long">("short");
   const mountId = useRef(0);
   if (mountId.current === 0) mountId.current = ++nextMountId;
 
@@ -71,6 +88,19 @@ function RuntimePreferencesFixture() {
     };
     window.addEventListener("lyceum:qa-preference-change", changePreferences);
     return () => window.removeEventListener("lyceum:qa-preference-change", changePreferences);
+  }, []);
+
+  useEffect(() => {
+    const changeVariant = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !event.detail || typeof event.detail !== "object") {
+        return;
+      }
+      const detail = event.detail as Record<string, unknown>;
+      if (detail.copy === "short" || detail.copy === "long") setCopyMode(detail.copy);
+      if (detail.options === "short" || detail.options === "long") setOptionMode(detail.options);
+    };
+    window.addEventListener("lyceum:qa-variant-change", changeVariant);
+    return () => window.removeEventListener("lyceum:qa-variant-change", changeVariant);
   }, []);
 
   useEffect(() => {
@@ -102,7 +132,10 @@ function RuntimePreferencesFixture() {
         <DialogTrigger asChild>
           <Button>Open runtime study settings</Button>
         </DialogTrigger>
-        <DialogContent title="Settings" description="Choose a topic.">
+        <DialogContent
+          title="Settings"
+          description={copyMode === "long" ? longDescription : "Choose a topic."}
+        >
           <div className="lyceum-select-demo">
             <label className="lyceum-select-demo__label" htmlFor="qa-runtime-topic">
               Study topic
@@ -116,6 +149,12 @@ function RuntimePreferencesFixture() {
                 <SelectItem value="physics">Physics</SelectItem>
                 <SelectItem value="chemistry">Chemistry</SelectItem>
                 <SelectItem value="history">History</SelectItem>
+                {optionMode === "long" &&
+                  extraTopics.map(([value, name]) => (
+                    <SelectItem key={value} value={value}>
+                      {name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
             <p>Selected topic: {topic}</p>
