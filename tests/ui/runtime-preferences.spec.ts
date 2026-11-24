@@ -239,6 +239,8 @@ test("320x256 with true 200% text and native forced colors preserve the mounted 
     "NARROW_ACTIVE_POPUP_LAYOUT",
     JSON.stringify(
       await page.locator(".lyceum-select__content").evaluate((content) => ({
+        side: content.getAttribute("data-side"),
+        placement: content.getAttribute("data-align"),
         contentRect: {
           y: content.getBoundingClientRect().y,
           height: content.getBoundingClientRect().height,

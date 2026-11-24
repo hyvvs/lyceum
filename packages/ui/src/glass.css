@@ -647,26 +647,13 @@
   overscroll-behavior: contain;
   padding: var(--space-2);
 }
-/* On very short viewports, leave clearance for the anchored Radix popup's
-   offset and border even when root text scale changes with the menu mounted.
-   The existing viewport remains scrollable; never clip keyboard-only options. */
+/* On very short viewports Radix's top-side Select popup can remain anchored
+   9px below the visual bottom edge after a live 200% text-scale change.
+   Shift only that top-side popup upward by one spacing token; reducing its
+   height alone does not help because Popper keeps the same bottom anchor. */
 @media (max-height: 320px) {
-  .lyceum-select__content {
-    max-height: min(
-      var(--radix-select-content-available-height),
-      calc(100dvh - var(--space-3) - var(--space-3) - var(--space-3) - var(--space-3))
-    );
-  }
-  .lyceum-select__viewport {
-    box-sizing: border-box;
-    max-height: calc(
-      100dvh -
-      var(--space-3) -
-      var(--space-3) -
-      var(--space-3) -
-      var(--space-3) -
-      var(--space-3)
-    );
+  .lyceum-select__content[data-side="top"] {
+    translate: 0 calc(-1 * var(--space-3));
   }
 }
 .lyceum-select__item {
