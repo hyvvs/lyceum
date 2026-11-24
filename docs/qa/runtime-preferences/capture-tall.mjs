@@ -46,7 +46,9 @@ async function start(page, scale) {
   await page.evaluate((value) => {
     window.dispatchEvent(
       new CustomEvent("lyceum:qa-variant-change", {
-        detail: { composition: "tall", options: "long" },
+        // Historical, deliberately unbounded consumer. The new supported
+        // tall composition is tested and captured separately.
+        detail: { composition: "tall-unbounded", options: "long" },
       }),
     );
     window.dispatchEvent(

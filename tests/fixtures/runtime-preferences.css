@@ -1,0 +1,89 @@
+/* QA-only complex-Dialog consumer contract. Nothing here changes the public
+   Lyceum Dialog or Select primitives, Radix's Popper or focus ownership. */
+.qa-bounded-dialog .lyceum-dialog__body {
+  position: static;
+  bottom: auto;
+  z-index: auto;
+  background: transparent;
+}
+
+/* Override only this consumer if the short-viewport generic Dialog/Select
+   rule would otherwise stick the entire multi-control body. */
+@media (max-height: 320px) {
+  .lyceum-dialog.qa-bounded-dialog:has(.lyceum-select__trigger:is([data-state="open"], :focus))
+    .lyceum-dialog__body {
+    position: static;
+    bottom: auto;
+    z-index: auto;
+    background: transparent;
+  }
+}
+
+.qa-bounded-composition,
+.qa-bounded-controls {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-3);
+}
+
+.qa-bounded-reading {
+  box-sizing: border-box;
+  min-width: 0;
+  max-height: max(var(--target-min), min(28dvh, 12rem));
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  padding: var(--space-1);
+  background: var(--surface-reading-solid);
+  color: var(--text-1);
+  border: var(--border-control) solid var(--contrast-border);
+  border-radius: var(--radius-control);
+  line-height: var(--line-height-reading);
+  scrollbar-gutter: stable;
+}
+
+.qa-bounded-reading__start {
+  margin: 0;
+  font-size: var(--type-sm);
+  line-height: 1.4;
+  padding: var(--space-1);
+  border-radius: var(--radius-chip);
+  background: var(--surface-reading-solid);
+}
+
+.qa-bounded-reading__start:focus {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--border-control));
+}
+
+.qa-bounded-reading:focus-visible {
+  /* This scrollable reading region already has a light border. A thicker
+     inset focus ring must remain distinguishable at real 200% text. */
+  outline: calc(var(--border-control) + var(--border-control)) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--border-control));
+}
+
+.qa-bounded-reading p {
+  margin-block: var(--space-2);
+}
+
+/* Historical, deliberately unbounded fixture retains the old grid geometry. */
+.qa-unbounded-controls {
+  display: contents;
+}
+
+@media (forced-colors: active) {
+  .qa-bounded-reading {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+  .qa-bounded-reading__start:focus,
+  .qa-bounded-reading:focus-visible {
+    outline-color: Highlight;
+  }
+  .qa-bounded-reading__start {
+    background: Canvas;
+    color: CanvasText;
+  }
+}

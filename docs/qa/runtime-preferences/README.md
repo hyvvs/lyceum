@@ -1,5 +1,23 @@
 # M0-003 second corrective slice — same-mounted runtime preferences and axe-incomplete triage
 
+**Latest audit #17 proof of concept (2026-11-24, pending owner merge decision):**
+The owner approved only the **consumer-specific** bounded Dialog reading and
+controls layout in the QA fixture. The default `composition:"tall"` now uses
+an explicit visible reading-start initial focus, a fully scrollable labeled
+reading region, separate real Select/control group and scoped native anchor
+scrolling on live preference reflow; the former failing
+`composition:"tall-unbounded"` remains deliberately reproducible. See
+[new actual before/after screenshot pairs, geometry, real focused-glyph
+pixels and precise acceptance boundaries](tall-body-investigation.md).
+No shared production Dialog/Select API/CSS, dependency, FocusScope, Popper,
+portal or global positioning manager changed in this proof of concept.
+Latest full **local** verification: frozen install/verify/audit/Storybook
+**PASS**, Chromium **88 passed / 0 failed**, original 141/141 stories and
+164/164 required axe states executed. Independent read-only UX, architecture
+and security reviews (including the final minor QA-only delta) report no
+blockers. **Exact-head hosted Linux Verify, Dependency audit and Secret scan
+remain pending**; PR #16 remains **DRAFT/UNMERGED**.
+
 **New 2026-11-24 tall-body limitation:** The owner-authorized realistic
 multi-control Dialog investigation revealed two red-first, normal-user-flow
 failures (initial Radix autofocus offscreen and live 100%→200% reflow of a

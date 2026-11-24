@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Button,
   Dialog,
@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../packages/ui/src/index";
+import "./runtime-preferences.css";
 
 type Theme = "dark" | "light";
 type Contrast = "standard" | "high";
@@ -75,11 +76,17 @@ function RuntimePreferencesFixture() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [copyMode, setCopyMode] = useState<"short" | "long">("short");
   const [optionMode, setOptionMode] = useState<"short" | "long">("short");
-  const [compositionMode, setCompositionMode] = useState<"compact" | "tall">("compact");
+  const [compositionMode, setCompositionMode] = useState<"compact" | "tall" | "tall-unbounded">(
+    "compact",
+  );
   const [directionMode, setDirectionMode] = useState<"ltr" | "rtl">("ltr");
   const [reviewedNotes, setReviewedNotes] = useState(false);
   const [studyPace, setStudyPace] = useState("steady");
   const [saved, setSaved] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const readingStartRef = useRef<HTMLHeadingElement>(null);
+  const isBounded = compositionMode === "tall";
+  const isTall = compositionMode !== "compact";
   const mountId = useRef(0);
   if (mountId.current === 0) mountId.current = ++nextMountId;
 
@@ -112,7 +119,11 @@ function RuntimePreferencesFixture() {
       const detail = event.detail as Record<string, unknown>;
       if (detail.copy === "short" || detail.copy === "long") setCopyMode(detail.copy);
       if (detail.options === "short" || detail.options === "long") setOptionMode(detail.options);
-      if (detail.composition === "compact" || detail.composition === "tall") {
+      if (
+        detail.composition === "compact" ||
+        detail.composition === "tall" ||
+        detail.composition === "tall-unbounded"
+      ) {
         setCompositionMode(detail.composition);
       }
       if (detail.direction === "ltr" || detail.direction === "rtl") {
@@ -137,14 +148,27 @@ function RuntimePreferencesFixture() {
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = preferences.theme;
     root.dataset.contrast = preferences.contrast;
     root.dataset.transparency = preferences.transparency;
     root.dataset.motion = preferences.motion;
     root.style.fontSize = preferences.textScale;
-  }, [preferences]);
+    // When preferences reflow a separately portalled Select, the focused option
+    // is outside Dialog's DOM and cannot trigger the Dialog's normal Tab scroll.
+    // Re-expose only this consumer's real Popper anchor; Radix still positions
+    // the portal, owns its active option and restores focus on dismissal.
+    if (dialogOpen && isBounded) {
+      const activeAnchor = dialogRef.current?.querySelector<HTMLElement>(
+        ".lyceum-select__trigger[data-state='open']",
+      );
+      // Center the trigger within the existing Dialog scrollport so its
+      // *external focus outline* remains visible when Radix restores focus,
+      // even after an open popup has already finished its collision pass.
+      activeAnchor?.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+    }
+  }, [preferences, dialogOpen, isBounded]);
 
   return (
     <div className="lyceum-select-demo">
@@ -153,64 +177,96 @@ function RuntimePreferencesFixture() {
           <Button>Open runtime study settings</Button>
         </DialogTrigger>
         <DialogContent
+          ref={dialogRef}
           title="Settings"
           description={copyMode === "long" ? longDescription : "Choose a topic."}
           dir={directionMode}
+          className={isBounded ? "qa-bounded-dialog" : undefined}
+          onOpenAutoFocus={(event) => {
+            if (isBounded && readingStartRef.current) {
+              event.preventDefault();
+              readingStartRef.current.focus();
+            }
+          }}
         >
-          <div className="lyceum-select-demo">
-            {compositionMode === "tall" && (
+          <div className={isBounded ? "qa-bounded-composition" : "lyceum-select-demo"}>
+            {isTall && (
               <>
-                <section data-qa-tall-reading aria-label="Study preparation notes">
+                {isBounded && (
+                  <h3
+                    id="qa-tall-reading-start"
+                    className="qa-bounded-reading__start"
+                    tabIndex={-1}
+                    ref={readingStartRef}
+                  >
+                    Study notes
+                  </h3>
+                )}
+                <section
+                  data-qa-tall-reading
+                  className={isBounded ? "qa-bounded-reading glass-reading" : undefined}
+                  role={isBounded ? "region" : undefined}
+                  aria-label="Study preparation notes"
+                  tabIndex={isBounded ? 0 : undefined}
+                >
                   {studyPreparationNotes.map((note) => (
                     <p key={note}>{note}</p>
                   ))}
                 </section>
+              </>
+            )}
+            <div
+              className={isBounded ? "qa-bounded-controls" : "qa-unbounded-controls"}
+              role={isBounded ? "group" : undefined}
+              aria-label={isBounded ? "Study controls" : undefined}
+            >
+              {isTall && (
                 <Button variant="secondary" onClick={() => setReviewedNotes((value) => !value)}>
                   {reviewedNotes ? "Notes acknowledged" : "Acknowledge study notes"}
                 </Button>
-              </>
-            )}
-            <label className="lyceum-select-demo__label" htmlFor="qa-runtime-topic">
-              Study topic
-            </label>
-            <Select dir={directionMode} value={topic} onValueChange={setTopic}>
-              <SelectTrigger id="qa-runtime-topic">
-                <SelectValue placeholder="Choose a study topic" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="math">Mathematics</SelectItem>
-                <SelectItem value="physics">Physics</SelectItem>
-                <SelectItem value="chemistry">Chemistry</SelectItem>
-                <SelectItem value="history">History</SelectItem>
-                {optionMode === "long" &&
-                  extraTopics.map(([value, name]) => (
-                    <SelectItem key={value} value={value}>
-                      {name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <p>Selected topic: {topic}</p>
-            {compositionMode === "tall" && (
-              <>
-                <Button variant="secondary" onClick={() => setSaved((value) => !value)}>
-                  {saved ? "Study settings saved" : "Save study settings"}
-                </Button>
-                <label className="lyceum-select-demo__label" htmlFor="qa-runtime-pace">
-                  Study pace
-                </label>
-                <Select dir={directionMode} value={studyPace} onValueChange={setStudyPace}>
-                  <SelectTrigger id="qa-runtime-pace">
-                    <SelectValue placeholder="Choose a study pace" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="steady">Steady</SelectItem>
-                    <SelectItem value="focused">Focused</SelectItem>
-                    <SelectItem value="intensive">Intensive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
+              )}
+              <label className="lyceum-select-demo__label" htmlFor="qa-runtime-topic">
+                Study topic
+              </label>
+              <Select dir={directionMode} value={topic} onValueChange={setTopic}>
+                <SelectTrigger id="qa-runtime-topic">
+                  <SelectValue placeholder="Choose a study topic" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="math">Mathematics</SelectItem>
+                  <SelectItem value="physics">Physics</SelectItem>
+                  <SelectItem value="chemistry">Chemistry</SelectItem>
+                  <SelectItem value="history">History</SelectItem>
+                  {optionMode === "long" &&
+                    extraTopics.map(([value, name]) => (
+                      <SelectItem key={value} value={value}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p>Selected topic: {topic}</p>
+              {isTall && (
+                <>
+                  <Button variant="secondary" onClick={() => setSaved((value) => !value)}>
+                    {saved ? "Study settings saved" : "Save study settings"}
+                  </Button>
+                  <label className="lyceum-select-demo__label" htmlFor="qa-runtime-pace">
+                    Study pace
+                  </label>
+                  <Select dir={directionMode} value={studyPace} onValueChange={setStudyPace}>
+                    <SelectTrigger id="qa-runtime-pace">
+                      <SelectValue placeholder="Choose a study pace" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="steady">Steady</SelectItem>
+                      <SelectItem value="focused">Focused</SelectItem>
+                      <SelectItem value="intensive">Intensive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
