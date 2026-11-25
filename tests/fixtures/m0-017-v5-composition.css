@@ -1,0 +1,711 @@
+/* M0-017 Slice A: original, static CSS-only atmosphere. Not an M0-019 backdrop asset. */
+.v5-scene {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  overflow: clip;
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  background: radial-gradient(
+      ellipse at 73% 16%,
+      color-mix(in srgb, var(--caution) 52%, transparent),
+      transparent 41%
+    ),
+    radial-gradient(
+      ellipse at 14% 61%,
+      color-mix(in srgb, var(--conceptual) 36%, transparent),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 91% 80%,
+      color-mix(in srgb, var(--positive) 15%, transparent),
+      transparent 51%
+    ),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--backdrop-solid) 57%, var(--conceptual)),
+      var(--backdrop-solid) 79%
+    );
+}
+.v5-scene__horizon,
+.v5-scene__structure,
+.v5-scene__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.v5-scene__horizon {
+  top: 35%;
+  background: radial-gradient(
+      ellipse at 78% 41%,
+      color-mix(in srgb, var(--caution) 35%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(
+      165deg,
+      transparent 28%,
+      color-mix(in srgb, var(--backdrop-solid) 72%, var(--conceptual)) 48%,
+      transparent 70%
+    ),
+    linear-gradient(
+      17deg,
+      color-mix(in srgb, var(--backdrop-solid) 85%, var(--accent)) 16%,
+      transparent 63%
+    );
+  clip-path: polygon(
+    0 64%,
+    18% 40%,
+    33% 54%,
+    52% 34%,
+    68% 46%,
+    86% 25%,
+    100% 36%,
+    100% 100%,
+    0 100%
+  );
+}
+.v5-scene__structure {
+  background: linear-gradient(
+      to bottom,
+      transparent 14%,
+      color-mix(in srgb, var(--glass-border) 65%, transparent) 14.2%,
+      transparent 14.5%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(16.67% - 3px),
+      color-mix(in srgb, var(--backdrop-solid) 83%, var(--glass-border-raised)) calc(16.67% - 2px),
+      color-mix(in srgb, var(--backdrop-solid) 83%, var(--glass-border-raised)) 16.67%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--backdrop-solid) 64%, transparent),
+      transparent 26%,
+      transparent 72%,
+      color-mix(in srgb, var(--backdrop-solid) 64%, transparent)
+    );
+  opacity: 0.29;
+}
+.v5-scene__scrim {
+  background: var(--backdrop-scrim);
+}
+.v5-scene__frame {
+  position: relative;
+  z-index: 1;
+  max-width: 1520px;
+  margin-inline: auto;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+.v5-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: center;
+  min-height: 64px;
+}
+.v5-brand {
+  display: inline-flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-self: start;
+  font-size: 1.4rem;
+  font-weight: 750;
+  letter-spacing: -.06em;
+  text-decoration: none;
+}
+.v5-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-control);
+  background: var(--glass-fill-raised);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.v5-brand__mark svg {
+  width: 24px;
+  height: 24px;
+}
+.v5-brand__dot {
+  color: var(--accent);
+}
+.v5-topnav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+}
+.v5-topnav__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--text-2);
+  font-size: var(--type-sm);
+  font-weight: 650;
+  text-decoration: none;
+}
+.v5-topnav__link svg {
+  width: 18px;
+  height: 18px;
+}
+.v5-topnav__link:hover,
+.v5-topnav__link.is-current {
+  color: var(--text-1);
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border-raised);
+}
+.v5-header__actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-self: end;
+}
+/* Small header controls keep the rim/raised treatment but avoid extra GPU blur layers. */
+.v5-header__actions .v5-icon-circle {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.v5-icon-circle {
+  display: grid;
+  place-items: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  border-radius: var(--radius-pill);
+}
+.v5-icon-circle svg {
+  width: 19px;
+  height: 19px;
+}
+.v5-dock {
+  position: absolute;
+  z-index: 5;
+  inset-inline-start: var(--space-6);
+  top: 270px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+}
+.v5-dock__item {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: var(--text-2);
+  text-decoration: none;
+}
+.v5-dock__item:hover {
+  color: var(--text-1);
+  background: var(--glass-fill-raised);
+}
+.v5-dock__item.is-current {
+  background: var(--surface-reading-solid);
+  color: var(--text-1);
+  border-color: var(--glass-border-raised);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.v5-dock__item svg {
+  width: 20px;
+  height: 20px;
+}
+.v5-main {
+  min-width: 0;
+  margin-inline-start: clamp(78px, 8vw, 114px);
+}
+.v5-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: var(--space-4);
+  margin: var(--space-6) 0 var(--space-5);
+}
+.v5-intro h1 {
+  max-width: 32ch;
+  margin: var(--space-2) 0;
+  font-size: clamp(2.1rem, 3vw, 2.9rem);
+  font-weight: 690;
+  line-height: 1.13;
+  letter-spacing: -.055em;
+}
+.v5-intro p:not(.v5-kicker) {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--type-sm);
+  line-height: 1.5;
+}
+.v5-kicker,
+.v5-label,
+.v5-topic__kind {
+  margin: 0;
+  font-size: var(--type-xs);
+  font-weight: 680;
+  letter-spacing: .09em;
+  color: var(--text-2);
+}
+.v5-kicker {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.v5-kicker__line {
+  width: var(--space-5);
+  height: 2px;
+  background: var(--accent);
+}
+.v5-status,
+.v5-section-heading__tag,
+.v5-library__heading > span {
+  flex-shrink: 0;
+  color: var(--text-2);
+  font-size: var(--type-xs);
+  line-height: 1.5;
+}
+.v5-status {
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-3);
+}
+.v5-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.v5-scene :is(.v5-small-card, .v5-feature, .v5-reading, .v5-topic) {
+  position: relative;
+  overflow: hidden;
+}
+.v5-scene :is(.v5-small-card, .v5-feature, .v5-reading, .v5-topic)::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--space-5);
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--glass-highlight), transparent);
+  pointer-events: none;
+}
+.v5-small-card {
+  min-height: 150px;
+  display: grid;
+  align-content: space-between;
+  gap: var(--space-1);
+}
+.v5-small-card__symbol {
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-chip);
+  background: var(--glass-fill-raised);
+}
+.v5-small-card__symbol svg {
+  width: 17px;
+  height: 17px;
+}
+.v5-small-card h2 {
+  margin: var(--space-2) 0 0;
+  font-size: 1.22rem;
+  font-weight: 680;
+  letter-spacing: -.025em;
+}
+.v5-small-card p {
+  margin: 0;
+  font-size: var(--type-sm);
+  color: var(--text-2);
+}
+/* Only the two raised overview cards are blurred; other cards stay translucent but cheap. */
+.v5-small-card--one,
+.v5-small-card--three {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.v5-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.v5-feature,
+.v5-reading {
+  min-height: 260px;
+}
+.v5-section-heading,
+.v5-library__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--space-4);
+}
+.v5-section-heading h2,
+.v5-library__heading h2 {
+  margin: var(--space-2) 0 0;
+  font-size: 1.6rem;
+  letter-spacing: -.04em;
+}
+.v5-section-heading__tag {
+  white-space: nowrap;
+}
+.v5-feature__body {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+.v5-feature__body p {
+  max-width: 35ch;
+  margin: 0 0 var(--space-5);
+  color: var(--text-2);
+  font-size: var(--type-sm);
+  line-height: 1.55;
+}
+.v5-feature .lyceum-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  border-radius: var(--radius-pill);
+  font-size: var(--type-sm);
+}
+.v5-feature .lyceum-button svg {
+  width: 17px;
+  height: 17px;
+}
+.v5-feature__motif {
+  display: flex;
+  align-items: end;
+  gap: var(--space-2);
+  width: 38%;
+  height: 115px;
+  padding-block-end: var(--space-2);
+}
+.v5-feature__motif span {
+  flex: 1;
+  border-radius: var(--radius-chip) var(--radius-chip) var(--space-1) var(--space-1);
+  border: 1px solid var(--glass-border-raised);
+  background: linear-gradient(to bottom, var(--glass-fill-raised), var(--glass-fill));
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.v5-feature__motif span:nth-child(1) {
+  height: 35%;
+}
+.v5-feature__motif span:nth-child(2) {
+  height: 72%;
+}
+.v5-feature__motif span:nth-child(3) {
+  height: 52%;
+}
+.v5-feature__motif span:nth-child(4) {
+  height: 94%;
+}
+.v5-feature__motif span:nth-child(5) {
+  height: 61%;
+}
+.v5-reading {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.v5-reading h2 {
+  margin: var(--space-3) 0;
+  font-size: 1.65rem;
+  letter-spacing: -.04em;
+}
+.v5-reading > p:not(.v5-label) {
+  margin: 0;
+  font-size: var(--type-sm);
+  line-height: 1.65;
+  color: var(--text-2);
+}
+.v5-reading__rule {
+  height: 1px;
+  margin: var(--space-5) 0;
+  background: var(--glass-border-raised);
+}
+.v5-reading .v5-reading__note {
+  font-size: var(--type-xs) !important;
+}
+.v5-library {
+  margin-top: var(--space-5);
+}
+.v5-library__heading {
+  margin-bottom: var(--space-4);
+  align-items: end;
+}
+.v5-library__heading h2 {
+  font-size: 1.45rem;
+}
+.v5-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.v5-topic {
+  min-height: 184px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+/* Five translucent tinted panels do not add five more expensive backdrop blurs. */
+.v5-scene .v5-topic {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.v5-topic__symbol {
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-chip);
+  background: var(--glass-fill-raised);
+}
+.v5-topic__symbol svg {
+  width: 18px;
+  height: 18px;
+}
+.v5-topic h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.25;
+  font-weight: 680;
+}
+.v5-topic p {
+  margin: 0;
+  font-size: var(--type-xs);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.v5-topic__kind {
+  font-size: .63rem;
+}
+.v5-topic__foot {
+  margin-top: auto;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--type-xs);
+  color: var(--text-2);
+}
+.v5-topic__foot svg {
+  width: 14px;
+  height: 14px;
+}
+.v5-disclaimer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-5) 0 var(--space-2);
+  color: var(--text-2);
+  font-size: var(--type-xs);
+}
+.v5-disclaimer svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.v5-disclaimer p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* The same hierarchy remains in solid and high-contrast modes. */
+:root[data-transparency="off"] .v5-scene,
+:root[data-transparency="reduced"] .v5-scene,
+:root[data-contrast="high"] .v5-scene {
+  background: var(--backdrop-solid);
+}
+:root[data-transparency="off"]
+  .v5-scene
+  :is(.v5-scene__horizon, .v5-scene__structure, .v5-scene__scrim),
+:root[data-transparency="reduced"]
+  .v5-scene
+  :is(.v5-scene__horizon, .v5-scene__structure, .v5-scene__scrim),
+:root[data-contrast="high"]
+  .v5-scene
+  :is(.v5-scene__horizon, .v5-scene__structure, .v5-scene__scrim) {
+  display: none;
+}
+:root[data-contrast="high"] .v5-scene .v5-topic {
+  border-color: var(--contrast-border);
+}
+@media (max-width: 1080px) {
+  .v5-main {
+    margin-inline-start: 76px;
+  }
+  .v5-intro h1 {
+    font-size: 2.4rem;
+  }
+  .v5-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .v5-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v5-feature,
+  .v5-reading {
+    min-height: 0;
+  }
+  .v5-topic-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .v5-scene__frame {
+    padding: var(--space-4) var(--space-4) calc(var(--space-7) * 3 + env(safe-area-inset-bottom));
+  }
+  .v5-header {
+    grid-template-columns: 1fr auto;
+  }
+  .v5-topnav {
+    display: none;
+  }
+  .v5-main {
+    margin-inline-start: 0;
+  }
+  .v5-dock {
+    position: fixed;
+    inset-inline-start: auto;
+    left: 50%;
+    right: auto;
+    top: auto;
+    bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    flex-direction: row;
+    box-shadow: var(--glass-shadow-raised);
+  }
+  .v5-scene {
+    scroll-padding-bottom: calc(var(--space-7) * 2 + env(safe-area-inset-bottom));
+  }
+  .v5-scene :is(a, button, section) {
+    scroll-margin-block-end: calc(var(--space-7) * 2);
+  }
+  .v5-intro {
+    margin-top: var(--space-6);
+  }
+  .v5-intro h1 {
+    font-size: clamp(2rem, 6vw, 2.65rem);
+  }
+}
+/* Very short viewports cannot spare a quarter of their visible height for
+   a fixed dock. Move it to the bottom of the scrollable composition instead. */
+@media (max-width: 900px) and (max-height: 360px) {
+  .v5-dock {
+    position: absolute;
+    bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+  .v5-scene__frame {
+    padding-bottom: calc(var(--space-7) * 3 + var(--target-min) + env(safe-area-inset-bottom));
+  }
+}
+/* Double-size root text also needs the visible viewport for actual reading,
+   not a fixed bar covering its first card. Dock remains at page bottom. */
+@media (max-width: 900px) {
+  :root[data-text-scale="200%"] .v5-dock {
+    position: absolute;
+    bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+  :root[data-text-scale="200%"] .v5-scene__frame {
+    padding-bottom: calc(var(--space-7) * 3 + var(--target-min) + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 580px) {
+  .v5-header__actions .v5-icon-circle:last-child {
+    display: none;
+  }
+  .v5-intro {
+    display: block;
+  }
+  .v5-intro h1 {
+    font-size: clamp(1.8rem, 8.5vw, 2.35rem);
+  }
+  .v5-status {
+    display: inline-block;
+    margin-top: var(--space-4);
+  }
+  .v5-overview,
+  .v5-topic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .v5-small-card {
+    min-height: 142px;
+    padding: var(--space-4);
+  }
+  .v5-small-card h2 {
+    font-size: 1.03rem;
+  }
+  .v5-small-card__symbol {
+    width: var(--space-5);
+    height: var(--space-5);
+  }
+  .v5-section-heading,
+  .v5-library__heading {
+    flex-direction: column;
+    align-items: start;
+  }
+  .v5-feature__body {
+    align-items: start;
+  }
+  .v5-feature__motif {
+    width: 24%;
+    min-width: 55px;
+    opacity: 0.45;
+  }
+  .v5-topic {
+    min-height: 196px;
+    padding: var(--space-4);
+  }
+  .v5-disclaimer {
+    align-items: start;
+  }
+}
+@media (max-width: 340px) {
+  .v5-overview,
+  .v5-topic-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v5-feature__motif {
+    display: none;
+  }
+}
+/* At 200% root text, two narrow columns would squeeze names below readable widths. */
+:root[data-text-scale="200%"] .v5-overview,
+:root[data-text-scale="200%"] .v5-topic-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (forced-colors: active) {
+  .v5-scene {
+    background: Canvas;
+    color: CanvasText;
+  }
+  .v5-scene__horizon,
+  .v5-scene__structure,
+  .v5-scene__scrim {
+    display: none;
+  }
+  .v5-dock__item.is-current,
+  .v5-topnav__link.is-current {
+    background: Highlight;
+    color: HighlightText;
+  }
+  .v5-scene :is(.v5-small-card, .v5-feature, .v5-reading, .v5-topic) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+  .v5-scene :is(.v5-kicker, .v5-label, .v5-topic__kind, .v5-topic p, .v5-intro p, .v5-status) {
+    color: CanvasText;
+  }
+}

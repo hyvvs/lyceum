@@ -6,17 +6,19 @@ import "./preview.css";
 interface FrameProps {
   children: ReactNode;
   theme: string;
+  backdrop: string;
   transparency: string;
   contrast: string;
   motion: string;
   textScale: string;
   /** A flat frame is required when the story renders its own glass layer. */
-  stageSurface: "reading" | "flat";
+  stageSurface: "reading" | "flat" | "fullbleed";
 }
 
 function StoryFrame({
   children,
   theme,
+  backdrop,
   transparency,
   contrast,
   motion,
@@ -26,28 +28,37 @@ function StoryFrame({
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = theme;
+    root.dataset.backdrop = backdrop;
     root.dataset.transparency = transparency;
     root.dataset.contrast = contrast;
     root.dataset.motion = motion;
+    root.dataset.textScale = textScale;
     root.style.fontSize = textScale;
     return () => {
-      for (const name of ["theme", "transparency", "contrast", "motion"]) {
+      for (const name of ["theme", "backdrop", "transparency", "contrast", "motion", "textScale"]) {
         root.removeAttribute(`data-${name}`);
       }
       root.style.removeProperty("font-size");
     };
-  }, [theme, transparency, contrast, motion, textScale]);
+  }, [theme, backdrop, transparency, contrast, motion, textScale]);
 
+  const Stage = stageSurface === "fullbleed" ? "div" : "main";
   return (
-    <main className="storybook-stage">
+    <Stage
+      className={
+        stageSurface === "fullbleed"
+          ? "storybook-stage storybook-stage--fullbleed"
+          : "storybook-stage"
+      }
+    >
       <div
         className={
-          stageSurface === "flat" ? "storybook-surface" : "glass-reading storybook-surface"
+          stageSurface === "reading" ? "glass-reading storybook-surface" : "storybook-surface"
         }
       >
         {children}
       </div>
-    </main>
+    </Stage>
   );
 }
 
@@ -56,6 +67,10 @@ const preview: Preview = {
     theme: {
       description: "Color theme",
       toolbar: { icon: "circlehollow", items: ["auto", "dark", "light"] },
+    },
+    backdrop: {
+      description: "Backdrop (CSS demonstration only; no M0-019 assets)",
+      toolbar: { icon: "photo", items: ["solid", "atmospheric"] },
     },
     transparency: {
       description: "Glass transparency",
@@ -73,6 +88,7 @@ const preview: Preview = {
   },
   initialGlobals: {
     theme: "dark",
+    backdrop: "solid",
     transparency: "off",
     contrast: "standard",
     motion: "reduced",
@@ -82,11 +98,18 @@ const preview: Preview = {
     (Story, context) => (
       <StoryFrame
         theme={String(context.globals.theme)}
+        backdrop={String(context.globals.backdrop)}
         transparency={String(context.globals.transparency)}
         contrast={String(context.globals.contrast)}
         motion={String(context.globals.motion)}
         textScale={String(context.globals.textScale)}
-        stageSurface={context.parameters.stageSurface === "flat" ? "flat" : "reading"}
+        stageSurface={
+          context.parameters.stageSurface === "fullbleed"
+            ? "fullbleed"
+            : context.parameters.stageSurface === "flat"
+              ? "flat"
+              : "reading"
+        }
       >
         <Story />
       </StoryFrame>

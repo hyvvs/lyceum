@@ -26,6 +26,33 @@ body {
   gap: var(--space-3);
 }
 
+:root[data-backdrop="atmospheric"] .storybook-stage:not(.storybook-stage--fullbleed) {
+  background-image: radial-gradient(
+      ellipse at 12% 18%,
+      color-mix(in srgb, var(--conceptual) 32%, transparent),
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse at 80% 80%,
+      color-mix(in srgb, var(--caution) 22%, transparent),
+      transparent 57%
+    ),
+    linear-gradient(
+      145deg,
+      var(--backdrop-solid),
+      color-mix(in srgb, var(--backdrop-solid) 82%, var(--accent))
+    );
+}
+
+.storybook-stage--fullbleed {
+  display: block;
+  min-width: 0;
+  padding: 0;
+}
+.storybook-stage--fullbleed .storybook-surface {
+  padding: 0;
+}
+
 /* QA-only, token-derived gradient. It is not a production or licensed M0-019 backdrop. */
 .storybook-stage:has(.lyceum-select-demo) {
   grid-template-columns: minmax(0, 1fr);
