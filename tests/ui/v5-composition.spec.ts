@@ -163,6 +163,12 @@ test("all desktop/mobile screenshot states retain contrast modes, 44px controls 
         `${scenario.file}: dock must be below initial reading viewport`,
       ).toBeGreaterThanOrEqual(scenario.height);
     }
+    if (scenario.width === 320 && scenario.name === "double-text") {
+      const libraryHeading = page.getByRole("heading", { name: "A world of possibilities." });
+      await libraryHeading.scrollIntoViewIfNeeded();
+      await expect(libraryHeading).toBeVisible();
+      await shot(page, "short-200-text-library-320x256.png");
+    }
     if (scenario.width <= 390) {
       const footer = page.locator("#scene-privacy");
       await footer.scrollIntoViewIfNeeded();
