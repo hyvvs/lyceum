@@ -17,7 +17,7 @@ jobs:
   verify:
     name: Verify
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,6 +34,10 @@ jobs:
         run: pnpm storybook:build
       - name: Test UI keyboard and accessibility
         run: pnpm test:ui
+      - name: Build real M0-004 web shell
+        run: pnpm web:build
+      - name: Test production web routes, worker and offline PWA
+        run: pnpm test:web
 
   audit:
     name: Dependency audit
