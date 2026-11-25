@@ -109,26 +109,6 @@ function VisualComposition() {
             </div>
           </header>
 
-          <nav className="v5-dock glass-float" aria-label="Visual-only dock">
-            {dock.map(({ label, href, icon }) => (
-              <Tooltip key={href}>
-                <TooltipTrigger asChild>
-                  <a
-                    className={
-                      activeSection === href.slice(1) ? "v5-dock__item is-current" : "v5-dock__item"
-                    }
-                    href={href}
-                    aria-label={label}
-                    aria-current={activeSection === href.slice(1) ? "location" : undefined}
-                  >
-                    <Icon name={icon} />
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent side="right" text={label} />
-              </Tooltip>
-            ))}
-          </nav>
-
           <main className="v5-main" id="scene-overview">
             <div className="v5-intro">
               <div>
@@ -175,6 +155,28 @@ function VisualComposition() {
                 <p>Local by default</p>
               </GlassCard>
             </section>
+
+            <nav className="v5-dock glass-float" aria-label="Visual-only dock">
+              {dock.map(({ label, href, icon }) => (
+                <Tooltip key={href}>
+                  <TooltipTrigger asChild>
+                    <a
+                      className={
+                        activeSection === href.slice(1)
+                          ? "v5-dock__item is-current"
+                          : "v5-dock__item"
+                      }
+                      href={href}
+                      aria-label={label}
+                      aria-current={activeSection === href.slice(1) ? "location" : undefined}
+                    >
+                      <Icon name={icon} />
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" text={label} />
+                </Tooltip>
+              ))}
+            </nav>
 
             <div className="v5-main-grid">
               <GlassPanel

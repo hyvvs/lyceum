@@ -575,13 +575,18 @@
     margin-inline-start: 0;
   }
   .v5-dock {
-    position: fixed;
+    /* A floating capsule in normal flow sits below the overview cards. A
+       fixed capsule obscures each reading line as it scrolls behind it. */
+    position: relative;
     inset-inline-start: auto;
-    left: 50%;
+    left: auto;
     right: auto;
     top: auto;
-    bottom: max(var(--space-4), env(safe-area-inset-bottom));
-    transform: translateX(-50%);
+    bottom: auto;
+    width: max-content;
+    max-width: 100%;
+    margin: var(--space-4) auto;
+    transform: none;
     flex-direction: row;
     box-shadow: var(--glass-shadow-raised);
   }
@@ -598,24 +603,14 @@
     font-size: clamp(2rem, 6vw, 2.65rem);
   }
 }
-/* Very short viewports cannot spare a quarter of their visible height for
-   a fixed dock. Move it to the bottom of the scrollable composition instead. */
+/* Short-height and 200%-text views retain extra safe-area breathing room.
+   The dock is already in normal flow, so it cannot occlude reading content. */
 @media (max-width: 900px) and (max-height: 360px) {
-  .v5-dock {
-    position: absolute;
-    bottom: max(var(--space-4), env(safe-area-inset-bottom));
-  }
   .v5-scene__frame {
     padding-bottom: calc(var(--space-7) * 3 + var(--target-min) + env(safe-area-inset-bottom));
   }
 }
-/* Double-size root text also needs the visible viewport for actual reading,
-   not a fixed bar covering its first card. Dock remains at page bottom. */
 @media (max-width: 900px) {
-  :root[data-text-scale="200%"] .v5-dock {
-    position: absolute;
-    bottom: max(var(--space-4), env(safe-area-inset-bottom));
-  }
   :root[data-text-scale="200%"] .v5-scene__frame {
     padding-bottom: calc(var(--space-7) * 3 + var(--target-min) + env(safe-area-inset-bottom));
   }
