@@ -9,3 +9,5 @@ export * from "./visually-hidden";
 export * from "./glass-panel";
 export * from "./glass-card";
 export * from "./tint-card";
+export * from "./pill-nav";
+export * from "./dock";

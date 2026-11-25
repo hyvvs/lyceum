@@ -56,13 +56,15 @@ describe("WCAG A/AA and generated Storybook acceptance contract", () => {
       "GlassPanel",
       "GlassCard",
       "TintCard",
+      "PillNav",
+      "Dock",
     ]);
-    const approved = PRIMITIVE_FAMILIES.slice(-3).map((name) => ({
+    const approved = PRIMITIVE_FAMILIES.slice(7).map((name) => ({
       ...defaultEntry,
       id: `primitives-${name.toLowerCase()}--dark-full`,
       title: `Primitives/${name}`,
     }));
-    expect(expectedStoryStates(approved)).toHaveLength(3);
+    expect(expectedStoryStates(approved)).toHaveLength(5);
   });
   test("covers every supported WCAG 2.0/2.1/2.2 A/AA rule tag in installed axe", () => {
     const supported = [...new Set(axe.getRules().flatMap((rule) => rule.tags))]

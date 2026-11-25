@@ -188,6 +188,63 @@
   border-radius: var(--radius-pill);
 }
 
+/* B3 presentational navigation recipes. The app owns placement and route links. */
+.lyceum-pill-nav,
+.lyceum-dock {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--space-2);
+}
+.lyceum-pill-nav {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.lyceum-dock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.lyceum-dock[data-orientation="vertical"] {
+  flex-direction: column;
+}
+.lyceum-dock[data-orientation="horizontal"] {
+  flex-direction: row;
+}
+:where(.lyceum-pill-nav > a, .lyceum-dock > a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  gap: var(--space-2);
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2);
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+:where(.lyceum-dock > a > span[aria-hidden="true"]) {
+  font-size: var(--type-reading);
+}
+:where(.lyceum-pill-nav > a:hover, .lyceum-dock > a:hover) {
+  background: var(--surface-reading-solid);
+  color: var(--text-1);
+}
+:where(.lyceum-pill-nav > a[aria-current="page"], .lyceum-dock > a[aria-current="page"]) {
+  background: var(--surface-reading-solid);
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 2px var(--contrast-border);
+}
+@media (forced-colors: active) {
+  :where(.lyceum-pill-nav > a[aria-current="page"], .lyceum-dock > a[aria-current="page"]) {
+    background: Highlight;
+    color: HighlightText;
+    border: 2px solid Highlight;
+  }
+}
+
 /* Slice A wrappers reuse the recipes above, rather than layering a second blur. */
 .lyceum-glass-panel,
 .lyceum-glass-card,

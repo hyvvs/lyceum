@@ -36,6 +36,12 @@
       max(var(--space-3), env(safe-area-inset-bottom))
       max(var(--space-3), env(safe-area-inset-left));
   }
+  /* The app measures real localized Tooltip bounds and applies a lane only
+     when lateral clearance is insufficient. The existing B2 hook measures
+     the resulting computed padding or gap, including a waiting PWA banner. */
+  .shell-auxiliary[data-update-pending="true"] {
+    padding-block-start: var(--space-2);
+  }
   .dock-grip,
   .dock-trail {
     display: none;
