@@ -1,5 +1,7 @@
 # M0-004 web shell — draft implementation evidence (2026-11-25)
 
+**Audit #21 security follow-up:** The original two-moderate Workbox audit blocker described below is historical evidence for the initially approved dependency tree, not the latest tested lockfile. The owner later authorized a single narrow, out-of-range experimental Workbox glob override. See [the exact patched package graph, unrestricted green local audit, precache parity, browser and Lighthouse comparisons, and retained semver risk](m0-004-workbox-override-audit21-2026-11-25.md); latest exact-head hosted outcomes belong on [DRAFT PR #18](https://github.com/hyvvs/lyceum/pull/18). This follow-up does not constitute M0-004 acceptance/merge or manual M0-003 signoff.
+
 **Status: DRAFT, NOT ACCEPTED OR MERGED.** Owner Independent Audit #20 authorized development and draft-PR verification A–D, not final acceptance. M0-003 remains `[~]`, M0-004 is `[~]`, manual accessibility signoff is **NOT RUN**, and no M0-005/M0-017+ implementation or public release is authorized.
 
 ## Real application and scope

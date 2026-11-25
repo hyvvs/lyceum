@@ -72,9 +72,17 @@ test("precache excludes sensitive API paths and can be updated/unregistered clea
   });
   expect(evidence.unregistered).toBe(true);
   expect(evidence.urls.length).toBeGreaterThan(0);
+  expect(new Set(evidence.urls).size).toBe(evidence.urls.length);
+  const paths = evidence.urls.map((url) => new URL(url).pathname);
+  for (const extension of [".html", ".js", ".css", ".png", ".webmanifest"]) {
+    expect(paths.some((path) => path.endsWith(extension))).toBe(true);
+  }
+  expect(paths.some((path) => path.includes("engine.worker-"))).toBe(true);
+  expect(paths.some((path) => path.endsWith("theme-bootstrap.js"))).toBe(true);
   for (const url of evidence.urls) {
     expect(url).toMatch(/^http:\/\/127\.0\.0\.1:4173\//);
     expect(url).not.toMatch(/\/(api|auth|uploads|private|provider|sync)\//);
+    expect(new URL(url).pathname).not.toMatch(/\.map$|\/\./);
   }
   expect(evidence.afterCleanup).toEqual([]);
 });

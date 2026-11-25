@@ -10,7 +10,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@joshwooding/vite-plugin-react-docgen-typescript": "0.9.1"
+      "@joshwooding/vite-plugin-react-docgen-typescript": "0.9.1",
+      "workbox-build@7.4.1>glob": "14.0.3"
     }
   },
   "scripts": {
