@@ -111,6 +111,10 @@ test("short mobile viewport keeps focused controls out of floating dock and reve
     document.documentElement.style.fontSize = "32px";
   });
   await expect(page.locator("html")).toHaveCSS("font-size", "32px");
+  // A translated/zoomed route title can exceed the available height.
+  // Ensure the interactive-control dock clearance does not scroll away its
+  // first line when the lazy Settings route receives heading focus.
+  await page.addStyleTag({ content: ".settings-screen h1 { min-height: 360px; }" });
 
   async function focusClearOfDock(locator: ReturnType<typeof page.getByRole>) {
     await locator.focus();

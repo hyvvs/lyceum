@@ -168,6 +168,10 @@ function RootLayout() {
 
   function revealFocusedControl(target: HTMLElement) {
     if (window.innerWidth > 900 || !target.isConnected) return;
+    // This clearance is for interactive controls only. A route heading may be
+    // taller than a short viewport at 200% text size. Scrolling it above the
+    // viewport to clear the dock would hide its start after route navigation.
+    if (!target.matches("a[href], button, input, select, textarea, [role='button']")) return;
     const dock = document.querySelector<HTMLElement>(".icon-dock");
     if (!dock) return;
     const control = target.getBoundingClientRect();
