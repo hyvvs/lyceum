@@ -30,11 +30,19 @@ const paragraphs = [
 
 async function waitForScrollToSettle(page: import("@playwright/test").Page) {
   await page.evaluate(async () => {
-    let previous = window.scrollY;
+    const frame = document.querySelector<HTMLElement>(".application-frame");
+    const owner =
+      frame &&
+      /(auto|scroll)/.test(getComputedStyle(frame).overflowY) &&
+      frame.scrollHeight > frame.clientHeight
+        ? frame
+        : document.scrollingElement;
+    if (!owner) throw new Error("B1 actual reading scroll owner missing");
+    let previous = owner.scrollTop;
     let stableFrames = 0;
     for (let frame = 0; frame < 80; frame++) {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      const current = window.scrollY;
+      const current = owner.scrollTop;
       stableFrames = Math.abs(current - previous) < 0.5 ? stableFrames + 1 : 0;
       previous = current;
       if (stableFrames >= 4) return;
@@ -72,7 +80,21 @@ async function sampleReading(page: import("@playwright/test").Page) {
         (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? innerHeight),
     };
     const dockBounds = clip(rect(dock.getBoundingClientRect()), viewport);
-    if (area(dockBounds) <= 0) throw new Error("Actual production Dock is not visible");
+    const frame = document.querySelector<HTMLElement>(".application-frame");
+    const reservedScroll =
+      frame &&
+      /(auto|scroll)/.test(getComputedStyle(frame).overflowY) &&
+      frame.scrollHeight > frame.clientHeight;
+    const owner = reservedScroll ? frame : document.scrollingElement;
+    if (!owner) throw new Error("B1 actual reading scroll owner missing");
+    const fallback =
+      document.querySelector(".application")?.getAttribute("data-navigation-mode") === "flow";
+    if (area(dockBounds) <= 0 && !fallback) {
+      throw new Error("Production Dock disappeared without independently active in-flow fallback");
+    }
+    if (fallback && (getComputedStyle(dock).position === "fixed" || dock.offsetParent === null)) {
+      throw new Error("In-flow fallback Dock is fixed or inaccessible");
+    }
 
     function visibleBounds(node: Element, bounds: Rectangle): Rectangle {
       let visible = clip(bounds, viewport);
@@ -139,12 +161,15 @@ async function sampleReading(page: import("@playwright/test").Page) {
     const action = fixture.querySelector<HTMLElement>("[data-b1-action]");
     if (!finalParagraph || !action) throw new Error("B1 final content missing");
     return {
-      scrollY: Number(window.scrollY.toFixed(2)),
-      maxScrollY: Number((document.documentElement.scrollHeight - innerHeight).toFixed(2)),
+      scrollY: Number(owner.scrollTop.toFixed(2)),
+      scrollOwner: reservedScroll ? "frame" : "document",
+      maxScrollY: Number((owner.scrollHeight - owner.clientHeight).toFixed(2)),
       viewport: { width: innerWidth, height: innerHeight },
       rootFontSize: getComputedStyle(document.documentElement).fontSize,
       direction: getComputedStyle(document.documentElement).direction,
       dock: dockBounds,
+      dockVisible: area(dockBounds) > 1,
+      fallback,
       visibleLines,
       visibleControls,
       finalParagraphVisible:
@@ -202,7 +227,21 @@ for (const config of configurations) {
     let lastScroll = -1;
     let finalParagraphReached = false;
     let actionReached = false;
-    await page.mouse.move(12, 12);
+    const wheelPoint = await page.evaluate(() => {
+      const frame = document.querySelector<HTMLElement>(".application-frame");
+      const scrollingFrame = frame && /(auto|scroll)/.test(getComputedStyle(frame).overflowY);
+      const target = scrollingFrame ? frame : document.querySelector("main");
+      if (!target) throw new Error("B1 reading wheel target absent");
+      const bounds = target.getBoundingClientRect();
+      return {
+        x: Math.min(innerWidth - 12, Math.max(12, bounds.left + bounds.width / 2)),
+        y: Math.min(
+          innerHeight - 12,
+          Math.max(12, bounds.top + Math.min(bounds.height, innerHeight) / 2),
+        ),
+      };
+    });
+    await page.mouse.move(wheelPoint.x, wheelPoint.y);
     for (let step = 0; step < 120; step++) {
       const observation = await sampleReading(page);
       finalParagraphReached ||= observation.finalParagraphVisible;
@@ -249,6 +288,13 @@ for (const config of configurations) {
     await expect(page.locator("[data-b1-action]")).not.toBeFocused();
     await page.keyboard.press("Tab");
     await expect(page.locator("[data-b1-action]")).toBeFocused();
+    if (samples[0]?.fallback) {
+      const nav = page.getByRole("navigation", { name: "Quick navigation" });
+      await page.keyboard.press("Tab");
+      await expect(nav.getByRole("link", { name: "Today" })).toBeFocused();
+      await expect(nav).toBeInViewport();
+      await expect(nav.getByRole("link", { name: "Settings" })).toBeVisible();
+    }
 
     const overlapping = samples.flatMap((sample) =>
       sample.obscured.map((hit) => ({ scrollY: sample.scrollY, ...hit })),
@@ -265,6 +311,9 @@ for (const config of configurations) {
               direction: samples[0].direction,
               viewport: samples[0].viewport,
               dock: samples[0].dock,
+              scrollOwner: samples[0].scrollOwner,
+              fallback: samples[0].fallback,
+              dockVisible: samples[0].dockVisible,
             }
           : null,
         last: samples.at(-1)
