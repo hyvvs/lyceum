@@ -316,7 +316,7 @@ for (const config of configurations) {
     console.log(
       `B1_MEASUREMENTS ${JSON.stringify({
         configuration: config.name,
-        baseline: "cc21572ccee8d42bc7ceea1f33457c2d2c8421d1",
+        baseline: "PR #20 merged production baseline; exact SHA in B1/B2 QA evidence",
         first: samples[0]
           ? {
               scrollY: samples[0].scrollY,
