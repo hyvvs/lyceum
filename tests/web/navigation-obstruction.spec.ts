@@ -223,6 +223,10 @@ for (const config of configurations) {
     );
 
     const samples: Awaited<ReturnType<typeof sampleReading>>[] = [];
+    const capture = process.env.LYCEUM_B2_CAPTURE === "1";
+    if (capture && config.name === "mobile-390") {
+      await page.screenshot({ path: "docs/qa/m0-017-stage-b2/mobile-initial.png" });
+    }
     let evidenceSaved = false;
     let lastScroll = -1;
     let finalParagraphReached = false;
@@ -248,6 +252,11 @@ for (const config of configurations) {
       actionReached ||= observation.actionVisible;
       if (observation.visibleLines > 0) {
         samples.push(observation);
+        if (capture && samples.length === 3) {
+          await page.screenshot({
+            path: `docs/qa/m0-017-stage-b2/${config.name}-reading.png`,
+          });
+        }
         if (
           !evidenceSaved &&
           observation.obscured.some(
@@ -294,6 +303,11 @@ for (const config of configurations) {
       await expect(nav.getByRole("link", { name: "Today" })).toBeFocused();
       await expect(nav).toBeInViewport();
       await expect(nav.getByRole("link", { name: "Settings" })).toBeVisible();
+      if (capture) {
+        await page.screenshot({
+          path: `docs/qa/m0-017-stage-b2/${config.name}-in-flow-navigation.png`,
+        });
+      }
     }
 
     const overlapping = samples.flatMap((sample) =>

@@ -28,10 +28,13 @@ button {
   outline-offset: 4px;
 }
 .application {
-  min-height: 100svh;
+  height: var(--shell-visible-height, 100dvh);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   position: relative;
   isolation: isolate;
-  overflow-x: clip;
+  overflow: clip;
 }
 .atmosphere {
   position: fixed;
@@ -103,8 +106,37 @@ button {
 }
 .application-frame {
   max-width: 1580px;
+  width: 100%;
   margin: 0 auto;
   padding: var(--space-5) var(--space-6) var(--space-3);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  overscroll-behavior-y: contain;
+}
+.shell-auxiliary {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: 0 max(var(--space-4), env(safe-area-inset-right))
+    max(var(--space-3), env(safe-area-inset-bottom));
+}
+.application[data-navigation-mode="flow"] {
+  display: block;
+  height: auto;
+  min-height: var(--shell-visible-height, 100dvh);
+  overflow: visible;
+}
+.application[data-navigation-mode="flow"] .application-frame {
+  overflow: visible;
+  overscroll-behavior-y: auto;
+  flex: none;
+}
+.application[data-navigation-mode="flow"] .shell-auxiliary {
+  align-items: center;
 }
 .skip-link {
   position: fixed;
@@ -219,7 +251,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-left: auto;
+  margin-inline-start: auto;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);

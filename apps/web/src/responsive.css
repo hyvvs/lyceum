@@ -13,20 +13,28 @@
 
 @media (max-width: 900px) {
   .application-frame {
-    padding: var(--space-4) var(--space-4) 110px;
+    padding: var(--space-4);
   }
   .pill-navigation {
     display: none;
   }
   .icon-dock {
+    position: static;
     top: auto;
-    bottom: var(--space-4);
-    left: 50%;
-    transform: translateX(-50%);
+    inset-inline-start: auto;
+    bottom: auto;
+    transform: none;
     flex-direction: row;
     border-radius: var(--radius-pill);
     padding: var(--space-2);
     box-shadow: var(--glass-shadow);
+  }
+  .shell-auxiliary {
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) max(var(--space-3), env(safe-area-inset-right))
+      max(var(--space-3), env(safe-area-inset-bottom))
+      max(var(--space-3), env(safe-area-inset-left));
   }
   .dock-grip,
   .dock-trail {
@@ -60,7 +68,7 @@
     width: 100%;
   }
   .hero-art {
-    right: -10%;
+    inset-inline-end: -10%;
     top: 48%;
     width: 61%;
     opacity: 0.2;
@@ -115,6 +123,13 @@
   .step-status {
     white-space: normal;
     text-align: center;
+    max-width: 100%;
+    margin-inline-start: auto;
+  }
+  .setup-list li {
+    flex-wrap: wrap;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .settings-field {
     align-items: stretch;
@@ -163,6 +178,13 @@
     border: 2px solid Highlight;
     background: Highlight;
     color: HighlightText;
+  }
+  /* Chromium can paint an inline child of a Highlight link with Canvas behind
+     its glyphs. Preserve the OS-selected HighlightText/Highlight pair. */
+  .primary-action > span {
+    forced-color-adjust: none;
+    color: HighlightText;
+    background: transparent;
   }
   .step-number,
   .eyebrow,

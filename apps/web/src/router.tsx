@@ -9,6 +9,7 @@ import {
 import { Suspense, lazy, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./icons";
+import { useNavigationLayout } from "./navigation-layout";
 import { TodayScreen } from "./today";
 import { usePwaUpdate } from "./use-pwa-update";
 
@@ -45,53 +46,54 @@ function Brand() {
   );
 }
 
+// One app-owned route specification; public navigation primitives are deferred
+// to B3. Both existing semantic landmarks use the same destinations and labels.
+const shellDestinations = [
+  { to: "/", label: "navigation.today", icon: "home" },
+  { to: "/settings", label: "navigation.settings", icon: "settings" },
+] as const;
+
 function Navigation() {
   const { t } = useTranslation();
   return (
-    <>
-      <nav className="pill-navigation glass-float" aria-label={t("navigation.primary")}>
+    <nav className="pill-navigation glass-float" aria-label={t("navigation.primary")}>
+      {shellDestinations.map((destination) => (
         <Link
-          to="/"
-          activeOptions={{ exact: true }}
+          key={destination.to}
+          to={destination.to}
+          activeOptions={{ exact: destination.to === "/" }}
           activeProps={{ className: "pill-link is-active" }}
           inactiveProps={{ className: "pill-link" }}
         >
-          <Icon name="home" />
-          <span>{t("navigation.today")}</span>
+          <Icon name={destination.icon} />
+          <span>{t(destination.label)}</span>
         </Link>
+      ))}
+    </nav>
+  );
+}
+
+function DockNavigation({ navRef }: { navRef: React.Ref<HTMLElement> }) {
+  const { t } = useTranslation();
+  return (
+    <nav ref={navRef} className="icon-dock glass-float" aria-label={t("navigation.dock")}>
+      <span className="dock-grip" aria-hidden="true">
+        •••
+      </span>
+      {shellDestinations.map((destination) => (
         <Link
-          to="/settings"
-          activeProps={{ className: "pill-link is-active" }}
-          inactiveProps={{ className: "pill-link" }}
-        >
-          <Icon name="settings" />
-          <span>{t("navigation.settings")}</span>
-        </Link>
-      </nav>
-      <nav className="icon-dock glass-float" aria-label={t("navigation.dock")}>
-        <span className="dock-grip" aria-hidden="true">
-          •••
-        </span>
-        <Link
-          to="/"
-          activeOptions={{ exact: true }}
-          aria-label={t("navigation.today")}
+          key={destination.to}
+          to={destination.to}
+          activeOptions={{ exact: destination.to === "/" }}
+          aria-label={t(destination.label)}
           activeProps={{ className: "dock-link is-active" }}
           inactiveProps={{ className: "dock-link" }}
         >
-          <Icon name="home" />
+          <Icon name={destination.icon} />
         </Link>
-        <Link
-          to="/settings"
-          aria-label={t("navigation.settings")}
-          activeProps={{ className: "dock-link is-active" }}
-          inactiveProps={{ className: "dock-link" }}
-        >
-          <Icon name="settings" />
-        </Link>
-        <span className="dock-trail" aria-hidden="true" />
-      </nav>
-    </>
+      ))}
+      <span className="dock-trail" aria-hidden="true" />
+    </nav>
   );
 }
 
@@ -139,6 +141,8 @@ function RootLayout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const previous = useRef(pathname);
   const { needsRefresh, update } = usePwaUpdate();
+  const { mode, frameRef, headerRef, dockRef, auxiliaryRef, bannerRef } =
+    useNavigationLayout(needsRefresh);
 
   useEffect(() => {
     if (pathname === previous.current) return;
@@ -166,23 +170,8 @@ function RootLayout() {
     };
   }, [pathname]);
 
-  function revealFocusedControl(target: HTMLElement) {
-    if (window.innerWidth > 900 || !target.isConnected) return;
-    // This clearance is for interactive controls only. A route heading may be
-    // taller than a short viewport at 200% text size. Scrolling it above the
-    // viewport to clear the dock would hide its start after route navigation.
-    if (!target.matches("a[href], button, input, select, textarea, [role='button']")) return;
-    const dock = document.querySelector<HTMLElement>(".icon-dock");
-    if (!dock) return;
-    const control = target.getBoundingClientRect();
-    const overlay = dock.getBoundingClientRect();
-    if (control.bottom > overlay.top - 12 && control.top < overlay.bottom) {
-      window.scrollBy({ top: control.bottom - overlay.top + 16, behavior: "instant" });
-    }
-  }
-
   return (
-    <div className="application">
+    <div className="application" data-navigation-mode={mode}>
       <a href="#main-content" className="skip-link">
         {t("navigation.skip")}
       </a>
@@ -191,8 +180,8 @@ function RootLayout() {
         <span className="atmosphere-b" />
         <span className="atmosphere-c" />
       </div>
-      <div className="application-frame">
-        <header className="topbar">
+      <div ref={frameRef} className="application-frame">
+        <header ref={headerRef} className="topbar">
           <Brand />
           <Navigation />
           <div className="topbar-status">
@@ -201,14 +190,7 @@ function RootLayout() {
             <Icon name="shield" />
           </div>
         </header>
-        <main
-          id="main-content"
-          tabIndex={-1}
-          onFocusCapture={(event) => {
-            const target = event.target;
-            requestAnimationFrame(() => revealFocusedControl(target));
-          }}
-        >
+        <main id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
         <footer className="footer">
@@ -216,14 +198,17 @@ function RootLayout() {
           <span className="placeholder-label">{t("shell.placeholder")}</span>
         </footer>
       </div>
-      {needsRefresh && (
-        <aside className="update-banner glass-reading">
-          <output>{t("updates.ready")}</output>
-          <button type="button" className="secondary-action" onClick={update}>
-            {t("updates.action")}
-          </button>
-        </aside>
-      )}
+      <div ref={auxiliaryRef} className="shell-auxiliary">
+        {needsRefresh && (
+          <aside ref={bannerRef} className="update-banner glass-reading">
+            <output>{t("updates.ready")}</output>
+            <button type="button" className="secondary-action" onClick={update}>
+              {t("updates.action")}
+            </button>
+          </aside>
+        )}
+        <DockNavigation navRef={dockRef} />
+      </div>
     </div>
   );
 }

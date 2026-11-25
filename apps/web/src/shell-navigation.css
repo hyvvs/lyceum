@@ -1,7 +1,7 @@
 .icon-dock {
   position: fixed;
   z-index: 5;
-  left: max(var(--space-6), calc((100vw - 1510px) / 2));
+  inset-inline-start: max(var(--space-6), calc((100vw - 1510px) / 2));
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -10,6 +10,17 @@
   gap: var(--space-3);
   padding: var(--space-3);
   border-radius: var(--radius-pill);
+}
+.application[data-navigation-mode="flow"] .icon-dock {
+  position: static;
+  inset-inline-start: auto;
+  top: auto;
+  transform: none;
+  flex-direction: row;
+}
+.application[data-navigation-mode="flow"] .dock-grip,
+.application[data-navigation-mode="flow"] .dock-trail {
+  display: none;
 }
 .dock-grip {
   color: var(--text-3);
@@ -45,7 +56,8 @@
 }
 main {
   min-height: 65svh;
-  padding: var(--space-6) var(--space-5) 0 clamp(76px, 8vw, 116px);
+  padding-block: var(--space-6) 0;
+  padding-inline: clamp(76px, 8vw, 116px) var(--space-5);
 }
 main:focus {
   outline: none;
@@ -68,7 +80,7 @@ main:focus {
 .hero::after {
   content: "";
   position: absolute;
-  right: -2%;
+  inset-inline-end: -2%;
   top: -20%;
   width: 36%;
   height: 75%;
@@ -157,7 +169,7 @@ h1 {
 }
 .hero-art {
   position: absolute;
-  right: 4%;
+  inset-inline-end: 4%;
   top: 50%;
   transform: translateY(-50%);
   width: 31%;
