@@ -1,4 +1,12 @@
 import {
+  Dock,
+  PillNav,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@lyceum/ui";
+import {
   Link,
   Outlet,
   createRootRoute,
@@ -6,7 +14,7 @@ import {
   createRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { Suspense, lazy, useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./icons";
 import { useNavigationLayout } from "./navigation-layout";
@@ -46,8 +54,9 @@ function Brand() {
   );
 }
 
-// One app-owned route specification; public navigation primitives are deferred
-// to B3. Both existing semantic landmarks use the same destinations and labels.
+// The app alone owns real destinations, translation and active route semantics.
+// Both separately named desktop landmarks remain keyboard-operable in B3;
+// duplicate destinations are documented rather than hiding focusable controls.
 const shellDestinations = [
   { to: "/", label: "navigation.today", icon: "home" },
   { to: "/settings", label: "navigation.settings", icon: "settings" },
@@ -55,12 +64,14 @@ const shellDestinations = [
 
 function Navigation() {
   const { t } = useTranslation();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   return (
-    <nav className="pill-navigation glass-float" aria-label={t("navigation.primary")}>
+    <PillNav className="pill-navigation" aria-label={t("navigation.primary")}>
       {shellDestinations.map((destination) => (
         <Link
           key={destination.to}
           to={destination.to}
+          aria-current={pathname === destination.to ? "page" : undefined}
           activeOptions={{ exact: destination.to === "/" }}
           activeProps={{ className: "pill-link is-active" }}
           inactiveProps={{ className: "pill-link" }}
@@ -69,31 +80,78 @@ function Navigation() {
           <span>{t(destination.label)}</span>
         </Link>
       ))}
-    </nav>
+    </PillNav>
   );
+}
+
+/** App-only responsive Tooltip positioning; no public UI routing/viewport policy. */
+function useDockTooltipPlacement() {
+  const [placement, setPlacement] = useState(() => ({
+    mobile: window.matchMedia("(max-width: 900px)").matches,
+    rtl: getComputedStyle(document.documentElement).direction === "rtl",
+  }));
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 900px)");
+    const update = () => {
+      const mobile = mobileQuery.matches;
+      const rtl = getComputedStyle(document.documentElement).direction === "rtl";
+      setPlacement((current) =>
+        current.mobile === mobile && current.rtl === rtl ? current : { mobile, rtl },
+      );
+    };
+    const rootObserver = new MutationObserver(update);
+    rootObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["dir"],
+    });
+    mobileQuery.addEventListener("change", update);
+    update();
+    return () => {
+      rootObserver.disconnect();
+      mobileQuery.removeEventListener("change", update);
+    };
+  }, []);
+
+  return placement;
 }
 
 function DockNavigation({ navRef }: { navRef: React.Ref<HTMLElement> }) {
   const { t } = useTranslation();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { mobile, rtl } = useDockTooltipPlacement();
   return (
-    <nav ref={navRef} className="icon-dock glass-float" aria-label={t("navigation.dock")}>
-      <span className="dock-grip" aria-hidden="true">
-        •••
-      </span>
-      {shellDestinations.map((destination) => (
-        <Link
-          key={destination.to}
-          to={destination.to}
-          activeOptions={{ exact: destination.to === "/" }}
-          aria-label={t(destination.label)}
-          activeProps={{ className: "dock-link is-active" }}
-          inactiveProps={{ className: "dock-link" }}
-        >
-          <Icon name={destination.icon} />
-        </Link>
-      ))}
-      <span className="dock-trail" aria-hidden="true" />
-    </nav>
+    <TooltipProvider>
+      <Dock ref={navRef} className="icon-dock" aria-label={t("navigation.dock")}>
+        <span className="dock-grip" aria-hidden="true">
+          •••
+        </span>
+        {shellDestinations.map((destination, index) => (
+          <Tooltip key={destination.to}>
+            <TooltipTrigger asChild>
+              <Link
+                to={destination.to}
+                aria-current={pathname === destination.to ? "page" : undefined}
+                activeOptions={{ exact: destination.to === "/" }}
+                aria-label={t(destination.label)}
+                activeProps={{ className: "dock-link is-active" }}
+                inactiveProps={{ className: "dock-link" }}
+              >
+                <Icon name={destination.icon} />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent
+              // On a reserved mobile row, leave both the actual reading scrollport
+              // and the other Dock link clear. Desktop retains normal top hints.
+              side={mobile ? ((index === 0) === rtl ? "right" : "left") : "top"}
+              sideOffset={mobile ? 16 : undefined}
+              text={t(destination.label)}
+            />
+          </Tooltip>
+        ))}
+        <span className="dock-trail" aria-hidden="true" />
+      </Dock>
+    </TooltipProvider>
   );
 }
 

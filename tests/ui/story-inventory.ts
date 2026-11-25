@@ -21,6 +21,8 @@ export const PRIMITIVE_FAMILIES = [
   "GlassPanel",
   "GlassCard",
   "TintCard",
+  "PillNav",
+  "Dock",
 ] as const;
 
 interface StorySource {

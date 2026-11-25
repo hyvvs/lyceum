@@ -13,7 +13,11 @@ export function expectedStoryStates(stories: readonly PrimitiveStory[]): string[
       case "Primitives/GlassPanel":
       case "Primitives/GlassCard":
       case "Primitives/TintCard":
+      case "Primitives/PillNav":
         states = [name];
+        break;
+      case "Primitives/Dock":
+        states = [name === "empty" ? "empty" : "tooltip-open"];
         break;
       case "Primitives/Dialog":
         states = [name === "disabled" ? "disabled" : "dialog-open"];
