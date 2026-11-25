@@ -9,6 +9,20 @@ export interface PrimitiveStory {
   importPath: string;
 }
 
+/** Explicitly gated primitives, including the owner-approved M0-017 Slice A families. */
+export const PRIMITIVE_FAMILIES = [
+  "Button",
+  "Dialog",
+  "Select",
+  "Tabs",
+  "Toast",
+  "Tooltip",
+  "VisuallyHidden",
+  "GlassPanel",
+  "GlassCard",
+  "TintCard",
+] as const;
+
 interface StorySource {
   importPath: string;
   source: string;
@@ -125,15 +139,7 @@ export function generatedPrimitiveStories(): PrimitiveStory[] {
 
 export function storiesForFamily(family: string): PrimitiveStory[] {
   const stories = generatedPrimitiveStories();
-  const allowedFamilies = [
-    "Button",
-    "Dialog",
-    "Select",
-    "Tabs",
-    "Toast",
-    "Tooltip",
-    "VisuallyHidden",
-  ];
+  const allowedFamilies: readonly string[] = PRIMITIVE_FAMILIES;
   const families = [...new Set(stories.map((story) => story.title.slice("Primitives/".length)))];
   if (
     families.length !== allowedFamilies.length ||

@@ -1,8 +1,12 @@
 import { createRequire } from "node:module";
 import { describe, expect, test } from "vitest";
 import { WCAG_AA_TAGS } from "../tests/ui/axe";
-import { assertStoryScanCoverage, validatePrimitivesStoryIndex } from "../tests/ui/story-inventory";
-import { assertExecutedStoryStates } from "../tests/ui/story-scan-coverage";
+import {
+  PRIMITIVE_FAMILIES,
+  assertStoryScanCoverage,
+  validatePrimitivesStoryIndex,
+} from "../tests/ui/story-inventory";
+import { assertExecutedStoryStates, expectedStoryStates } from "../tests/ui/story-scan-coverage";
 
 const requireFromHere = createRequire(import.meta.url);
 const requireFromAxe = createRequire(requireFromHere.resolve("@axe-core/playwright"));
@@ -40,6 +44,26 @@ const index = {
 };
 
 describe("WCAG A/AA and generated Storybook acceptance contract", () => {
+  test("the fail-closed inventory includes every old and new approved surface family", () => {
+    expect(PRIMITIVE_FAMILIES).toEqual([
+      "Button",
+      "Dialog",
+      "Select",
+      "Tabs",
+      "Toast",
+      "Tooltip",
+      "VisuallyHidden",
+      "GlassPanel",
+      "GlassCard",
+      "TintCard",
+    ]);
+    const approved = PRIMITIVE_FAMILIES.slice(-3).map((name) => ({
+      ...defaultEntry,
+      id: `primitives-${name.toLowerCase()}--dark-full`,
+      title: `Primitives/${name}`,
+    }));
+    expect(expectedStoryStates(approved)).toHaveLength(3);
+  });
   test("covers every supported WCAG 2.0/2.1/2.2 A/AA rule tag in installed axe", () => {
     const supported = [...new Set(axe.getRules().flatMap((rule) => rule.tags))]
       .filter((tag) => /^wcag(?:2|21|22)(?:a|aa)$/.test(tag))
