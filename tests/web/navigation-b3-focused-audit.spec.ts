@@ -42,95 +42,140 @@ async function assertVisibleTooltipClearance(page: Page, label: string, mode: st
   await expect(tooltip).toBeVisible();
   await expect(tooltip).toHaveText(label);
   await expect(tooltip).toHaveCSS("opacity", "1");
-  const report = await page.evaluate((layoutMode) => {
-    const surface = document.querySelector<HTMLElement>(".lyceum-tooltip[role='tooltip']");
-    const frame = document.querySelector<HTMLElement>(".application-frame");
-    const nav = document.querySelector<HTMLElement>(".icon-dock");
-    if (!surface || !frame || !nav) throw new Error("Actual tooltip, reader or nav missing");
-    const visibleStyle = getComputedStyle(surface);
-    if (visibleStyle.visibility !== "visible" || visibleStyle.display === "none")
-      throw new Error("Tooltip surface is not actually visible");
-    const tip = surface.getBoundingClientRect();
-    const intersects = (a: DOMRect, b: DOMRect) =>
-      Math.min(a.right, b.right) > Math.max(a.left, b.left) + 0.5 &&
-      Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 0.5;
-    const dockLinks = Array.from(nav.querySelectorAll<HTMLAnchorElement>("a[href]"));
-    if (dockLinks.length !== 2) throw new Error("Expected the two native Dock destinations");
-    const maskedLinks = dockLinks.filter((link) => intersects(tip, link.getBoundingClientRect()));
-    const maskedReading: string[] = [];
-    let meaningfulSamples = 0;
-    const consider = (rect: DOMRect, description: string) => {
-      // Reserved reading uses a clipped, dedicated scrollport: Range rects for
-      // offscreen text may still be laid out behind its clip, but are NOT visible.
-      const clip = layoutMode === "reserved" ? frame.getBoundingClientRect() : null;
-      const visible = {
-        left: Math.max(0, rect.left, clip?.left ?? 0),
-        right: Math.min(innerWidth, rect.right, clip?.right ?? innerWidth),
-        top: Math.max(0, rect.top, clip?.top ?? 0),
-        bottom: Math.min(innerHeight, rect.bottom, clip?.bottom ?? innerHeight),
+  const report = await page.evaluate(
+    ({ layoutMode, label }) => {
+      const surface = document.querySelector<HTMLElement>(".lyceum-tooltip[role='tooltip']");
+      const frame = document.querySelector<HTMLElement>(".application-frame");
+      const nav = document.querySelector<HTMLElement>(".icon-dock");
+      if (!surface || !frame || !nav) throw new Error("Actual tooltip, reader or nav missing");
+      const visibleStyle = getComputedStyle(surface);
+      if (visibleStyle.visibility !== "visible" || visibleStyle.display === "none")
+        throw new Error("Tooltip surface is not actually visible");
+      const tip = surface.getBoundingClientRect();
+      const intersects = (a: DOMRect, b: DOMRect) =>
+        Math.min(a.right, b.right) > Math.max(a.left, b.left) + 0.5 &&
+        Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 0.5;
+      const dockLinks = Array.from(nav.querySelectorAll<HTMLAnchorElement>("a[href]"));
+      if (dockLinks.length !== 2) throw new Error("Expected the two native Dock destinations");
+      const trigger = dockLinks.find((link) => link.getAttribute("aria-label") === label);
+      const neighbor = dockLinks.find((link) => link !== trigger);
+      if (!trigger || !neighbor) throw new Error("Actual Dock Tooltip trigger/neighbor missing");
+      const triggerRect = trigger.getBoundingClientRect();
+      const neighborRect = neighbor.getBoundingClientRect();
+      const requestedOutward =
+        (dockLinks.indexOf(trigger) === 0) ===
+        (getComputedStyle(document.documentElement).direction === "rtl")
+          ? "right"
+          : "left";
+      const viewportLeft = visualViewport?.offsetLeft ?? 0;
+      const viewportRight = viewportLeft + (visualViewport?.width ?? innerWidth);
+      // Existing app offset = 16px; existing Tooltip collision padding = 12px.
+      const lateralAvailable =
+        requestedOutward === "left"
+          ? triggerRect.left - viewportLeft - 16 - 12
+          : viewportRight - triggerRect.right - 16 - 12;
+      const maskedLinks = dockLinks.filter((link) => intersects(tip, link.getBoundingClientRect()));
+      const maskedReading: string[] = [];
+      let meaningfulSamples = 0;
+      const consider = (rect: DOMRect, description: string) => {
+        // Reserved reading uses a clipped, dedicated scrollport: Range rects for
+        // offscreen text may still be laid out behind its clip, but are NOT visible.
+        const clip = layoutMode === "reserved" ? frame.getBoundingClientRect() : null;
+        const visible = {
+          left: Math.max(0, rect.left, clip?.left ?? 0),
+          right: Math.min(innerWidth, rect.right, clip?.right ?? innerWidth),
+          top: Math.max(0, rect.top, clip?.top ?? 0),
+          bottom: Math.min(innerHeight, rect.bottom, clip?.bottom ?? innerHeight),
+        };
+        if (visible.right <= visible.left || visible.bottom <= visible.top) return;
+        meaningfulSamples += 1;
+        if (
+          Math.min(tip.right, visible.right) > Math.max(tip.left, visible.left) + 0.5 &&
+          Math.min(tip.bottom, visible.bottom) > Math.max(tip.top, visible.top) + 0.5
+        )
+          maskedReading.push(description);
       };
-      if (visible.right <= visible.left || visible.bottom <= visible.top) return;
-      meaningfulSamples += 1;
-      if (
-        Math.min(tip.right, visible.right) > Math.max(tip.left, visible.left) + 0.5 &&
-        Math.min(tip.bottom, visible.bottom) > Math.max(tip.top, visible.top) + 0.5
-      )
-        maskedReading.push(description);
-    };
-    // For flow mode the frame includes document content above the Dock. Check
-    // actual rendered text/control bounds, not the full frame rectangle.
-    const walker = document.createTreeWalker(frame, NodeFilter.SHOW_TEXT);
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      if (!node.textContent?.trim()) continue;
-      const parent = node.parentElement;
-      if (
-        !parent ||
-        parent.closest("[aria-hidden='true'],[hidden]") ||
-        getComputedStyle(parent).visibility === "hidden" ||
-        getComputedStyle(parent).display === "none"
-      )
-        continue;
-      const range = document.createRange();
-      range.selectNodeContents(node);
-      for (const rect of Array.from(range.getClientRects())) {
-        consider(rect, `reading text: ${node.textContent.trim().slice(0, 36)}`);
+      // For flow mode the frame includes document content above the Dock. Check
+      // actual rendered text/control bounds, not the full frame rectangle.
+      const walker = document.createTreeWalker(frame, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent?.trim()) continue;
+        const parent = node.parentElement;
+        if (
+          !parent ||
+          parent.closest("[aria-hidden='true'],[hidden]") ||
+          getComputedStyle(parent).visibility === "hidden" ||
+          getComputedStyle(parent).display === "none"
+        )
+          continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of Array.from(range.getClientRects())) {
+          consider(rect, `reading text: ${node.textContent.trim().slice(0, 36)}`);
+        }
       }
-    }
-    for (const node of frame.querySelectorAll<HTMLElement>(
-      "a[href],button:not(:disabled),input,select,textarea",
-    )) {
-      if (node.closest("[aria-hidden='true'],[hidden]")) continue;
-      consider(node.getBoundingClientRect(), `reading control: ${node.tagName}`);
-    }
-    const viewport = {
-      left: Math.max(0, visualViewport?.offsetLeft ?? 0),
-      top: Math.max(0, visualViewport?.offsetTop ?? 0),
-      right: Math.min(
-        innerWidth,
-        (visualViewport?.offsetLeft ?? 0) + (visualViewport?.width ?? innerWidth),
-      ),
-      bottom: Math.min(
-        innerHeight,
-        (visualViewport?.offsetTop ?? 0) + (visualViewport?.height ?? innerHeight),
-      ),
-    };
-    return {
-      rect: tip.toJSON(),
-      viewport,
-      text: surface.textContent?.trim(),
-      scrollWidth: surface.scrollWidth,
-      clientWidth: surface.clientWidth,
-      scrollHeight: surface.scrollHeight,
-      clientHeight: surface.clientHeight,
-      navMasked: intersects(tip, nav.getBoundingClientRect()),
-      readerMasked: intersects(tip, frame.getBoundingClientRect()),
-      maskedLinks: maskedLinks.map((link) => link.getAttribute("aria-label")),
-      maskedReading,
-      meaningfulSamples,
-      scrollY: window.scrollY,
-    };
-  }, mode);
+      for (const node of frame.querySelectorAll<HTMLElement>(
+        "a[href],button:not(:disabled),input,select,textarea",
+      )) {
+        if (node.closest("[aria-hidden='true'],[hidden]")) continue;
+        consider(node.getBoundingClientRect(), `reading control: ${node.tagName}`);
+      }
+      const viewport = {
+        left: Math.max(0, visualViewport?.offsetLeft ?? 0),
+        top: Math.max(0, visualViewport?.offsetTop ?? 0),
+        right: Math.min(
+          innerWidth,
+          (visualViewport?.offsetLeft ?? 0) + (visualViewport?.width ?? innerWidth),
+        ),
+        bottom: Math.min(
+          innerHeight,
+          (visualViewport?.offsetTop ?? 0) + (visualViewport?.height ?? innerHeight),
+        ),
+      };
+      const rootFontPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const header = frame.querySelector<HTMLElement>(".topbar");
+      const main = frame.querySelector<HTMLElement>("main");
+      const usableReadingHeight =
+        frame.getBoundingClientRect().height -
+        (header?.getBoundingClientRect().height ?? 0) -
+        (Number.parseFloat(getComputedStyle(frame).paddingTop) || 0) -
+        (main ? Number.parseFloat(getComputedStyle(main).paddingTop) || 0 : 0);
+      return {
+        rect: tip.toJSON(),
+        viewport,
+        text: surface.textContent?.trim(),
+        scrollWidth: surface.scrollWidth,
+        clientWidth: surface.clientWidth,
+        scrollHeight: surface.scrollHeight,
+        clientHeight: surface.clientHeight,
+        navMasked: intersects(tip, nav.getBoundingClientRect()),
+        readerMasked: intersects(tip, frame.getBoundingClientRect()),
+        maskedLinks: maskedLinks.map((link) => link.getAttribute("aria-label")),
+        maskedReading,
+        meaningfulSamples,
+        scrollY: window.scrollY,
+        trigger: triggerRect.toJSON(),
+        neighbor: neighborRect.toJSON(),
+        requestedOutward,
+        resolvedSide: surface.getAttribute("data-side"),
+        lateralAvailable,
+        lateralNeeded: tip.width,
+        rootFont: getComputedStyle(document.documentElement).fontSize,
+        tooltipFont: visibleStyle.font,
+        modeChoice: document
+          .querySelector(".shell-auxiliary")
+          ?.getAttribute("data-tooltip-placement"),
+        readingHeight: frame.getBoundingClientRect().height,
+        usableReadingHeight,
+        minimumReadingHeight: Math.max(224, 14 * rootFontPx),
+        auxiliary: document.querySelector(".shell-auxiliary")?.getBoundingClientRect().toJSON(),
+        banner: document.querySelector(".update-banner")?.getBoundingClientRect().toJSON() ?? null,
+      };
+    },
+    { layoutMode: mode, label },
+  );
   const at = `${mode} ${label}: ${JSON.stringify(report)}`;
+  if (process.env.LYCEUM_B3_GEOMETRY === "1") console.log(`B3_TOOLTIP_GEOMETRY ${at}`);
   expect(report.rect.width, at).toBeGreaterThan(0);
   expect(report.rect.height, at).toBeGreaterThan(0);
   expect(report.rect.left, at).toBeGreaterThanOrEqual(report.viewport.left - 1);
@@ -146,8 +191,69 @@ async function assertVisibleTooltipClearance(page: Page, label: string, mode: st
   if (mode === "reserved") {
     expect(report.readerMasked, at).toBe(false);
     expect(report.navMasked, at).toBe(false);
+    expect(report.usableReadingHeight, at).toBeGreaterThanOrEqual(report.minimumReadingHeight - 1);
   }
   return report;
+}
+
+// Width and font boundaries: the width-dependent placement cannot assume
+// that a 16px root always has room beside two real operable Dock links.
+const boundaryScenarios = [
+  { width: 304, height: 720, root: 16, mode: "reserved" },
+  { width: 312, height: 720, root: 16, mode: "reserved" },
+  { width: 328, height: 720, root: 16, mode: "reserved" },
+  { width: 344, height: 720, root: 16, mode: "reserved" },
+  { width: 360, height: 720, root: 16, mode: "reserved" },
+  { width: 320, height: 720, root: 18, mode: "reserved" },
+  { width: 344, height: 720, root: 18, mode: "reserved" },
+  { width: 360, height: 720, root: 19, mode: "reserved" },
+  { width: 352, height: 760, root: 20, mode: "reserved" },
+  { width: 320, height: 256, root: 16, mode: "flow" },
+] as const;
+
+for (const scenario of boundaryScenarios) {
+  for (const locale of ["en", "es"] as const) {
+    for (const dir of ["ltr", "rtl"] as const) {
+      test(`audit B3 lateral width boundary ${scenario.width}x${scenario.height}/${scenario.root}px ${locale} ${dir}`, async ({
+        page,
+      }) => {
+        test.slow();
+        await page.setViewportSize({ width: scenario.width, height: scenario.height });
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        await prepare(page, locale, dir, scenario.root);
+        await expect(page.locator(".application")).toHaveAttribute(
+          "data-navigation-mode",
+          scenario.mode,
+        );
+        const labels = translations[locale];
+        const nav = page.getByRole("navigation", { name: labels.landmark });
+        for (const label of labels.links) {
+          await nav.getByRole("link", { name: label }).hover();
+          const report = await assertVisibleTooltipClearance(page, label, scenario.mode);
+          if (scenario.width === 304 && scenario.root === 16) {
+            expect(report.modeChoice).toBe("top");
+          }
+          if (scenario.width === 360 && scenario.root === 16) {
+            expect(report.modeChoice).toBe("outward");
+            expect(report.resolvedSide).toBe(report.requestedOutward);
+          }
+          if (
+            process.env.LYCEUM_B3_WIDTH_CAPTURE === "1" &&
+            ((scenario.width === 304 && scenario.root === 16) ||
+              (scenario.width === 360 && scenario.root === 19) ||
+              scenario.mode === "flow")
+          ) {
+            await page.screenshot({
+              path: `docs/qa/m0-017-stage-b3/audit-width-${scenario.width}x${scenario.height}-${scenario.root}px-${locale}-${dir}-${label.toLowerCase()}.png`,
+              animations: "disabled",
+            });
+          }
+          await page.keyboard.press("Escape");
+          await expect(page.locator(".lyceum-tooltip[role='tooltip']")).not.toBeVisible();
+        }
+      });
+    }
+  }
 }
 
 for (const scenario of scenarios) {
@@ -176,6 +282,20 @@ for (const scenario of scenarios) {
           // Pointer-only navigation, including hoverable Tooltip dismissal.
           await link.hover();
           await assertVisibleTooltipClearance(page, label, scenario.mode);
+          if (
+            process.env.LYCEUM_B3_WIDTH_CAPTURE === "1" &&
+            ((scenario.width === 320 && scenario.height === 640 && scenario.root === 16) ||
+              (scenario.width === 390 &&
+                scenario.height === 844 &&
+                scenario.root === 32 &&
+                locale === "es" &&
+                dir === "rtl"))
+          ) {
+            await page.screenshot({
+              path: `docs/qa/m0-017-stage-b3/audit-width-${scenario.width}x${scenario.height}-${scenario.root}px-${locale}-${dir}-${label.toLowerCase()}.png`,
+              animations: "disabled",
+            });
+          }
           if (
             process.env.LYCEUM_B3_AUDIT_CAPTURE === "1" &&
             label === labels.links[1] &&
@@ -251,6 +371,109 @@ for (const scenario of scenarios) {
     }
   }
 }
+
+test("audit B3 live width, locale and height transitions keep safe Tooltip lanes and native focus", async ({
+  page,
+}) => {
+  test.slow();
+  await page.setViewportSize({ width: 360, height: 720 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await prepare(page, "en", "ltr", 16);
+  const auxiliary = page.locator(".shell-auxiliary");
+  const readingFrame = page.locator(".application-frame");
+  await expect(auxiliary).toHaveAttribute("data-tooltip-placement", "outward");
+  await expect(page.locator(".application")).toHaveAttribute("data-navigation-mode", "reserved");
+  const initialPadding = await auxiliary.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).paddingTop),
+  );
+  const initialReading = await readingFrame.evaluate(
+    (element) => element.getBoundingClientRect().height,
+  );
+
+  // Reach the trigger by ordinary Tab navigation (never force focus).
+  const settings = page.getByRole("navigation", { name: "Quick navigation" }).getByRole("link", {
+    name: "Settings",
+  });
+  for (let step = 0; step < 35; step++) {
+    if (await settings.evaluate((element) => document.activeElement === element)) break;
+    await page.keyboard.press("Tab");
+  }
+  await expect(settings).toBeFocused();
+  await page.setViewportSize({ width: 304, height: 720 });
+  await expect(auxiliary).toHaveAttribute("data-tooltip-placement", "top");
+  await expect(page.locator(".application")).toHaveAttribute("data-navigation-mode", "reserved");
+  await expect(settings).toBeFocused();
+  const focusedBounds = await settings.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      ring: Number.parseFloat(style.outlineWidth) + Number.parseFloat(style.outlineOffset),
+      outline: style.outlineStyle,
+    };
+  });
+  expect(focusedBounds.outline).not.toBe("none");
+  expect(focusedBounds.left - focusedBounds.ring).toBeGreaterThanOrEqual(-0.5);
+  expect(focusedBounds.right + focusedBounds.ring).toBeLessThanOrEqual(304.5);
+  expect(focusedBounds.top - focusedBounds.ring).toBeGreaterThanOrEqual(-0.5);
+  expect(focusedBounds.bottom + focusedBounds.ring).toBeLessThanOrEqual(720.5);
+  const narrowPadding = await auxiliary.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).paddingTop),
+  );
+  expect(narrowPadding).toBeGreaterThan(initialPadding);
+  await settings.hover();
+  await assertVisibleTooltipClearance(page, "Settings", "reserved");
+  await page.keyboard.press("Escape");
+
+  await page.setViewportSize({ width: 360, height: 720 });
+  await expect(auxiliary).toHaveAttribute("data-tooltip-placement", "outward");
+  const restoredPadding = await auxiliary.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).paddingTop),
+  );
+  expect(restoredPadding).toBe(initialPadding);
+  const restoredReading = await readingFrame.evaluate(
+    (element) => element.getBoundingClientRect().height,
+  );
+  expect(Math.abs(restoredReading - initialReading)).toBeLessThanOrEqual(1);
+  await settings.hover();
+  await assertVisibleTooltipClearance(page, "Settings", "reserved");
+  await page.keyboard.press("Escape");
+
+  // Client-side navigation and the real preference selector can replace the
+  // label after mount. Both the observer and measured lane must respond.
+  await settings.click();
+  await page.locator("#language").selectOption("es");
+  await page
+    .getByRole("navigation", { name: "Navegación rápida" })
+    .getByRole("link", { name: "Hoy" })
+    .click();
+  await page.evaluate(() => {
+    document.documentElement.dir = "rtl";
+    document.documentElement.style.fontSize = "20px";
+  });
+  await page.setViewportSize({ width: 304, height: 720 });
+  await expect(auxiliary).toHaveAttribute("data-tooltip-placement", "top");
+  await expect(page.locator(".application")).toHaveAttribute("data-navigation-mode", "reserved");
+  const nav = page.getByRole("navigation", { name: "Navegación rápida" });
+  for (const name of ["Hoy", "Ajustes"]) {
+    await nav.getByRole("link", { name }).hover();
+    await assertVisibleTooltipClearance(page, name, "reserved");
+    await page.keyboard.press("Escape");
+  }
+  await page.setViewportSize({ width: 304, height: 256 });
+  await expect(page.locator(".application")).toHaveAttribute("data-navigation-mode", "flow");
+  await nav.getByRole("link", { name: "Ajustes" }).scrollIntoViewIfNeeded();
+  await nav.getByRole("link", { name: "Ajustes" }).hover();
+  await assertVisibleTooltipClearance(page, "Ajustes", "flow");
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 304, height: 720 });
+  await expect(page.locator(".application")).toHaveAttribute("data-navigation-mode", "reserved");
+  await nav.getByRole("link", { name: "Hoy" }).hover();
+  await assertVisibleTooltipClearance(page, "Hoy", "reserved");
+});
 
 test("audit B3 320x256 at 32px root naturally reveals both complete focused Dock links and rings", async ({
   page,

@@ -14,7 +14,7 @@ import {
   createRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./icons";
 import { useNavigationLayout } from "./navigation-layout";
@@ -84,24 +84,82 @@ function Navigation() {
   );
 }
 
-/** App-only responsive Tooltip positioning; no public UI routing/viewport policy. */
-function useDockTooltipPlacement() {
+// The existing Tooltip's mobile sideOffset and collisionPadding are 16px and
+// 12px respectively. Use the same values for the app's preflight geometry.
+const mobileTooltipOffset = 16;
+const mobileTooltipCollisionPadding = 12;
+
+/** App-only measured Tooltip layout; B2 still owns reserved/flow mode. */
+function useDockTooltipPlacement(
+  dockRef: React.RefObject<HTMLElement | null>,
+  todayLabel: string,
+  settingsLabel: string,
+) {
   const [placement, setPlacement] = useState(() => ({
     mobile: window.matchMedia("(max-width: 900px)").matches,
     rtl: getComputedStyle(document.documentElement).direction === "rtl",
-    enlarged: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) >= 20,
+    top: false,
+    lane: 0,
   }));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 900px)");
     const update = () => {
       const mobile = mobileQuery.matches;
       const rtl = getComputedStyle(document.documentElement).direction === "rtl";
-      const enlarged = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) >= 20;
+      let top = false;
+      let lane = 0;
+      const links = Array.from(
+        dockRef.current?.querySelectorAll<HTMLAnchorElement>("a[href]") ?? [],
+      );
+      if (mobile && links.length === 2) {
+        // Match the real shared Tooltip's font, padding, wrapping and current
+        // locale without rendering an operable or accessible extra control.
+        const probe = document.createElement("div");
+        probe.className = "lyceum-tooltip";
+        probe.style.position = "fixed";
+        probe.style.visibility = "hidden";
+        probe.style.pointerEvents = "none";
+        probe.style.animation = "none";
+        probe.style.width = "max-content";
+        document.body.append(probe);
+        const sizes = [todayLabel, settingsLabel].map((label) => {
+          probe.textContent = label;
+          const rect = probe.getBoundingClientRect();
+          return { width: rect.width, height: rect.height };
+        });
+        probe.remove();
+        const left = window.visualViewport?.offsetLeft ?? 0;
+        const right = Math.min(
+          window.innerWidth,
+          left + (window.visualViewport?.width ?? window.innerWidth),
+        );
+        top = links.some((link, index) => {
+          const rect = link.getBoundingClientRect();
+          const outwardRight = (index === 0) === rtl;
+          const available =
+            (outwardRight ? right - rect.right : rect.left - left) -
+            mobileTooltipOffset -
+            mobileTooltipCollisionPadding;
+          // A 2px rounding margin prevents a nominally fitting hint from
+          // flipping inward when platform font metrics differ at the edge.
+          return available < (sizes[index]?.width ?? Number.POSITIVE_INFINITY) + 2;
+        });
+        if (top) {
+          lane = Math.ceil(
+            Math.max(...sizes.map((size) => size.height)) +
+              mobileTooltipOffset +
+              mobileTooltipCollisionPadding,
+          );
+        }
+      }
       setPlacement((current) =>
-        current.mobile === mobile && current.rtl === rtl && current.enlarged === enlarged
+        current.mobile === mobile &&
+        current.rtl === rtl &&
+        current.top === top &&
+        current.lane === lane
           ? current
-          : { mobile, rtl, enlarged },
+          : { mobile, rtl, top, lane },
       );
     };
     const rootObserver = new MutationObserver(update);
@@ -109,23 +167,34 @@ function useDockTooltipPlacement() {
       attributes: true,
       attributeFilter: ["dir", "style", "class"],
     });
+    const dockObserver = new ResizeObserver(update);
+    if (dockRef.current) dockObserver.observe(dockRef.current);
     mobileQuery.addEventListener("change", update);
     window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
     update();
     return () => {
       rootObserver.disconnect();
+      dockObserver.disconnect();
       mobileQuery.removeEventListener("change", update);
       window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
     };
-  }, []);
+  }, [dockRef, todayLabel, settingsLabel]);
 
   return placement;
 }
 
-function DockNavigation({ navRef }: { navRef: React.Ref<HTMLElement> }) {
+function DockNavigation({
+  navRef,
+  placement,
+}: {
+  navRef: React.Ref<HTMLElement>;
+  placement: ReturnType<typeof useDockTooltipPlacement>;
+}) {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { mobile, rtl, enlarged } = useDockTooltipPlacement();
+  const { mobile, rtl, top } = placement;
   return (
     <TooltipProvider>
       <Dock ref={navRef} className="icon-dock" aria-label={t("navigation.dock")}>
@@ -147,11 +216,11 @@ function DockNavigation({ navRef }: { navRef: React.Ref<HTMLElement> }) {
               </Link>
             </TooltipTrigger>
             <TooltipContent
-              // Enlarged labels need a reserved vertical lane: lateral placement
-              // can flip into the adjacent native link at narrow viewport widths.
-              // Normal mobile keeps the previously accepted outward-facing sides.
-              side={mobile && !enlarged ? ((index === 0) === rtl ? "right" : "left") : "top"}
-              sideOffset={mobile ? 16 : undefined}
+              // Only use outward placement when the actual translated label
+              // fits beside its native trigger without Radix flipping inward.
+              side={mobile && !top ? ((index === 0) === rtl ? "right" : "left") : "top"}
+              sideOffset={mobile ? mobileTooltipOffset : undefined}
+              collisionPadding={mobile ? mobileTooltipCollisionPadding : undefined}
               text={t(destination.label)}
             />
           </Tooltip>
@@ -208,6 +277,11 @@ function RootLayout() {
   const { needsRefresh, update } = usePwaUpdate();
   const { mode, frameRef, headerRef, dockRef, auxiliaryRef, bannerRef } =
     useNavigationLayout(needsRefresh);
+  const tooltipPlacement = useDockTooltipPlacement(
+    dockRef,
+    t("navigation.today"),
+    t("navigation.settings"),
+  );
 
   useEffect(() => {
     if (pathname === previous.current) return;
@@ -267,6 +341,16 @@ function RootLayout() {
         ref={auxiliaryRef}
         className="shell-auxiliary"
         data-update-pending={needsRefresh ? "true" : undefined}
+        data-tooltip-placement={
+          tooltipPlacement.mobile ? (tooltipPlacement.top ? "top" : "outward") : "desktop"
+        }
+        style={
+          tooltipPlacement.mobile && tooltipPlacement.top
+            ? needsRefresh
+              ? { rowGap: `${tooltipPlacement.lane}px` }
+              : { paddingBlockStart: `${tooltipPlacement.lane}px` }
+            : undefined
+        }
       >
         {needsRefresh && (
           <aside ref={bannerRef} className="update-banner glass-reading">
@@ -276,7 +360,7 @@ function RootLayout() {
             </button>
           </aside>
         )}
-        <DockNavigation navRef={dockRef} />
+        <DockNavigation navRef={dockRef} placement={tooltipPlacement} />
       </div>
     </div>
   );

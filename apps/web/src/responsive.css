@@ -35,38 +35,12 @@
     padding: var(--space-2) max(var(--space-3), env(safe-area-inset-right))
       max(var(--space-3), env(safe-area-inset-bottom))
       max(var(--space-3), env(safe-area-inset-left));
-    /* Enlarged-root Tooltip hints need their own clear lane above the Dock.
-       At the normal 16px root this resolves to the existing 8px padding. */
-    padding-block-start: clamp(
-      var(--space-2),
-      calc(
-        14rem -
-        var(--space-7) -
-        var(--space-7) -
-        var(--space-7) -
-        var(--space-7) -
-        var(--space-5)
-      ),
-      calc(var(--space-7) + var(--space-7) + var(--space-5))
-    );
   }
-  /* A genuine waiting update banner comes before the Dock in the auxiliary
-     flow. Reserve the Tooltip lane BETWEEN them, never over its consent button.
-     The existing B2 measured row-gap remains the source of truth. */
+  /* The app measures real localized Tooltip bounds and applies a lane only
+     when lateral clearance is insufficient. The existing B2 hook measures
+     the resulting computed padding or gap, including a waiting PWA banner. */
   .shell-auxiliary[data-update-pending="true"] {
     padding-block-start: var(--space-2);
-    row-gap: clamp(
-      var(--space-2),
-      calc(
-        14rem -
-        var(--space-7) -
-        var(--space-7) -
-        var(--space-7) -
-        var(--space-7) -
-        var(--space-5)
-      ),
-      calc(var(--space-7) + var(--space-7) + var(--space-5))
-    );
   }
   .dock-grip,
   .dock-trail {
