@@ -39,6 +39,7 @@ test("genuinely waiting service-worker update reserves space and activates only 
       })
       .toBe(200);
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(origin);
     await page.evaluate(async () => navigator.serviceWorker.ready);
     await page.reload();
@@ -58,6 +59,71 @@ test("genuinely waiting service-worker update reserves space and activates only 
     expect(
       await page.evaluate(() => (window as Window & { b2UnsavedMarker?: string }).b2UnsavedMarker),
     ).toBe("still waiting for my consent");
+
+    // B3 focused owner audit: the actual waiting update prompt is an operable
+    // auxiliary control, not just a banner rectangle. At enlarged root text,
+    // the Tooltip must not float over its action or the other Dock link.
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "32px";
+    });
+    await expect(page.locator("html")).toHaveCSS("font-size", "32px");
+    for (const name of ["Today", "Settings"]) {
+      const link = page.getByRole("navigation", { name: "Quick navigation" }).getByRole("link", {
+        name,
+      });
+      // Real update prompt may force in-flow navigation at 32px. Scroll
+      // the link into view before verifying an already settled Tooltip, so
+      // ancestor-scroll dismissal cannot masquerade as a blank screenshot.
+      await link.scrollIntoViewIfNeeded();
+      await link.hover();
+      const visibleTooltip = page.locator(".lyceum-tooltip[role='tooltip']");
+      await expect(visibleTooltip).toHaveText(name);
+      await expect(visibleTooltip).toBeVisible();
+      // Radix may mount the portal during its 120ms fade from opacity zero.
+      // Never count or capture an invisible frame as a visible clearance proof.
+      await expect(visibleTooltip).toHaveCSS("opacity", "1");
+      const collision = await page.evaluate(() => {
+        const hint = document.querySelector<HTMLElement>(".lyceum-tooltip[role='tooltip']");
+        const prompt = document.querySelector<HTMLElement>(".update-banner");
+        const button = prompt?.querySelector<HTMLButtonElement>("button");
+        const links = Array.from(document.querySelectorAll<HTMLElement>(".icon-dock a[href]"));
+        if (!hint || !prompt || !button || links.length !== 2)
+          throw new Error("Real waiting update/Tooltip/Dock missing");
+        const tip = hint.getBoundingClientRect();
+        const intersect = (a: DOMRect, b: DOMRect) =>
+          Math.min(a.right, b.right) > Math.max(a.left, b.left) + 0.5 &&
+          Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 0.5;
+        return {
+          hint: tip.toJSON(),
+          prompt: prompt.getBoundingClientRect().toJSON(),
+          mode: document.querySelector(".application")?.getAttribute("data-navigation-mode"),
+          promptMasked: intersect(tip, prompt.getBoundingClientRect()),
+          buttonMasked: intersect(tip, button.getBoundingClientRect()),
+          linksMasked: links.filter((item) => intersect(tip, item.getBoundingClientRect())).length,
+          withinViewport:
+            tip.left >= -1 &&
+            tip.right <= innerWidth + 1 &&
+            tip.top >= -1 &&
+            tip.bottom <= innerHeight + 1,
+        };
+      });
+      if (process.env.LYCEUM_B3_AUDIT_CAPTURE === "1") {
+        await page.screenshot({
+          path: `docs/qa/m0-017-stage-b3/audit-pwa-waiting-32px-tooltip-${name.toLowerCase()}.png`,
+          animations: "disabled",
+        });
+      }
+      expect(collision.withinViewport, JSON.stringify(collision)).toBe(true);
+      expect(collision.promptMasked, JSON.stringify(collision)).toBe(false);
+      expect(collision.buttonMasked, JSON.stringify(collision)).toBe(false);
+      expect(collision.linksMasked, JSON.stringify(collision)).toBe(0);
+      await page.keyboard.press("Escape");
+      await expect(page.locator(".lyceum-tooltip[role='tooltip']")).not.toBeVisible();
+    }
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "16px";
+    });
+    await expect(page.locator(".application")).toHaveAttribute("data-navigation-mode", "reserved");
 
     const rectangles = await page.evaluate(() => {
       const frame = document.querySelector(".application-frame")?.getBoundingClientRect();

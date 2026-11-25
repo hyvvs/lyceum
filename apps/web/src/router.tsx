@@ -89,6 +89,7 @@ function useDockTooltipPlacement() {
   const [placement, setPlacement] = useState(() => ({
     mobile: window.matchMedia("(max-width: 900px)").matches,
     rtl: getComputedStyle(document.documentElement).direction === "rtl",
+    enlarged: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) >= 20,
   }));
 
   useEffect(() => {
@@ -96,20 +97,25 @@ function useDockTooltipPlacement() {
     const update = () => {
       const mobile = mobileQuery.matches;
       const rtl = getComputedStyle(document.documentElement).direction === "rtl";
+      const enlarged = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) >= 20;
       setPlacement((current) =>
-        current.mobile === mobile && current.rtl === rtl ? current : { mobile, rtl },
+        current.mobile === mobile && current.rtl === rtl && current.enlarged === enlarged
+          ? current
+          : { mobile, rtl, enlarged },
       );
     };
     const rootObserver = new MutationObserver(update);
     rootObserver.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["dir"],
+      attributeFilter: ["dir", "style", "class"],
     });
     mobileQuery.addEventListener("change", update);
+    window.addEventListener("resize", update);
     update();
     return () => {
       rootObserver.disconnect();
       mobileQuery.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
     };
   }, []);
 
@@ -119,7 +125,7 @@ function useDockTooltipPlacement() {
 function DockNavigation({ navRef }: { navRef: React.Ref<HTMLElement> }) {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { mobile, rtl } = useDockTooltipPlacement();
+  const { mobile, rtl, enlarged } = useDockTooltipPlacement();
   return (
     <TooltipProvider>
       <Dock ref={navRef} className="icon-dock" aria-label={t("navigation.dock")}>
@@ -141,9 +147,10 @@ function DockNavigation({ navRef }: { navRef: React.Ref<HTMLElement> }) {
               </Link>
             </TooltipTrigger>
             <TooltipContent
-              // On a reserved mobile row, leave both the actual reading scrollport
-              // and the other Dock link clear. Desktop retains normal top hints.
-              side={mobile ? ((index === 0) === rtl ? "right" : "left") : "top"}
+              // Enlarged labels need a reserved vertical lane: lateral placement
+              // can flip into the adjacent native link at narrow viewport widths.
+              // Normal mobile keeps the previously accepted outward-facing sides.
+              side={mobile && !enlarged ? ((index === 0) === rtl ? "right" : "left") : "top"}
               sideOffset={mobile ? 16 : undefined}
               text={t(destination.label)}
             />
@@ -256,7 +263,11 @@ function RootLayout() {
           <span className="placeholder-label">{t("shell.placeholder")}</span>
         </footer>
       </div>
-      <div ref={auxiliaryRef} className="shell-auxiliary">
+      <div
+        ref={auxiliaryRef}
+        className="shell-auxiliary"
+        data-update-pending={needsRefresh ? "true" : undefined}
+      >
         {needsRefresh && (
           <aside ref={bannerRef} className="update-banner glass-reading">
             <output>{t("updates.ready")}</output>

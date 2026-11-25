@@ -50,7 +50,10 @@ test("desktop Dock clears actual rendered meaningful content in LTR/RTL during r
           const nav = document.querySelector<HTMLElement>(".icon-dock");
           const main = document.querySelector<HTMLElement>("#main-content");
           const frame = document.querySelector<HTMLElement>(".application-frame");
-          if (!nav || !main || !frame) throw new Error("Actual desktop reading geometry absent");
+          const header = document.querySelector<HTMLElement>(".topbar");
+          const footer = document.querySelector<HTMLElement>(".footer");
+          if (!nav || !main || !frame || !header || !footer)
+            throw new Error("Actual desktop reading/header/footer geometry absent");
           const navRect = nav.getBoundingClientRect();
           const frameRect = frame.getBoundingClientRect();
           const visible = {
@@ -61,13 +64,15 @@ test("desktop Dock clears actual rendered meaningful content in LTR/RTL during r
           };
           const overlapping: string[] = [];
           let sampled = 0;
-          const inspect = (r: DOMRect, label: string) => {
+          const sampledByArea = { header: 0, main: 0, footer: 0 };
+          const inspect = (r: DOMRect, label: string, area: keyof typeof sampledByArea) => {
             const left = Math.max(r.left, visible.left);
             const right = Math.min(r.right, visible.right);
             const top = Math.max(r.top, visible.top);
             const bottom = Math.min(r.bottom, visible.bottom);
             if (right <= left || bottom <= top) return;
             sampled++;
+            sampledByArea[area]++;
             if (
               Math.min(right, navRect.right) > Math.max(left, navRect.left) &&
               Math.min(bottom, navRect.bottom) > Math.max(top, navRect.top)
@@ -75,26 +80,55 @@ test("desktop Dock clears actual rendered meaningful content in LTR/RTL during r
               overlapping.push(label);
             }
           };
-          const tree = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
-          for (let node = tree.nextNode(); node; node = tree.nextNode()) {
-            if (!node.textContent?.trim()) continue;
-            const parent = node.parentElement;
-            if (!parent || getComputedStyle(parent).visibility === "hidden") continue;
-            const range = document.createRange();
-            range.selectNodeContents(node);
-            for (const rect of Array.from(range.getClientRects())) {
-              inspect(rect, node.textContent.trim().slice(0, 36));
+          // Header brand/status and footer disclosures are meaningful reading
+          // content too; the floating Dock must not obscure them at any scroll.
+          for (const { element, area } of [
+            { element: header, area: "header" },
+            { element: main, area: "main" },
+            { element: footer, area: "footer" },
+          ] as const) {
+            const tree = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+            for (let node = tree.nextNode(); node; node = tree.nextNode()) {
+              if (!node.textContent?.trim()) continue;
+              const parent = node.parentElement;
+              if (
+                !parent ||
+                parent.closest("[hidden],[aria-hidden='true']") ||
+                getComputedStyle(parent).visibility === "hidden" ||
+                getComputedStyle(parent).display === "none" ||
+                getComputedStyle(parent).fontSize === "0px"
+              )
+                continue;
+              const range = document.createRange();
+              range.selectNodeContents(node);
+              for (const rect of Array.from(range.getClientRects())) {
+                inspect(rect, `${area}: ${node.textContent.trim().slice(0, 36)}`, area);
+              }
+            }
+            for (const control of element.querySelectorAll<HTMLElement>(
+              "a[href],button:not(:disabled),input,select,textarea",
+            )) {
+              if (
+                control.closest("[hidden],[aria-hidden='true']") ||
+                getComputedStyle(control).visibility === "hidden" ||
+                getComputedStyle(control).display === "none"
+              )
+                continue;
+              inspect(control.getBoundingClientRect(), `${area}: ${control.tagName}`, area);
             }
           }
-          for (const control of main.querySelectorAll<HTMLElement>(
-            "a[href],button:not(:disabled),input,select,textarea",
-          )) {
-            inspect(control.getBoundingClientRect(), control.tagName);
-          }
-          return { sampled, overlapping };
+          return { sampled, sampledByArea, overlapping };
         });
       const initial = await read();
       expect(initial.sampled, `Initial desktop content ${width} ${dir}`).toBeGreaterThan(0);
+      expect(
+        initial.sampledByArea.header,
+        `Meaningful header sample ${width} ${dir}`,
+      ).toBeGreaterThan(0);
+      expect(
+        initial.sampledByArea.main,
+        `Meaningful initial reading ${width} ${dir}`,
+      ).toBeGreaterThan(0);
       expect(initial.overlapping, `Initial desktop Dock collision ${width} ${dir}`).toEqual([]);
       // Use real laid-out DOM text to force an intermediate scroll position.
       // This is a test-only reading fixture, never a fabricated learner route.
@@ -130,6 +164,16 @@ test("desktop Dock clears actual rendered meaningful content in LTR/RTL during r
         intermediate.overlapping,
         `Intermediate desktop Dock collision ${width} ${dir}`,
       ).toEqual([]);
+      await page.mouse.wheel(0, 30_000);
+      await expect(page.locator(".footer")).toBeInViewport();
+      const footerVisible = await read();
+      expect(
+        footerVisible.sampledByArea.footer,
+        `Visible footer text ${width} ${dir}`,
+      ).toBeGreaterThan(0);
+      expect(footerVisible.overlapping, `Footer-visible Dock collision ${width} ${dir}`).toEqual(
+        [],
+      );
     }
   }
 });
