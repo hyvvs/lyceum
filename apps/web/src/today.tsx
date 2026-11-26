@@ -1,3 +1,4 @@
+import { GlassCard, GlassPanel } from "@lyceum/ui";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -74,7 +75,7 @@ export function TodayScreen() {
 
   return (
     <div className="screen today-screen">
-      <section className="hero glass-reading" aria-labelledby="welcome-heading">
+      <GlassPanel level="reading" className="hero" aria-labelledby="welcome-heading">
         <div className="hero-content">
           <p className="eyebrow">
             <span className="eyebrow-line" />
@@ -102,10 +103,10 @@ export function TodayScreen() {
           </div>
           <div className="orbit-glint" />
         </div>
-      </section>
+      </GlassPanel>
 
       <div className="content-grid">
-        <section className="setup-card glass" aria-labelledby="setup-title">
+        <GlassPanel level="raised" className="setup-card" aria-labelledby="setup-title">
           <div className="card-topline">
             <span className="card-icon">
               <Icon name="spark" />
@@ -126,9 +127,9 @@ export function TodayScreen() {
             </li>
           </ol>
           <p className="setup-footnote">{t("setup.empty")}</p>
-        </section>
+        </GlassPanel>
         <div className="side-stack">
-          <section className="mini-card glass" aria-labelledby="library-heading">
+          <GlassCard level="raised" className="mini-card" aria-labelledby="library-heading">
             <div className="mini-icon">
               <Icon name="book" />
             </div>
@@ -136,8 +137,8 @@ export function TodayScreen() {
               <h2 id="library-heading">{t("panels.library")}</h2>
               <p>{t("panels.libraryBody")}</p>
             </div>
-          </section>
-          <section className="mini-card glass" aria-labelledby="session-heading">
+          </GlassCard>
+          <GlassCard className="mini-card" aria-labelledby="session-heading">
             <div className="mini-icon">
               <Icon name="clock" />
             </div>
@@ -145,10 +146,10 @@ export function TodayScreen() {
               <h2 id="session-heading">{t("panels.session")}</h2>
               <p>{t("panels.sessionBody")}</p>
             </div>
-          </section>
+          </GlassCard>
         </div>
       </div>
-      <section className="worker-card glass-reading" aria-labelledby="worker-heading">
+      <GlassPanel level="reading" className="worker-card" aria-labelledby="worker-heading">
         <div className="worker-copy">
           <h2 id="worker-heading">{t("panels.worker")}</h2>
           <p>{t("panels.workerBody")}</p>
@@ -174,7 +175,7 @@ export function TodayScreen() {
             {t("panels.cancel")}
           </button>
         </div>
-      </section>
+      </GlassPanel>
     </div>
   );
 }
