@@ -41,9 +41,9 @@ const normalizedPattern = (pattern: string): { source: string; flags: string } =
 
 const regexPattern = z
   .string()
-  .trim()
   .min(1)
   .max(MAX_RULE_LENGTH)
+  .refine((pattern) => pattern.trim().length > 0, "Regex pattern must not be blank")
   .superRefine((pattern, ctx) => {
     if (pattern.includes("(?i)") && !pattern.startsWith("(?i)")) {
       ctx.addIssue({ code: "custom", message: "(?i) is supported only as a leading marker" });
@@ -61,7 +61,11 @@ const regexPattern = z
     }
   });
 
-const phrase = z.string().trim().min(1).max(MAX_RULE_LENGTH);
+const phrase = z
+  .string()
+  .min(1)
+  .max(MAX_RULE_LENGTH)
+  .refine((value) => value.trim().length > 0, "Phrase must not be blank");
 
 const RegexPresentRuleSchema = z
   .object({ type: z.literal("regex_present"), pattern: regexPattern })
@@ -114,6 +118,19 @@ const expectSchema = z
   .superRefine((expectations, ctx) => {
     if (!expectations.must && !expectations.must_not && !expectations.rules) {
       ctx.addIssue({ code: "custom", message: "At least one expectation or rule is required" });
+    }
+
+    const required = new Set(
+      (expectations.must ?? []).map((text) => text.normalize("NFC").toLowerCase()),
+    );
+    for (const [index, text] of (expectations.must_not ?? []).entries()) {
+      if (required.has(text.normalize("NFC").toLowerCase())) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["must_not", index],
+          message: "An expectation cannot be both required and forbidden",
+        });
+      }
     }
 
     const seen = new Map<string, Rule["type"]>();

@@ -47,6 +47,15 @@ describe("ScenarioSchema", () => {
     ).toBe(true);
   });
 
+  it("rejects contradictory identical must and must_not declarations", () => {
+    expect(
+      ScenarioSchema.safeParse({
+        ...baseScenario,
+        expect: { must: ["Explains the step."], must_not: ["Explains the step."] },
+      }).success,
+    ).toBe(false);
+  });
+
   it("accepts the documented tutor modes and user/assistant dialogue roles", () => {
     const modes = [
       "teach",

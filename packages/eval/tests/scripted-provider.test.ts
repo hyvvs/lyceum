@@ -1,6 +1,10 @@
-import { type CompletionRequest, GatewayError } from "@lyceum/gateway";
+import type { CompletionRequest } from "@lyceum/gateway";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type ScriptedOutcome, ScriptedProvider } from "../src/scripted-provider.ts";
+import {
+  type ScriptedOutcome,
+  ScriptedProvider,
+  ScriptedProviderError,
+} from "../src/scripted-provider.ts";
 
 const request = (signal?: AbortSignal): CompletionRequest => ({
   model: "scripted-fixture",
@@ -35,6 +39,23 @@ describe("ScriptedProvider", () => {
     expect(completion.result).not.toHaveProperty("usage");
   });
 
+  it("preserves malformed fixture metadata so the runner can fail closed", async () => {
+    const provider = new ScriptedProvider({
+      "scenario-a": [
+        {
+          kind: "response",
+          response: {
+            text: "A synthetic response.",
+            finishReason: "stop",
+            evidence: null as unknown as { hintLevel?: number },
+          },
+        },
+      ],
+    });
+    const completion = await provider.completeForScenario("scenario-a", request());
+    expect(completion.evidence).toBeNull();
+  });
+
   it("selects scenario scripts deterministically and preserves response order", async () => {
     const scripts = {
       "scenario-a": [response("A1"), response("A2")],
@@ -63,6 +84,55 @@ describe("ScriptedProvider", () => {
     });
   });
 
+  it("consumes distinct outcomes for concurrent completions of the same scenario", async () => {
+    const provider = new ScriptedProvider({ "scenario-a": [response("A1"), response("A2")] });
+    const results = await Promise.all([
+      provider.completeForScenario("scenario-a", request()),
+      provider.completeForScenario("scenario-a", request()),
+    ]);
+    expect(results.map((result) => result.result.text)).toEqual(["A1", "A2"]);
+  });
+
+  it("keeps independent scenario cursors when calls overlap", async () => {
+    const provider = new ScriptedProvider({
+      "scenario-a": [response("A1"), response("A2")],
+      "scenario-b": [response("B1"), response("B2")],
+    });
+    const results = await Promise.all([
+      provider.completeForScenario("scenario-a", request()),
+      provider.completeForScenario("scenario-b", request()),
+      provider.completeForScenario("scenario-b", request()),
+      provider.completeForScenario("scenario-a", request()),
+    ]);
+    expect(results.map((item) => item.result.text)).toEqual(["A1", "B1", "B2", "A2"]);
+  });
+
+  it("does not consume an aborted concurrent reservation", async () => {
+    const provider = new ScriptedProvider({ "scenario-a": [response("A1"), response("A2")] });
+    const abort = new AbortController();
+    const cancelled = provider.completeForScenario("scenario-a", request(abort.signal));
+    const active = provider.completeForScenario("scenario-a", request());
+    abort.abort();
+    await expect(cancelled).rejects.toMatchObject({ code: "aborted" });
+    await expect(active).resolves.toMatchObject({ result: { text: "A1" } });
+    await expect(provider.completeForScenario("scenario-a", request())).resolves.toMatchObject({
+      result: { text: "A2" },
+    });
+  });
+
+  it("clones fixtures and results instead of leaking mutable state across runs", async () => {
+    const evidence = { hintLevel: 2 };
+    const fixtures = { "scenario-a": [response("Stable", evidence)] };
+    const first = new ScriptedProvider(fixtures);
+    evidence.hintLevel = 4;
+    const completion = await first.completeForScenario("scenario-a", request());
+    expect(completion.evidence?.hintLevel).toBe(2);
+    if (completion.evidence) (completion.evidence as { hintLevel: number }).hintLevel = 5;
+    const fresh = new ScriptedProvider({ "scenario-a": [response("Stable", { hintLevel: 2 })] });
+    const repeated = await fresh.completeForScenario("scenario-a", request());
+    expect(repeated).toMatchObject({ result: { text: "Stable" }, evidence: { hintLevel: 2 } });
+  });
+
   it("fails explicitly when a scenario script is exhausted", async () => {
     const provider = new ScriptedProvider({ "scenario-a": [response("Only response")] });
     await provider.completeForScenario("scenario-a", request());
@@ -78,7 +148,8 @@ describe("ScriptedProvider", () => {
     const error = await provider
       .completeForScenario("scenario-a", request())
       .catch((value) => value);
-    expect(error).toBeInstanceOf(GatewayError);
+    expect(error).toBeInstanceOf(ScriptedProviderError);
+    expect(error.name).toBe("GatewayError");
     expect(error.code).toBe("provider");
   });
 

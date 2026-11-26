@@ -1,13 +1,13 @@
-import {
-  type Capabilities,
-  type CompletionRequest,
-  type CompletionResult,
+import type {
+  Capabilities,
+  CompletionRequest,
+  CompletionResult,
   GatewayError,
-  type GatewayErrorCode,
-  type HealthResult,
-  type ModelInfo,
-  type ProviderAdapter,
-  type StreamEvent,
+  GatewayErrorCode,
+  HealthResult,
+  ModelInfo,
+  ProviderAdapter,
+  StreamEvent,
 } from "@lyceum/gateway";
 
 export interface ResponseEvidence {
@@ -30,10 +30,37 @@ export interface ScriptedCompletion {
   readonly evidence?: ResponseEvidence;
 }
 
+/** Structurally implements the public gateway error contract without loading gateway runtime code. */
+export class ScriptedProviderError extends Error implements GatewayError {
+  override readonly name = "GatewayError";
+  readonly code: GatewayErrorCode;
+
+  constructor(code: GatewayErrorCode, message: string) {
+    super(message);
+    this.code = code;
+  }
+
+  get retryable(): boolean {
+    return this.code === "rate_limit" || this.code === "network" || this.code === "provider";
+  }
+}
+
+const cloneEvidence = (evidence: unknown): ResponseEvidence => {
+  if (evidence === null || typeof evidence !== "object" || Array.isArray(evidence)) {
+    return evidence as ResponseEvidence;
+  }
+  const prototype = Object.getPrototypeOf(evidence);
+  if (prototype !== Object.prototype && prototype !== null) return evidence as ResponseEvidence;
+  return Object.defineProperties(
+    Object.create(prototype),
+    Object.getOwnPropertyDescriptors(evidence),
+  ) as ResponseEvidence;
+};
+
 const cloneResponse = (response: ScriptedResponse): ScriptedResponse => ({
   text: response.text,
   finishReason: response.finishReason,
-  ...(response.evidence ? { evidence: { ...response.evidence } } : {}),
+  ...(response.evidence === undefined ? {} : { evidence: cloneEvidence(response.evidence) }),
 });
 
 const cloneOutcome = (outcome: ScriptedOutcome): ScriptedOutcome =>
@@ -42,7 +69,7 @@ const cloneOutcome = (outcome: ScriptedOutcome): ScriptedOutcome =>
     : { kind: "response", response: cloneResponse(outcome.response) };
 
 const throwIfAborted = (signal?: AbortSignal): void => {
-  if (signal?.aborted) throw new GatewayError("aborted", "Scripted operation aborted");
+  if (signal?.aborted) throw new ScriptedProviderError("aborted", "Scripted operation aborted");
 };
 
 /**
@@ -95,24 +122,24 @@ export class ScriptedProvider implements ProviderAdapter {
     request: CompletionRequest,
   ): Promise<ScriptedCompletion> {
     throwIfAborted(request.signal);
+    // Yield before reading the cursor, then select and consume synchronously.
+    // Concurrent calls cannot reserve the same outcome; aborted calls consume none.
+    await Promise.resolve();
+    throwIfAborted(request.signal);
     const outcomes = this.scripts.get(scenarioId);
     if (!outcomes) {
-      throw new GatewayError("provider", "No scripted response is configured");
+      throw new ScriptedProviderError("provider", "No scripted response is configured");
     }
     const cursor = this.cursors.get(scenarioId) ?? 0;
     const outcome = outcomes[cursor];
     if (!outcome) {
-      throw new GatewayError("provider", "Scripted response sequence exhausted");
+      throw new ScriptedProviderError("provider", "Scripted response sequence exhausted");
     }
 
-    // Yield once so a caller can abort an in-flight deterministic operation.
-    // The cursor advances only after the cancellation check succeeds.
-    await Promise.resolve();
-    throwIfAborted(request.signal);
     this.cursors.set(scenarioId, cursor + 1);
 
     if (outcome.kind === "error") {
-      throw new GatewayError(outcome.code, "Scripted provider fixture failed");
+      throw new ScriptedProviderError(outcome.code, "Scripted provider fixture failed");
     }
 
     const response = cloneResponse(outcome.response);
@@ -121,7 +148,7 @@ export class ScriptedProvider implements ProviderAdapter {
         text: response.text,
         finishReason: response.finishReason,
       },
-      ...(response.evidence ? { evidence: response.evidence } : {}),
+      ...(response.evidence === undefined ? {} : { evidence: response.evidence }),
     };
   }
 
