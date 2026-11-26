@@ -104,6 +104,8 @@ function inspectSource(root, pkg, file, problems) {
       report(node, `gateway must not import ${specifier}`);
     } else if (scoped && pkg === "core" && scoped[1] !== pkg) {
       report(node, `core must not import ${specifier}`);
+    } else if (scoped && pkg === "storage" && scoped[1] !== "core") {
+      report(node, `storage must not import ${specifier}`);
     } else if (scoped && scoped[1] !== pkg && scoped[2]) {
       report(node, `deep cross-package import; use @lyceum/${scoped[1]}: ${specifier}`);
     }
@@ -212,6 +214,13 @@ export function findBoundaryViolations(root) {
     const manifestPath = join(packagesDir, pkg, "package.json");
     if (!existsSync(manifestPath)) continue;
     const manifest = read(manifestPath);
+    if (pkg === "storage") {
+      for (const dep of declaredDependencies(manifest)) {
+        if (dep !== "@lyceum/core") {
+          problems.push(`storage must only depend on @lyceum/core, found: ${dep}`);
+        }
+      }
+    }
     checkTypecheck(manifest, pkg);
     for (const target of exportTargets(manifest.exports)) {
       if (!target.startsWith(".")) continue;

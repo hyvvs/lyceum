@@ -35,10 +35,11 @@ Requirements: Tauri v2 wrapping apps/web; Rust commands for keychain set/get/del
 Acceptance: builds on macOS and one other OS in CI; keychain round-trip test; app starts to themed hello screen under 2.5 s on reference device.
 Ask first if: adding Tauri plugins.
 
-### [ ] M0-006 Storage port and in-memory implementation
+### [~] M0-006 Storage port and in-memory implementation
 Package: packages/core (port), new packages/storage · Depends on: M0-001 · Context: docs/09, docs/02 section 5
 Requirements: define `Storage` port (events, content stores, projections, transactions); in-memory implementation; shared contract test suite (append/read ordering, atomic batches, idempotent import, concurrent writers, large payloads).
 Acceptance: contract suite passes for in-memory; suite is reusable by other implementations.
+**Owner acceptance and controlled merge checkpoint (Independent Audit, 2026-11-26):** the owner independently **ACCEPTED M0-006** after review of [PR #25](https://github.com/hyvvs/lyceum/pull/25) at `a5ebaf03d643b8d1d4f83ac25d135d6806676825`. Exact-head [hosted run 45757741019](https://github.com/hyvvs/lyceum/actions/runs/45757741019) passed Verify, unrestricted Dependency audit and Secret scan; Verify recorded 215/215 Linux units, 69 storage tests, 139 Chromium UI passes + one optional skip, 341 stories/364 axe states, eight integrated compositions, 108 production passes + three optional skips and all five B1 zero-overlap cases. The first documentation-only acceptance amendment `c76d7c67cd167e92123130a14134795f17737726` passed all three fresh exact-head jobs in [run 45760659655](https://github.com/hyvvs/lyceum/actions/runs/45760659655). The final wording reconciliation also requires its own fresh exact-head three-green checks. The owner explicitly authorizes a **controlled squash merge** with no branch-protection bypass. Zero formal submitted reviews are accepted for PR #25 only. This card remains `[~]` until actual squash SHA and exact merged-main three-job CI are verified; only then may it become `[x]` and record the accepted SHA. See [M0-006 QA/acceptance record](../docs/qa/m0-006/README.md). No SQLite, native/WASM/OPFS, migrations, archive packaging, credential vault, subject algorithms, or production web integration implemented. M0-003/004/017 remain `[~]`, all 20 native/manual accessibility cases BLOCKED/NOT RUN, ADR-0009 and ADR-0010 remain binding.
 
 ### [ ] M0-007 SQLite implementations (native + WASM/OPFS)
 Package: packages/storage · Depends on: M0-006, M0-004, M0-005 · Context: docs/09, docs/17 R5

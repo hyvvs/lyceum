@@ -33,6 +33,36 @@ describe("architectural boundaries", () => {
     expect(findBoundaryViolations(root)).toEqual([]);
   });
 
+  it("restricts the new storage adapter to the public core entry point and dependency", () => {
+    const root = fixture();
+    mkdirSync(join(root, "packages", "storage", "src"), { recursive: true });
+    writeFileSync(
+      join(root, "packages", "storage", "package.json"),
+      JSON.stringify({
+        name: "@lyceum/storage",
+        scripts: { typecheck: "tsc --noEmit" },
+        dependencies: {
+          "@lyceum/core": "workspace:*",
+          "@lyceum/ui": "workspace:*",
+          "arbitrary-external-package": "1.0.0",
+        },
+      }),
+    );
+    writeFileSync(
+      join(root, "packages", "storage", "src", "illegal.ts"),
+      'import { EventStore } from "@lyceum/core";\nimport { Button } from "@lyceum/ui";',
+    );
+    expect(findBoundaryViolations(root)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("storage must only depend on @lyceum/core, found: @lyceum/ui"),
+        expect.stringContaining(
+          "storage must only depend on @lyceum/core, found: arbitrary-external-package",
+        ),
+        expect.stringContaining("storage must not import @lyceum/ui"),
+      ]),
+    );
+  });
+
   it("rejects subject tooling outside profile packages", () => {
     const root = fixture();
     writeFileSync(join(root, "packages", "core", "src", "illegal.ts"), 'import "sympy";');
