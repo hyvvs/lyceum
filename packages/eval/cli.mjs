@@ -9,6 +9,7 @@ import {
 } from "./cli-files.mjs";
 import {
   CANONICAL_SCRIPTED_FIXTURES,
+  MISSING_EVIDENCE_SCRIPTED_FIXTURES,
   NEGATIVE_SCRIPTED_FIXTURES,
   ScenarioLoadError,
   ScriptedProvider,
@@ -27,7 +28,12 @@ const reportDirectory = join(root, "evals", "reports");
 async function main() {
   const args = process.argv.slice(2);
   const negative = args[0] === "--negative-fixture";
-  const reportName = negative ? "m0-010-negative.json" : "m0-010.json";
+  const missingEvidence = args[0] === "--missing-evidence-fixture";
+  const reportName = negative
+    ? "m0-010-negative.json"
+    : missingEvidence
+      ? "m0-011-missing-evidence.json"
+      : "m0-010.json";
   const reportPath = join(reportDirectory, reportName);
   const pendingReportPath = `${reportPath}.tmp`;
   await assertRealDirectory(root);
@@ -35,11 +41,17 @@ async function main() {
   // A prior successful report must never survive an invalid or failed invocation.
   await rm(reportPath, { force: true });
   await rm(pendingReportPath, { force: true });
-  if (args.length > 1 || (args.length === 1 && args[0] !== "--negative-fixture")) {
-    throw new Error("Unsupported eval option; use no arguments or --negative-fixture");
+  if (args.length > 1 || (args.length === 1 && !negative && !missingEvidence)) {
+    throw new Error(
+      "Unsupported eval option; use no arguments, --negative-fixture or --missing-evidence-fixture",
+    );
   }
   const loaded = await loadScenarios(scenarioFs, scenarioDirectory);
-  const fixtures = negative ? NEGATIVE_SCRIPTED_FIXTURES : CANONICAL_SCRIPTED_FIXTURES;
+  const fixtures = negative
+    ? NEGATIVE_SCRIPTED_FIXTURES
+    : missingEvidence
+      ? MISSING_EVIDENCE_SCRIPTED_FIXTURES
+      : CANONICAL_SCRIPTED_FIXTURES;
   const ids = loaded.map(({ scenario }) => scenario.id).sort();
   const fixtureIds = Object.keys(fixtures).sort();
   if (JSON.stringify(ids) !== JSON.stringify(fixtureIds)) {
