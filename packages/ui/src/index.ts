@@ -13,3 +13,6 @@ export * from "./pill-nav";
 export * from "./dock";
 export * from "./round-icon-button";
 export * from "./segmented-control";
+export * from "./stat-card";
+export * from "./bar-chart";
+export * from "./mastery-ring";

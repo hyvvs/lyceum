@@ -1204,3 +1204,205 @@
     outline-color: Highlight;
   }
 }
+
+/* B5b: presentational measurements; glass is only on outer article/figure. */
+.lyceum-stat-card,
+.lyceum-bar-chart,
+.lyceum-mastery-ring {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+.lyceum-bar-chart,
+.lyceum-mastery-ring {
+  margin: 0;
+}
+.lyceum-stat-card h3,
+.lyceum-bar-chart figcaption,
+.lyceum-mastery-ring figcaption {
+  margin: 0;
+  font-size: var(--type-reading);
+  font-weight: 700;
+}
+.lyceum-stat-card__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.lyceum-stat-card__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-chip);
+  background: var(--surface-raised-solid);
+}
+.lyceum-stat-card__value {
+  margin: var(--space-3) 0;
+  font-size: var(--type-title);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lyceum-stat-card__value[data-available="false"] {
+  color: var(--text-2);
+  font-size: var(--type-reading);
+}
+.lyceum-stat-card__delta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-chip);
+  background: var(--surface-raised-solid);
+  font-weight: 700;
+}
+.lyceum-stat-card__delta-context {
+  font-weight: 400;
+  color: var(--text-2);
+}
+.lyceum-stat-card__trend {
+  margin-block-start: var(--space-3);
+}
+.lyceum-stat-card__sparkline {
+  display: block;
+  width: 100%;
+  height: var(--space-7);
+  overflow: visible;
+}
+.lyceum-stat-card__sparkline polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.lyceum-stat-card__trend p {
+  margin: var(--space-2) 0 0;
+  color: var(--text-2);
+}
+.lyceum-bar-chart__scale,
+.lyceum-bar-chart__empty {
+  margin: var(--space-2) 0;
+  color: var(--text-2);
+}
+.lyceum-bar-chart__bars {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.lyceum-bar-chart__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: max(var(--target-min), var(--space-7));
+  gap: var(--space-2);
+}
+.lyceum-bar-chart__track {
+  display: flex;
+  align-items: flex-end;
+  box-sizing: border-box;
+  height: calc(var(--space-7) * 4);
+  width: 100%;
+  padding: var(--space-1);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised-solid);
+}
+.lyceum-bar-chart__bar {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  border: 1px solid var(--contrast-border);
+  border-radius: var(--radius-chip);
+  background: var(--surface-float-solid);
+}
+.lyceum-bar-chart__item[data-highlighted="true"] .lyceum-bar-chart__bar {
+  background: var(--accent);
+}
+.lyceum-bar-chart__datum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--type-sm);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.lyceum-bar-chart__highlight {
+  font-weight: 700;
+}
+.lyceum-mastery-ring {
+  text-align: center;
+}
+.lyceum-mastery-ring__visual {
+  display: block;
+  width: min(100%, calc(var(--space-7) * 5));
+  aspect-ratio: 1;
+  margin: var(--space-3) auto;
+  overflow: visible;
+}
+.lyceum-mastery-ring__visual circle {
+  fill: none;
+  stroke-width: 8;
+  transform-origin: center;
+  transform: rotate(-90deg);
+}
+.lyceum-mastery-ring__track {
+  stroke: var(--glass-border-raised);
+}
+.lyceum-mastery-ring__uncertainty {
+  stroke: var(--text-2);
+  stroke-dasharray: none;
+  stroke-width: 5;
+}
+.lyceum-mastery-ring__progress {
+  stroke: var(--accent);
+}
+.lyceum-mastery-ring__value {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lyceum-mastery-ring__interval,
+.lyceum-mastery-ring__unassessed {
+  margin: var(--space-2) 0 0;
+  color: var(--text-2);
+}
+@media (forced-colors: active) {
+  .lyceum-stat-card__icon,
+  .lyceum-stat-card__delta,
+  .lyceum-bar-chart__track {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+  .lyceum-bar-chart__bar,
+  .lyceum-mastery-ring__progress,
+  .lyceum-stat-card__sparkline polyline {
+    stroke: Highlight;
+    border-color: Highlight;
+  }
+  .lyceum-bar-chart__item[data-highlighted="true"] .lyceum-bar-chart__bar {
+    background: Highlight;
+    border-color: Highlight;
+  }
+  .lyceum-mastery-ring__track,
+  .lyceum-mastery-ring__uncertainty {
+    stroke: CanvasText;
+  }
+}

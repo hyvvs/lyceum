@@ -25,6 +25,9 @@ export const PRIMITIVE_FAMILIES = [
   "Dock",
   "RoundIconButton",
   "SegmentedControl",
+  "StatCard",
+  "BarChart",
+  "MasteryRing",
 ] as const;
 
 interface StorySource {

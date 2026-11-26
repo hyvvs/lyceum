@@ -1,0 +1,107 @@
+import { type ReactNode, useId } from "react";
+
+export interface StatDelta {
+  /** Descriptive direction, never a judgment of improvement. */
+  direction: "increase" | "decrease" | "unchanged";
+  text: string;
+  context: string;
+}
+export interface StatTrend {
+  /** Consumer-supplied observations in chronological order. */
+  samples: readonly number[];
+  /** Textual equivalent for the trend rather than ornamental SVG alone. */
+  description: string;
+}
+export interface StatCardProps {
+  label: string;
+  value?: string | number | null;
+  icon?: ReactNode;
+  delta?: StatDelta;
+  trend?: StatTrend;
+  unavailableLabel?: string;
+  className?: string;
+}
+
+export function StatCard({
+  label,
+  value,
+  icon,
+  delta,
+  trend,
+  unavailableLabel = "Not available",
+  className,
+}: StatCardProps) {
+  if (!label.trim() || !unavailableLabel.trim()) {
+    throw new Error("StatCard requires meaningful label and unavailable wording.");
+  }
+  if (typeof value === "number" && !Number.isFinite(value)) {
+    throw new Error("StatCard numeric values must be finite.");
+  }
+  if (delta && (!delta.text.trim() || !delta.context.trim())) {
+    throw new Error("StatCard delta requires explicit text and comparison context.");
+  }
+  if (trend) {
+    if (trend.samples.length < 2) {
+      throw new Error("StatCard trend needs at least two actual observations.");
+    }
+    if (trend.samples.some((sample) => !Number.isFinite(sample))) {
+      throw new Error("StatCard trend samples must be finite.");
+    }
+    if (!trend.description.trim()) {
+      throw new Error("StatCard trend needs a textual equivalent.");
+    }
+  }
+  const titleId = useId();
+  const hasValue = value !== null && value !== undefined && value !== "";
+  const values = trend?.samples ?? [];
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  const points = values
+    .map((sample, i) => {
+      const x = (i / (values.length - 1)) * 120;
+      const y = high === low ? 14 : 24 - ((sample - low) / (high - low)) * 20;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+  return (
+    <article
+      aria-labelledby={titleId}
+      className={["glass-raised", "lyceum-stat-card", className].filter(Boolean).join(" ")}
+    >
+      <div className="lyceum-stat-card__heading">
+        {icon !== undefined && (
+          <span className="lyceum-stat-card__icon" aria-hidden="true">
+            {icon}
+          </span>
+        )}
+        <h3 id={titleId}>{label}</h3>
+      </div>
+      <p className="lyceum-stat-card__value" data-available={hasValue}>
+        {hasValue ? value : unavailableLabel}
+      </p>
+      {delta && (
+        <p className="lyceum-stat-card__delta" data-direction={delta.direction}>
+          <span aria-hidden="true">
+            {delta.direction === "increase" ? "↑" : delta.direction === "decrease" ? "↓" : "–"}
+          </span>
+          <span>{delta.text}</span>
+          <span className="lyceum-stat-card__delta-context">{delta.context}</span>
+        </p>
+      )}
+      {trend && (
+        <div className="lyceum-stat-card__trend">
+          <svg
+            className="lyceum-stat-card__sparkline"
+            viewBox="0 0 120 28"
+            preserveAspectRatio="none"
+            focusable="false"
+            aria-hidden="true"
+          >
+            <polyline points={points} />
+          </svg>
+          <p>{trend.description}</p>
+        </div>
+      )}
+    </article>
+  );
+}
