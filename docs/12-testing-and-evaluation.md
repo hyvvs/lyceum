@@ -71,6 +71,10 @@ Anti-sycophancy · hint ladder compliance · diagnose-before-correct · tool-vs-
 
 ### 3.3 Running and gating
 
+**Current M0-010 implementation boundary:** `pnpm eval` now runs only five existing trusted repository-authored YAML scenarios against deterministic, original scripted fixtures. The report records four executable rule passes and 17 **unevaluated** subjective expectations with tutoring-quality acceptance **INCOMPLETE**. `--negative-fixture` deliberately fails executable rules and exits nonzero. The current default unavailable LLM judge performs no real model call or subjective evaluation; model comparisons, calibrated judges, reference baselines, readiness evaluation and the future release-quality gates described below are **not implemented or established by M0-010**. Reports use explicit evaluated (pass+fail), failed, unevaluated and error totals; multi-tag category totals intentionally overlap. See [M0-010 QA](qa/m0-010/README.md).
+
+**Current exit behavior:** healthy deterministic fixture execution with no evaluated rule failures or infrastructure errors exits zero, even though subjective tutoring expectations are incomplete. Any failed evaluated rule, failed expectation or infrastructure error exits nonzero. A deterministic rule with missing structured evidence remains visibly unevaluated rather than passing; such incompleteness alone does not currently trigger nonzero exit. This command is not a tutoring-quality gate.
+
 - `pnpm eval` runs the suite against configured provider profiles (scripted fake by default; real models when configured).
 - Results are reported per scenario with pass rate by category, and compared to a stored baseline per **reference model set**.
 - CI runs the fast deterministic subset on every PR; the full suite runs nightly and before releases.
