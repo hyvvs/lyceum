@@ -26,10 +26,13 @@ function copyValue(value: unknown, depth: number, state: Traversal): StorageJson
     if (Object.getPrototypeOf(value) !== Array.prototype || state.active.has(value)) invalid();
     // Native arrays have their indexed own keys plus the non-enumerable length.
     // Reject custom properties, symbols and holes rather than silently dropping them.
-    if (Reflect.ownKeys(value).length !== value.length + 1) invalid();
+    const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
+    const length = lengthDescriptor?.value;
+    if (typeof length !== "number" || !Number.isSafeInteger(length)) invalid();
+    if (Reflect.ownKeys(value).length !== length + 1) invalid();
     state.active.add(value);
     const out: StorageJson[] = [];
-    for (let i = 0; i < value.length; i++) {
+    for (let i = 0; i < length; i++) {
       const slot = Object.getOwnPropertyDescriptor(value, String(i));
       if (!slot?.enumerable || !("value" in slot)) invalid();
       out.push(copyValue(slot.value, depth + 1, state));

@@ -49,8 +49,10 @@ export function eventContract(factory: StorageFactory): void {
         "session.ended",
         "goal.created",
       ] as const;
-      await store.append(types.map((type, index) => event(type, `variant-${index}`)));
+      const expected = types.map((type, index) => event(type, `variant-${index}`));
+      await store.append(expected);
       expect((await store.read()).events.map((item) => item.type)).toEqual(types);
+      expect((await store.read()).events).toEqual(expected);
       expect(await store.getLastSeq()).toBe(4);
     });
 

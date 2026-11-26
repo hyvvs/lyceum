@@ -45,6 +45,70 @@ export function transactionContract(factory: StorageFactory): void {
       });
     });
 
+    it("paginates across committed and staged event boundaries without skipping entries", async () => {
+      const store = await factory();
+      await store.append([attempt("old-1"), attempt("old-2")]);
+      await store.transaction((tx) => {
+        tx.append([attempt("new-1"), attempt("new-2")]);
+        const middle = tx.readEntries({ afterSeq: 1, limit: 2 });
+        const tail = tx.readEntries({ afterSeq: middle.lastSeq, limit: 2 });
+        expect(middle.entries.map((row) => [row.seq, row.event.id])).toEqual([
+          [2, "old-2"],
+          [3, "new-1"],
+        ]);
+        expect(tail.entries.map((row) => [row.seq, row.event.id])).toEqual([[4, "new-2"]]);
+        expect(tail.lastSeq).toBe(4);
+      });
+      expect(await store.getLastSeq()).toBe(4);
+    });
+
+    it("transaction-local content revisions replay identically and reject gaps atomically", async () => {
+      const store = await factory();
+      await store.putContent(content("multi-revision"));
+      await store.transaction((tx) => {
+        tx.putContent(content("multi-revision", { nodes: ["two"] }, 2));
+        tx.putContent(content("multi-revision", { nodes: ["two"] }, 2));
+        tx.putContent(content("multi-revision", { nodes: ["three"] }, 3));
+        expect(tx.getContent("concept-graph", "multi-revision")?.revision).toBe(3);
+        expect(tx.getContent("concept-graph", "multi-revision", 1)).toEqual(
+          content("multi-revision"),
+        );
+      });
+      expect((await store.getContent("concept-graph", "multi-revision"))?.revision).toBe(3);
+      await expect(
+        store.transaction((tx) => {
+          tx.putContent(content("gap-batch"));
+          tx.putContent(content("gap-batch", { nodes: [8] }, 3));
+        }),
+      ).rejects.toMatchObject({ code: "invalid_input" });
+      expect(await store.getContent("concept-graph", "gap-batch")).toBeNull();
+    });
+
+    it("rolls back replacement of an already committed projection without altering prior data", async () => {
+      const store = await factory();
+      const old = {
+        id: "replaceable",
+        asOfSeq: 0,
+        algoVersion: "synthetic-v1",
+        payload: { count: 0 },
+      };
+      await store.putProjection(old);
+      await expect(
+        store.transaction((tx) => {
+          tx.append([attempt("uncommitted")]);
+          tx.putProjection({
+            id: old.id,
+            asOfSeq: 1,
+            algoVersion: "synthetic-v2",
+            payload: { count: 1 },
+          });
+          throw Error("synthetic rollback");
+        }),
+      ).rejects.toMatchObject({ code: "transaction_aborted" });
+      expect(await store.getProjection(old.id)).toEqual(old);
+      expect(await store.getLastSeq()).toBe(0);
+    });
+
     it("external reads observe only committed data while a write is staged", async () => {
       const store = await factory();
       let outsideRead!: ReturnType<typeof store.readEntries>;
@@ -239,6 +303,24 @@ export function transactionContract(factory: StorageFactory): void {
       ).rejects.toMatchObject({ code: "nested_transaction" });
       expect(await store.getLastSeq()).toBe(0);
       await store.append([attempt("after-nesting")]);
+      expect(await store.getLastSeq()).toBe(1);
+    });
+
+    it("cannot commit a transaction when a nested write failure was caught", async () => {
+      const store = await factory();
+      await expect(
+        store.transaction((tx) => {
+          tx.append([attempt("discard-before-nesting")]);
+          try {
+            void store.append([attempt("nested")]);
+          } catch {
+            // Deliberately swallow the direct exception; the outer tx must
+            // still be poisoned, not silently commit its earlier event.
+          }
+        }),
+      ).rejects.toMatchObject({ code: "nested_transaction" });
+      expect(await store.getLastSeq()).toBe(0);
+      await store.append([attempt("after-caught-nesting")]);
       expect(await store.getLastSeq()).toBe(1);
     });
 

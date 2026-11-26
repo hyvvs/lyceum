@@ -6,6 +6,7 @@ import {
   StorageError,
   type StorageTransaction,
 } from "@lyceum/core";
+import { safeStorageError } from "./errors";
 import { MemoryStage, committedContent, committedProjection, emptyState, eventPage } from "./stage";
 import { validContent, validEvents, validProjection } from "./validation";
 
@@ -17,20 +18,36 @@ export function createInMemoryStorage(): Storage {
   const state = emptyState();
   let writerTail: Promise<void> = Promise.resolve();
   let inSynchronousCallback = false;
+  let activeStage: MemoryStage | null = null;
 
   function forbidReentrantWrite(): void {
     // A synchronous transaction callback runs uninterrupted on the JS thread.
     // Independent concurrent callers are queued between callbacks. This guard
     // therefore rejects nested writes without rejecting concurrent writers.
-    if (inSynchronousCallback) throw new StorageError("nested_transaction");
+    if (inSynchronousCallback) {
+      const error = new StorageError("nested_transaction");
+      activeStage?.invalidate(error);
+      throw error;
+    }
   }
 
   function queue(operation: (tx: StorageTransaction) => void): Promise<void> {
     forbidReentrantWrite();
     const run = writerTail.then(() => {
       const stage = new MemoryStage(state);
+      activeStage = stage;
       inSynchronousCallback = true;
       try {
+        // Native async functions must be rejected before running their body:
+        // otherwise their continuation could run after the transaction closes.
+        // Arbitrary caller JS cannot be sandboxed: callback code must still be
+        // trusted to obey the documented synchronous transaction contract.
+        if (
+          typeof operation !== "function" ||
+          Object.prototype.toString.call(operation) !== "[object Function]"
+        ) {
+          throw new StorageError("async_transaction");
+        }
         const returned: unknown = operation(stage.handle);
         if (
           returned !== null &&
@@ -39,14 +56,20 @@ export function createInMemoryStorage(): Storage {
         ) {
           // An awaited callback would hold a write lock across external code;
           // staging/SQLite adapters deliberately forbid this.
+          // Consume rejected thenables too; do not leak unhandled rejections.
+          void Promise.resolve(returned).then(
+            () => undefined,
+            () => undefined,
+          );
           throw new StorageError("async_transaction");
         }
         stage.commit();
       } catch (error) {
-        throw error instanceof StorageError ? error : new StorageError("transaction_aborted");
+        throw safeStorageError(error, "transaction_aborted");
       } finally {
         stage.close();
         inSynchronousCallback = false;
+        activeStage = null;
       }
     });
     // A rejected writer never poisons the serialization queue.
@@ -65,9 +88,7 @@ export function createInMemoryStorage(): Storage {
         const captured = validEvents(events);
         return queue((tx) => tx.append(captured));
       } catch (error) {
-        return Promise.reject(
-          error instanceof StorageError ? error : new StorageError("invalid_event"),
-        );
+        return Promise.reject(safeStorageError(error, "invalid_event"));
       }
     },
 
@@ -76,9 +97,7 @@ export function createInMemoryStorage(): Storage {
         // Read-committed at invocation, even during another staged callback.
         return Promise.resolve(eventPage(state, [], options));
       } catch (error) {
-        return Promise.reject(
-          error instanceof StorageError ? error : new StorageError("transaction_aborted"),
-        );
+        return Promise.reject(safeStorageError(error, "transaction_aborted"));
       }
     },
 
@@ -97,9 +116,7 @@ export function createInMemoryStorage(): Storage {
       try {
         return Promise.resolve(committedContent(state, namespace, id, revision));
       } catch (error) {
-        return Promise.reject(
-          error instanceof StorageError ? error : new StorageError("transaction_aborted"),
-        );
+        return Promise.reject(safeStorageError(error, "transaction_aborted"));
       }
     },
 
@@ -109,9 +126,7 @@ export function createInMemoryStorage(): Storage {
         const captured = validContent(record);
         return queue((tx) => tx.putContent(captured));
       } catch (error) {
-        return Promise.reject(
-          error instanceof StorageError ? error : new StorageError("invalid_input"),
-        );
+        return Promise.reject(safeStorageError(error, "invalid_input"));
       }
     },
 
@@ -119,9 +134,7 @@ export function createInMemoryStorage(): Storage {
       try {
         return Promise.resolve(committedProjection(state, id));
       } catch (error) {
-        return Promise.reject(
-          error instanceof StorageError ? error : new StorageError("transaction_aborted"),
-        );
+        return Promise.reject(safeStorageError(error, "transaction_aborted"));
       }
     },
 
@@ -131,9 +144,7 @@ export function createInMemoryStorage(): Storage {
         const captured = validProjection(record);
         return queue((tx) => tx.putProjection(captured));
       } catch (error) {
-        return Promise.reject(
-          error instanceof StorageError ? error : new StorageError("invalid_input"),
-        );
+        return Promise.reject(safeStorageError(error, "invalid_input"));
       }
     },
 

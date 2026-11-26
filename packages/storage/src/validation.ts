@@ -73,21 +73,38 @@ export function validEvent(value: unknown): LyceumEvent {
     const safe = cloneJson(value);
     const parsed = LyceumEventSchema.safeParse(safe);
     if (!parsed.success) throw new StorageError("invalid_event");
-    return parsed.data;
+    // Zod may add default arrays or normalize optional fields. Verify the
+    // *canonical* representation against the same portable JSON bounds before
+    // committing it, or a successful write could become unreadable on replay.
+    return cloneJson(parsed.data) as unknown as LyceumEvent;
   } catch {
     throw new StorageError("invalid_event");
   }
 }
 
 export function validEvents(value: readonly LyceumEvent[]): LyceumEvent[] {
-  if (!Array.isArray(value) || value.length > 100_000) throw new StorageError("invalid_event");
-  const canonical: LyceumEvent[] = [];
-  for (let i = 0; i < value.length; i++) {
-    const slot = Object.getOwnPropertyDescriptor(value, String(i));
-    if (!slot?.enumerable || !("value" in slot)) throw new StorageError("invalid_event");
-    canonical.push(validEvent(slot.value));
+  try {
+    if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {
+      throw new StorageError("invalid_event");
+    }
+    const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
+    const length = lengthDescriptor?.value;
+    if (typeof length !== "number" || !Number.isSafeInteger(length) || length > 100_000) {
+      throw new StorageError("invalid_event");
+    }
+    if (Reflect.ownKeys(value).length !== length + 1) {
+      throw new StorageError("invalid_event");
+    }
+    const canonical: LyceumEvent[] = [];
+    for (let i = 0; i < length; i++) {
+      const slot = Object.getOwnPropertyDescriptor(value, String(i));
+      if (!slot?.enumerable || !("value" in slot)) throw new StorageError("invalid_event");
+      canonical.push(validEvent(slot.value));
+    }
+    return canonical;
+  } catch {
+    throw new StorageError("invalid_event");
   }
-  return canonical;
 }
 
 export function sameEvent(a: LyceumEvent, b: LyceumEvent): boolean {
@@ -130,18 +147,30 @@ export function validPagination(
   options: StorageReadOptions | undefined,
   currentHead: number,
 ): { afterSeq: number; limit: number } {
-  if (options !== undefined) {
-    if (options === null || typeof options !== "object" || Array.isArray(options)) badInput();
-    const prototype = Object.getPrototypeOf(options);
-    if (prototype !== Object.prototype && prototype !== null) badInput();
-    for (const key of Reflect.ownKeys(options)) {
-      if (key !== "afterSeq" && key !== "limit") badInput();
-      const descriptor = Object.getOwnPropertyDescriptor(options, key);
-      if (!descriptor || !("value" in descriptor)) badInput();
+  try {
+    const snapshot: { afterSeq?: unknown; limit?: unknown } = Object.create(null);
+    if (options !== undefined) {
+      if (options === null || typeof options !== "object" || Array.isArray(options)) badInput();
+      const prototype = Object.getPrototypeOf(options);
+      if (prototype !== Object.prototype && prototype !== null) badInput();
+      for (const key of Reflect.ownKeys(options)) {
+        if (key !== "afterSeq" && key !== "limit") badInput();
+        const descriptor = Object.getOwnPropertyDescriptor(options, key);
+        if (!descriptor?.enumerable || !("value" in descriptor)) badInput();
+        Object.defineProperty(snapshot, key, {
+          value: descriptor.value,
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
+      }
     }
+    // Undefined is omission. Explicit null is always invalid.
+    const afterSeq = safeInt(snapshot.afterSeq === undefined ? 0 : snapshot.afterSeq, 0);
+    const limit = safeInt(snapshot.limit === undefined ? 1000 : snapshot.limit, 1);
+    if (afterSeq > currentHead || limit > 10_000) badInput();
+    return { afterSeq, limit };
+  } catch {
+    throw new StorageError("invalid_input");
   }
-  const afterSeq = safeInt(options?.afterSeq ?? 0, 0);
-  const limit = safeInt(options?.limit ?? 1000, 1);
-  if (afterSeq > currentHead || limit > 10_000) badInput();
-  return { afterSeq, limit };
 }

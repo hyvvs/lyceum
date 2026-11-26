@@ -10,6 +10,7 @@ import {
   type StorageReadOptions,
   type StorageTransaction,
 } from "@lyceum/core";
+import { safeStorageError } from "./errors";
 import { equalJson } from "./json";
 import {
   sameEvent,
@@ -94,7 +95,7 @@ export class MemoryStage {
   private readonly stagedContent: ContentMap = new Map();
   private readonly stagedProjections = new Map<string, ProjectionRecord>();
 
-  constructor(private readonly state: MemoryState) {
+  constructor(private state: MemoryState | null) {
     this.handle = Object.freeze({
       append: (events: readonly LyceumEvent[]) => this.append(events),
       readEntries: (options?: StorageReadOptions) => this.readEntries(options),
@@ -112,31 +113,43 @@ export class MemoryStage {
     if (this.poison) throw this.poison;
   }
 
+  private get current(): MemoryState {
+    this.assertOpen();
+    if (!this.state) throw new StorageError("closed_transaction");
+    return this.state;
+  }
+
   private run<T>(action: () => T): T {
     this.assertOpen();
     try {
       return action();
     } catch (error) {
       // Even if the callback swallows a validation/conflict error, rollback wins.
-      this.poison = error instanceof StorageError ? error : new StorageError("transaction_aborted");
+      this.poison = safeStorageError(error, "transaction_aborted");
       throw this.poison;
     }
   }
 
+  /** Reentrant writes poison the enclosing transaction even if caller catches. */
+  invalidate(error: StorageError): void {
+    if (this.open && !this.poison) this.poison = safeStorageError(error, "nested_transaction");
+  }
+
   private getLastSeq(): number {
-    return this.run(() => this.state.entries.length + this.stagedEvents.length);
+    return this.run(() => this.current.entries.length + this.stagedEvents.length);
   }
 
   private append(events: readonly LyceumEvent[]): void {
     this.run(() => {
       const canonical = validEvents(events);
       for (const candidate of canonical) {
-        const previous = this.stagedIds.get(candidate.id) ?? this.state.eventIds.get(candidate.id);
+        const previous =
+          this.stagedIds.get(candidate.id) ?? this.current.eventIds.get(candidate.id);
         if (previous) {
           if (!sameEvent(previous, candidate)) throw new StorageError("conflict");
           continue;
         }
-        const seq = this.state.entries.length + this.stagedEvents.length + 1;
+        const seq = this.current.entries.length + this.stagedEvents.length + 1;
         this.stagedEvents.push({ seq, event: candidate });
         this.stagedIds.set(candidate.id, candidate);
       }
@@ -144,7 +157,7 @@ export class MemoryStage {
   }
 
   private readEntries(options?: StorageReadOptions): StorageEventPage {
-    return this.run(() => eventPage(this.state, this.stagedEvents, options));
+    return this.run(() => eventPage(this.current, this.stagedEvents, options));
   }
 
   private getContent(
@@ -154,7 +167,7 @@ export class MemoryStage {
   ): ContentRecord | null {
     return this.run(() => {
       validContentLookup(namespace, id, revision);
-      const stored = this.state.content.get(namespace)?.get(id);
+      const stored = this.current.content.get(namespace)?.get(id);
       const staged = this.stagedContent.get(namespace)?.get(id);
       const desired = revision ?? (stored?.size ?? 0) + (staged?.size ?? 0);
       const item = staged?.get(desired) ?? stored?.get(desired);
@@ -165,7 +178,7 @@ export class MemoryStage {
   private putContent(input: ContentRecord): void {
     this.run(() => {
       const candidate = validContent(input);
-      const stored = this.state.content.get(candidate.namespace)?.get(candidate.id);
+      const stored = this.current.content.get(candidate.namespace)?.get(candidate.id);
       const staged = this.stagedContent.get(candidate.namespace)?.get(candidate.id);
       const head = (stored?.size ?? 0) + (staged?.size ?? 0);
       if (candidate.revision <= head) {
@@ -196,7 +209,7 @@ export class MemoryStage {
   private getProjection(id: string): ProjectionRecord | null {
     return this.run(() => {
       validId(id);
-      const record = this.stagedProjections.get(id) ?? this.state.projections.get(id);
+      const record = this.stagedProjections.get(id) ?? this.current.projections.get(id);
       return record ? validProjection(record) : null;
     });
   }
@@ -204,7 +217,7 @@ export class MemoryStage {
   private putProjection(input: ProjectionRecord): void {
     this.run(() => {
       const candidate = validProjection(input);
-      const head = this.state.entries.length + this.stagedEvents.length;
+      const head = this.current.entries.length + this.stagedEvents.length;
       if (candidate.asOfSeq > head) throw new StorageError("invalid_input");
       this.stagedProjections.set(candidate.id, candidate);
     });
@@ -215,15 +228,16 @@ export class MemoryStage {
     this.assertOpen();
     // All possible validation and callback failures happened while staging.
     // No O(history) log copy or spread-call limit: work is proportional to delta.
+    const committed = this.current;
     for (const entry of this.stagedEvents) {
-      this.state.entries.push(entry);
-      this.state.eventIds.set(entry.event.id, entry.event);
+      committed.entries.push(entry);
+      committed.eventIds.set(entry.event.id, entry.event);
     }
     for (const [namespace, ids] of this.stagedContent) {
-      let committedIds = this.state.content.get(namespace);
+      let committedIds = committed.content.get(namespace);
       if (!committedIds) {
         committedIds = new Map();
-        this.state.content.set(namespace, committedIds);
+        committed.content.set(namespace, committedIds);
       }
       for (const [id, versions] of ids) {
         let committedVersions = committedIds.get(id);
@@ -234,10 +248,17 @@ export class MemoryStage {
         for (const [revision, item] of versions) committedVersions.set(revision, item);
       }
     }
-    for (const [id, record] of this.stagedProjections) this.state.projections.set(id, record);
+    for (const [id, record] of this.stagedProjections) committed.projections.set(id, record);
   }
 
   close(): void {
     this.open = false;
+    // Retained closed transaction handles must not retain the active store or
+    // raw staged learner payloads indefinitely through their closures.
+    this.stagedEvents.length = 0;
+    this.stagedIds.clear();
+    this.stagedContent.clear();
+    this.stagedProjections.clear();
+    this.state = null;
   }
 }
