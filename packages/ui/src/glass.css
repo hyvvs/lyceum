@@ -1212,6 +1212,7 @@
   box-sizing: border-box;
   min-width: 0;
   max-width: 100%;
+  padding: var(--space-5);
   color: var(--text-1);
   overflow-wrap: anywhere;
 }
@@ -1244,7 +1245,7 @@
 }
 .lyceum-stat-card__value {
   margin: var(--space-3) 0;
-  font-size: var(--type-title);
+  font-size: calc(var(--type-reading) * 1.5);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1330,6 +1331,9 @@
   border-radius: var(--radius-chip);
   background: var(--surface-float-solid);
 }
+.lyceum-bar-chart__item[data-zero="true"] .lyceum-bar-chart__bar {
+  border-width: 0;
+}
 .lyceum-bar-chart__item[data-highlighted="true"] .lyceum-bar-chart__bar {
   background: var(--accent);
 }
@@ -1366,7 +1370,6 @@
 }
 .lyceum-mastery-ring__uncertainty {
   stroke: var(--text-2);
-  stroke-dasharray: none;
   stroke-width: 5;
 }
 .lyceum-mastery-ring__progress {
@@ -1374,7 +1377,7 @@
 }
 .lyceum-mastery-ring__value {
   margin: 0;
-  font-size: var(--type-title);
+  font-size: calc(var(--type-reading) * 1.5);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1416,6 +1419,7 @@
   min-width: 0;
   max-width: 100%;
   width: fit-content;
+  padding: var(--space-5);
   overflow-wrap: anywhere;
   white-space: normal;
   color: var(--text-1);
@@ -1436,7 +1440,7 @@
 .lyceum-chat-bubble__content {
   min-width: 0;
   max-width: 100%;
-  line-height: var(--leading-reading);
+  line-height: var(--line-height-reading);
 }
 .lyceum-chat-bubble__content > :first-child {
   margin-block-start: 0;
@@ -1464,5 +1468,22 @@
     background: Canvas;
     border-color: CanvasText;
     color: CanvasText;
+  }
+}
+@media (max-width: 400px) {
+  .lyceum-stat-card,
+  .lyceum-bar-chart,
+  .lyceum-mastery-ring,
+  .lyceum-chat-bubble {
+    padding: var(--space-3);
+  }
+  /* At 200% root text, each bar needs a full reading line instead of letter-wide columns. */
+  .lyceum-bar-chart__bars {
+    flex-direction: column;
+  }
+  .lyceum-bar-chart__item {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
   }
 }

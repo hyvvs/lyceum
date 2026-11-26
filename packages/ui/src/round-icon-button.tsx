@@ -11,6 +11,7 @@ export interface RoundIconBadge {
 /** Consumer-owned native icon action; icon is decorative and never a nested control. */
 export type RoundIconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
   "aria-label": string;
+  /** Trusted decorative icon content only; must not contain a nested interactive element. */
   icon: ReactNode;
   badge?: RoundIconBadge;
   /** Keeps keyboard focus but prevents activation while pending. */

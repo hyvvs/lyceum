@@ -5,6 +5,7 @@ export interface ChatBubbleProps {
   speaker: "tutor" | "learner";
   /** Visible speaker identity, independent of color or alignment. */
   speakerLabel: string;
+  /** Trusted, already-rendered React nodes/text only; not an HTML sanitizer or markdown executor. */
   children?: ReactNode;
   /** Tutor-only presentational progress cue; never a live transcript or announcement owner. */
   streaming?: boolean;

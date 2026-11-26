@@ -52,6 +52,16 @@ test("B5b BarChart has a single non-color highlighted bar and truthful accessibl
   expect(heights[1] ?? 0).toBeGreaterThan(heights[0] ?? 0);
   await page.goto(story("barchart", "zero"));
   await expect(page.getByText("0 sample items", { exact: true })).toBeVisible();
+  const zeroBar = await page
+    .locator(".lyceum-bar-chart__item")
+    .first()
+    .locator(".lyceum-bar-chart__bar")
+    .evaluate((node) => ({
+      height: node.getBoundingClientRect().height,
+      border: getComputedStyle(node).borderTopWidth,
+    }));
+  expect(zeroBar.height).toBe(0);
+  expect(zeroBar.border).toBe("0px");
   await page.goto(story("barchart", "empty"));
   await expect(page.getByText("No data available")).toBeVisible();
 });
@@ -71,6 +81,21 @@ test("B5b MasteryRing speaks explicit probability and uncertainty and never equa
   await expect(page.locator(".lyceum-mastery-ring__visual")).toHaveCount(0);
   await page.goto(story("masteryring", "zero"));
   await expect(page.locator(".lyceum-mastery-ring__value")).toHaveText("0%");
+});
+
+test("B5b rendered MasteryRing uncertainty halo reflects the supplied partial interval, not a full circle", async ({
+  page,
+}) => {
+  await page.goto(story("masteryring", "default"));
+  const halo = await page.locator(".lyceum-mastery-ring__uncertainty").evaluate((node) => ({
+    attr: node.getAttribute("stroke-dasharray"),
+    computed: getComputedStyle(node).strokeDasharray,
+  }));
+  expect(halo.attr).not.toBeNull();
+  expect(halo.computed).not.toBe("none");
+  const firstDash = Number.parseFloat(halo.computed.split(/[ ,]/)[0] ?? "");
+  const expected = (0.77 - 0.47) * 2 * Math.PI * 40;
+  expect(Math.abs(firstDash - expected)).toBeLessThan(1);
 });
 
 test("B5b data surfaces retain meaningful visible content in narrow RTL, 200%-text and opaque modes", async ({

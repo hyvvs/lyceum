@@ -15,6 +15,7 @@ export interface StatTrend {
 export interface StatCardProps {
   label: string;
   value?: string | number | null;
+  /** Trusted decorative React content only; consumers must not render arbitrary HTML/media. */
   icon?: ReactNode;
   delta?: StatDelta;
   trend?: StatTrend;
@@ -54,12 +55,22 @@ export function StatCard({
   const titleId = useId();
   const hasValue = value !== null && value !== undefined && value !== "";
   const values = trend?.samples ?? [];
-  const low = Math.min(...values);
-  const high = Math.max(...values);
+  let low = Number.POSITIVE_INFINITY;
+  let high = Number.NEGATIVE_INFINITY;
+  for (const sample of values) {
+    if (sample < low) low = sample;
+    if (sample > high) high = sample;
+  }
+  // Normalize before subtracting: finite extrema can have an infinite raw difference.
+  const magnitude = Math.max(Math.abs(low), Math.abs(high));
+  const scaledLow = magnitude > 0 && Number.isFinite(magnitude) ? low / magnitude : 0;
+  const scaledHigh = magnitude > 0 && Number.isFinite(magnitude) ? high / magnitude : 0;
   const points = values
     .map((sample, i) => {
       const x = (i / (values.length - 1)) * 120;
-      const y = high === low ? 14 : 24 - ((sample - low) / (high - low)) * 20;
+      const fraction =
+        high === low ? 0.5 : (sample / magnitude - scaledLow) / (scaledHigh - scaledLow);
+      const y = 24 - fraction * 20;
       return `${x.toFixed(2)},${y.toFixed(2)}`;
     })
     .join(" ");

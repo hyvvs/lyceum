@@ -61,6 +61,7 @@ export function BarChart({
                 className="lyceum-bar-chart__item"
                 key={datum.id}
                 data-highlighted={highlighted || undefined}
+                data-zero={datum.value === 0 || undefined}
               >
                 <div className="lyceum-bar-chart__track" aria-hidden="true">
                   <span

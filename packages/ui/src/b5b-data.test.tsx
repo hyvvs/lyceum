@@ -72,6 +72,36 @@ describe("B5b pure, truthful presentation of consumer-supplied data", () => {
     ).toThrow(/delta/i);
   });
 
+  test("StatCard keeps finite SVG coordinates with both largest-magnitude finite extrema", () => {
+    const html = renderToStaticMarkup(
+      <StatCard
+        label="Extreme sample range"
+        value="Extrema"
+        trend={{
+          samples: [-Number.MAX_VALUE, 0, Number.MAX_VALUE],
+          description: "Three extreme but finite illustrative samples",
+        }}
+      />,
+    );
+    const points = html.match(/<polyline points="([^"]+)"/)?.[1] ?? "";
+    expect(points).not.toBe("");
+    expect(points).not.toMatch(/NaN|Infinity/);
+    expect(points.split(" ")).toHaveLength(3);
+  });
+
+  test("StatCard does not throw from argument-spread limits when supplied a large finite trend", () => {
+    const samples = Array.from({ length: 150_000 }, (_, index) => index % 2);
+    const html = renderToStaticMarkup(
+      <StatCard
+        label="Large synthetic trend"
+        value={1}
+        trend={{ samples, description: "Long finite input" }}
+      />,
+    );
+    expect(html).toContain("Long finite input");
+    expect(html).not.toMatch(/NaN|Infinity/);
+  });
+
   test("BarChart labels every finite value in the textual equivalent, units and exclusive highlight", () => {
     const html = renderToStaticMarkup(
       <BarChart
