@@ -14,6 +14,12 @@ export function expectedStoryStates(stories: readonly PrimitiveStory[]): string[
       case "Primitives/GlassCard":
       case "Primitives/TintCard":
       case "Primitives/PillNav":
+      case "Primitives/RoundIconButton":
+      case "Primitives/SegmentedControl":
+      case "Primitives/StatCard":
+      case "Primitives/BarChart":
+      case "Primitives/MasteryRing":
+      case "Primitives/ChatBubble":
         states = [name];
         break;
       case "Primitives/Dock":

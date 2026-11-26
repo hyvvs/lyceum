@@ -23,6 +23,12 @@ export const PRIMITIVE_FAMILIES = [
   "TintCard",
   "PillNav",
   "Dock",
+  "RoundIconButton",
+  "SegmentedControl",
+  "StatCard",
+  "BarChart",
+  "MasteryRing",
+  "ChatBubble",
 ] as const;
 
 interface StorySource {
