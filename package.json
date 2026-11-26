@@ -17,6 +17,7 @@
   "scripts": {
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
+    "eval": "pnpm --filter @lyceum/eval eval",
     "test:watch": "vitest",
     "storybook": "storybook dev --no-open -p 6006",
     "storybook:build": "storybook build",
@@ -26,7 +27,7 @@
     "boundaries": "node scripts/check-boundaries.mjs",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "verify": "pnpm boundaries && pnpm agentcheck && pnpm typecheck && pnpm test && pnpm lint",
+    "verify": "pnpm boundaries && pnpm agentcheck && pnpm typecheck && pnpm test && pnpm eval && pnpm lint",
     "agentcheck": "node scripts/check-agent-files.mjs"
   },
   "devDependencies": {

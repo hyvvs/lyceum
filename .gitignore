@@ -11,3 +11,4 @@ src-tauri/target
 storybook-static
 playwright-report
 test-results
+/evals/reports/
