@@ -11,3 +11,5 @@ export * from "./glass-card";
 export * from "./tint-card";
 export * from "./pill-nav";
 export * from "./dock";
+export * from "./round-icon-button";
+export * from "./segmented-control";

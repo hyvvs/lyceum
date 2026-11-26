@@ -1031,3 +1031,176 @@
     color: CanvasText;
   }
 }
+
+/* B5a: native controls, with no additional backdrop-filter layer. */
+.lyceum-round-icon-button__wrap {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+}
+.lyceum-round-icon-button {
+  position: relative;
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: var(--space-2);
+  border: var(--border-control) solid var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised-solid);
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+}
+.lyceum-round-icon-button:hover:not(:disabled):not([aria-disabled="true"]),
+.lyceum-round-icon-button[aria-pressed="true"] {
+  background: var(--surface-float-solid);
+  border-color: var(--contrast-border);
+}
+.lyceum-round-icon-button:focus-visible {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-1);
+}
+.lyceum-round-icon-button:disabled,
+.lyceum-round-icon-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.lyceum-round-icon-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--type-reading);
+}
+.lyceum-round-icon-button__badge {
+  position: absolute;
+  inset-block-start: calc(-1 * var(--space-2));
+  inset-inline-end: calc(-1 * var(--space-2));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-5);
+  min-height: var(--space-5);
+  padding-inline: var(--space-1);
+  border: 1px solid var(--contrast-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-float-solid);
+  color: var(--text-1);
+  font-size: var(--type-xs);
+  font-weight: 700;
+}
+.lyceum-round-icon-button__spinner {
+  position: absolute;
+  inset-inline-end: var(--space-1);
+  inset-block-end: var(--space-1);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: currentColor;
+}
+.lyceum-segmented-control {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--text-1);
+}
+.lyceum-segmented-control__legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+  font-weight: 600;
+}
+.lyceum-segmented-control__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-control);
+  background: var(--surface-solid);
+}
+.lyceum-segmented-control__option {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+}
+.lyceum-segmented-control__input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+}
+.lyceum-segmented-control__label {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-control) solid transparent;
+  border-radius: var(--radius-chip);
+  color: var(--text-1);
+  font-size: var(--type-sm);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.lyceum-segmented-control__check {
+  display: none;
+  font-weight: 700;
+}
+.lyceum-segmented-control__input:checked + .lyceum-segmented-control__label {
+  background: var(--surface-float-solid);
+  border-color: var(--contrast-border);
+  font-weight: 700;
+}
+.lyceum-segmented-control__input:checked
+  + .lyceum-segmented-control__label
+  .lyceum-segmented-control__check {
+  display: inline;
+}
+.lyceum-segmented-control__input:focus-visible + .lyceum-segmented-control__label {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-1);
+}
+.lyceum-segmented-control__input:disabled + .lyceum-segmented-control__label,
+.lyceum-segmented-control:disabled .lyceum-segmented-control__label {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.lyceum-segmented-control__empty {
+  margin: 0;
+  color: var(--text-2);
+}
+@media (forced-colors: active) {
+  .lyceum-round-icon-button,
+  .lyceum-segmented-control__options,
+  .lyceum-segmented-control__label {
+    background: Canvas;
+    color: CanvasText;
+    border-color: ButtonText;
+    box-shadow: none;
+  }
+  .lyceum-round-icon-button:hover,
+  .lyceum-round-icon-button[aria-pressed="true"],
+  .lyceum-segmented-control__input:checked + .lyceum-segmented-control__label {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+  .lyceum-round-icon-button:focus-visible,
+  .lyceum-segmented-control__input:focus-visible + .lyceum-segmented-control__label {
+    outline-color: Highlight;
+  }
+}
