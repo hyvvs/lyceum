@@ -3,6 +3,7 @@ import {
   type LyceumEvent,
   StorageError,
   type StorageReadOptions,
+  type StorageTransaction,
 } from "@lyceum/core";
 import { describe, expect, it } from "vitest";
 import { describeStorageContract } from "./contracts";
@@ -21,6 +22,48 @@ describe("in-memory adapter-specific lifecycle", () => {
 });
 
 describe("independent review regression evidence", () => {
+  it("accepts genuinely synchronous callbacks named async", async () => {
+    const store = createInMemoryStorage();
+    const callbacks = {
+      async(tx: StorageTransaction) {
+        tx.append([attempt("sync-method-named-async")]);
+      },
+    };
+    await expect(store.transaction(callbacks.async)).resolves.toBeUndefined();
+    await expect(
+      store.transaction((async) => {
+        async.append([attempt("sync-arrow-parameter-async")]);
+      }),
+    ).resolves.toBeUndefined();
+    expect((await store.read()).events.map((event) => event.id)).toEqual([
+      "sync-method-named-async",
+      "sync-arrow-parameter-async",
+    ]);
+  });
+
+  it("keeps a poisoned transaction error code stable when caller mutates a caught error", async () => {
+    const store = createInMemoryStorage();
+    await expect(
+      store.transaction((tx) => {
+        tx.append([attempt("must-rollback")]);
+        try {
+          const invalid = {
+            ...attempt("bad-payload"),
+            payload: { ...attempt("bad-payload").payload, responseMs: -1 },
+          } as LyceumEvent;
+          tx.append([invalid]);
+        } catch (error) {
+          if (error instanceof StorageError) {
+            // A callback is allowed to catch its error; it cannot rewrite the
+            // original validation failure into an unrelated conflict code.
+            Object.assign(error, { code: "conflict" });
+          }
+        }
+      }),
+    ).rejects.toMatchObject({ code: "invalid_event", message: "invalid_event" });
+    expect(await store.getLastSeq()).toBe(0);
+  });
+
   it("does not propagate forged StorageError messages from a callback or input proxy", async () => {
     const store = createInMemoryStorage();
     const marker = "SYNTHETIC_PRIVATE_LEARNER_PAYLOAD_DO_NOT_DISCLOSE";

@@ -10,6 +10,31 @@ import { safeStorageError } from "./errors";
 import { MemoryStage, committedContent, committedProjection, emptyState, eventPage } from "./stage";
 import { validContent, validEvents, validProjection } from "./validation";
 
+const asyncFunctionPrototype = Object.getPrototypeOf(async () => undefined);
+const generatorFunctionPrototype = Object.getPrototypeOf(function* () {});
+const asyncGeneratorFunctionPrototype = Object.getPrototypeOf(async function* () {});
+
+function requiresAsynchronousCallback(operation: unknown): boolean {
+  if (typeof operation !== "function") return true;
+  // Function kind prototypes distinguish genuine async/generator functions from
+  // perfectly synchronous methods named `async` and arrows with an `async`
+  // parameter. A source fallback also rejects functions whose prototype was
+  // explicitly reassigned, without trusting a forged Symbol.toStringTag.
+  const prototype = Object.getPrototypeOf(operation);
+  if (
+    prototype === asyncFunctionPrototype ||
+    prototype === generatorFunctionPrototype ||
+    prototype === asyncGeneratorFunctionPrototype
+  ) {
+    return true;
+  }
+  const source = Function.prototype.toString.call(operation);
+  return (
+    /^\s*(?:async\s+function\b|async\s*\*|function\s*\*|\*)/.test(source) ||
+    /^\s*async\s*(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/.test(source)
+  );
+}
+
 /**
  * Per-instance, memory-only Storage adapter. No global registry, I/O, persistence,
  * browser API, clock, telemetry, or learner-specific behavior.
@@ -42,15 +67,9 @@ export function createInMemoryStorage(): Storage {
         // otherwise their continuation could run after the transaction closes.
         // Arbitrary caller JS cannot be sandboxed: callback code must still be
         // trusted to obey the documented synchronous transaction contract.
-        // Function.prototype.toString bypasses a forged Symbol.toStringTag on
-        // native async/generator functions. Executable custom JS remains a
-        // trusted callback boundary, never a sandbox for hostile code.
-        const source = Function.prototype.toString.call(operation);
-        if (
-          typeof operation !== "function" ||
-          /^\s*async\b/.test(source) ||
-          /^\s*function\s*\*/.test(source)
-        ) {
+        // Recognize actual function kinds, not identifier text. Executable
+        // custom JS remains a trusted callback boundary, never a sandbox.
+        if (requiresAsynchronousCallback(operation)) {
           throw new StorageError("async_transaction");
         }
         const returned: unknown = operation(stage.handle);

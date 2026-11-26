@@ -5,6 +5,7 @@ import {
   type ProjectionRecord,
   type SequencedEvent,
   StorageError,
+  type StorageErrorCode,
   type StorageEventPage,
   type StorageJson,
   type StorageReadOptions,
@@ -89,7 +90,7 @@ export function committedProjection(state: MemoryState, id: string): ProjectionR
 export class MemoryStage {
   readonly handle: StorageTransaction;
   private open = true;
-  private poison: StorageError | null = null;
+  private poison: StorageErrorCode | null = null;
   private readonly stagedEvents: SequencedEvent[] = [];
   private readonly stagedIds = new Map<string, LyceumEvent>();
   private readonly stagedContent: ContentMap = new Map();
@@ -110,7 +111,7 @@ export class MemoryStage {
 
   private assertOpen(): void {
     if (!this.open) throw new StorageError("closed_transaction");
-    if (this.poison) throw this.poison;
+    if (this.poison) throw new StorageError(this.poison);
   }
 
   private get current(): MemoryState {
@@ -125,14 +126,18 @@ export class MemoryStage {
       return action();
     } catch (error) {
       // Even if the callback swallows a validation/conflict error, rollback wins.
-      this.poison = safeStorageError(error, "transaction_aborted");
-      throw this.poison;
+      // Keep only a private error code. The callback may catch and mutate the
+      // thrown error, but must never change the stored reason for rollback.
+      this.poison = safeStorageError(error, "transaction_aborted").code;
+      throw new StorageError(this.poison);
     }
   }
 
   /** Reentrant writes poison the enclosing transaction even if caller catches. */
   invalidate(error: StorageError): void {
-    if (this.open && !this.poison) this.poison = safeStorageError(error, "nested_transaction");
+    if (this.open && !this.poison) {
+      this.poison = safeStorageError(error, "nested_transaction").code;
+    }
   }
 
   private getLastSeq(): number {
