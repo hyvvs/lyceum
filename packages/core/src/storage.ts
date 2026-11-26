@@ -1,7 +1,12 @@
 import type { LyceumEvent } from "./events";
 import type { EventStore } from "./ports";
 
-/** Portable JSON only: no dates, binary blobs, class instances, functions, or credentials. */
+/**
+ * Portable JSON only: no dates, binary blobs, class instances, functions or
+ * credentials. The in-memory adapter rejects accessor-backed/prototype values,
+ * nonfinite numbers and cycles; a depth of >64 or >1,000,000 JSON nodes is
+ * invalid. Future adapters must preserve the same portable representation.
+ */
 export type StorageJson =
   | null
   | boolean
@@ -55,7 +60,11 @@ export interface ContentRecord {
   readonly payload: StorageJson;
 }
 
-/** Disposable derived state, always bounded by the locally committed event head. */
+/**
+ * Disposable derived state, never authoritative learner history. Replacing a
+ * projection may move asOfSeq backwards (e.g. rebuilding from zero), but never
+ * past the current transaction-local head, and never edits historical events.
+ */
 export interface ProjectionRecord {
   readonly id: string;
   readonly asOfSeq: number;
@@ -66,7 +75,9 @@ export interface ProjectionRecord {
 /**
  * Only valid during the synchronous transaction callback. Methods reject use
  * after commit/rollback. Reads on this handle see staged writes; reads through
- * the enclosing Storage see only committed data.
+ * the enclosing Storage see only committed data sampled at read invocation.
+ * Any validation/duplicate conflict or nested write poisons the transaction
+ * even if the consumer catches the immediate error.
  */
 export interface StorageTransaction {
   append(events: readonly LyceumEvent[]): void;
@@ -83,9 +94,19 @@ export interface StorageTransaction {
  * assignment. Reads see committed state at invocation, not pending writes.
  * Transactions stage all writes and atomically commit or roll back.
  *
- * A transaction callback MUST be synchronous: thenables and nested/reentrant
- * storage writes are rejected so neither SQLite adapter needs an async lock
- * held across arbitrary awaited user code.
+ * A transaction callback MUST be a trusted synchronous function returning
+ * undefined: async/generator callbacks, returned promises/thenables and
+ * nested/reentrant storage writes are rejected. Reentrant writes throw
+ * synchronously; other validation failures reject the returned Promise.
+ * No arbitrary JavaScript callback or Proxy sandbox is implied.
+ *
+ * Standalone append/content/projection writes snapshot and validate at method
+ * invocation, before waiting in the serialized writer queue. Transaction-handle
+ * writes snapshot immediately at their synchronous handle method invocation.
+ * Caller-held objects and returned records cannot mutate committed state.
+ *
+ * A future native/WASM SQLite adapter must match committed read visibility and
+ * provide synchronous transaction-local reads within its bounded callback.
  */
 export interface Storage extends EventStore {
   readEntries(options?: StorageReadOptions): Promise<StorageEventPage>;

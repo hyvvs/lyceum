@@ -140,6 +140,24 @@ export function contentProjectionContract(factory: StorageFactory): void {
       await expect(store.getProjection("")).rejects.toMatchObject({ code: "invalid_input" });
     });
 
+    it("rejects nonserializable projection payloads without replacing committed state", async () => {
+      const store = await factory();
+      const valid: ProjectionRecord = {
+        id: "safe-projection",
+        asOfSeq: 0,
+        algoVersion: "synthetic-v1",
+        payload: { folded: 0 },
+      };
+      await store.putProjection(valid);
+      await expect(
+        store.putProjection({
+          ...valid,
+          payload: { fn: () => "execute" },
+        } as unknown as ProjectionRecord),
+      ).rejects.toMatchObject({ code: "invalid_json" });
+      expect(await store.getProjection("safe-projection")).toEqual(valid);
+    });
+
     it("replaces projections deterministically and leaves the event log unchanged", async () => {
       const store = await factory();
       const events = [attempt("a"), attempt("b")];

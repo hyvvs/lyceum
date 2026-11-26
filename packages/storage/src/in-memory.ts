@@ -42,25 +42,29 @@ export function createInMemoryStorage(): Storage {
         // otherwise their continuation could run after the transaction closes.
         // Arbitrary caller JS cannot be sandboxed: callback code must still be
         // trusted to obey the documented synchronous transaction contract.
+        // Function.prototype.toString bypasses a forged Symbol.toStringTag on
+        // native async/generator functions. Executable custom JS remains a
+        // trusted callback boundary, never a sandbox for hostile code.
+        const source = Function.prototype.toString.call(operation);
         if (
           typeof operation !== "function" ||
-          Object.prototype.toString.call(operation) !== "[object Function]"
+          /^\s*async\b/.test(source) ||
+          /^\s*function\s*\*/.test(source)
         ) {
           throw new StorageError("async_transaction");
         }
         const returned: unknown = operation(stage.handle);
-        if (
-          returned !== null &&
-          (typeof returned === "object" || typeof returned === "function") &&
-          "then" in returned
-        ) {
+        if (returned !== undefined) {
           // An awaited callback would hold a write lock across external code;
           // staging/SQLite adapters deliberately forbid this.
-          // Consume rejected thenables too; do not leak unhandled rejections.
-          void Promise.resolve(returned).then(
-            () => undefined,
-            () => undefined,
-          );
+          // Observe only genuine native promises using the intrinsic internal
+          // slot brand-check. Do NOT execute arbitrary user-supplied .then
+          // methods or invoke getters on untrusted thenables after rollback.
+          try {
+            void Promise.prototype.then.call(returned, undefined, () => undefined);
+          } catch {
+            // Non-Promise thenables are rejected without executing their code.
+          }
           throw new StorageError("async_transaction");
         }
         stage.commit();

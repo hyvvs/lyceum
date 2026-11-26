@@ -113,17 +113,30 @@ export function transactionContract(factory: StorageFactory): void {
       const store = await factory();
       let outsideRead!: ReturnType<typeof store.readEntries>;
       let outsideContent!: ReturnType<typeof store.getContent>;
+      let outsideProjection!: ReturnType<typeof store.getProjection>;
+      let outsideHead!: ReturnType<typeof store.getLastSeq>;
       await store.transaction((tx) => {
         tx.append([attempt("not-yet-committed")]);
         tx.putContent(content("not-yet-committed"));
         outsideRead = store.readEntries();
         outsideContent = store.getContent("concept-graph", "not-yet-committed");
+        tx.putProjection({
+          id: "not-yet-committed",
+          asOfSeq: 1,
+          algoVersion: "synthetic-v1",
+          payload: { count: 1 },
+        });
+        outsideProjection = store.getProjection("not-yet-committed");
+        outsideHead = store.getLastSeq();
         expect(tx.readEntries().entries).toHaveLength(1);
       });
       expect(await outsideRead).toEqual({ entries: [], lastSeq: 0 });
       expect(await outsideContent).toBeNull();
+      expect(await outsideProjection).toBeNull();
+      expect(await outsideHead).toBe(0);
       expect((await store.read()).events).toHaveLength(1);
       expect(await store.getContent("concept-graph", "not-yet-committed")).not.toBeNull();
+      expect((await store.getProjection("not-yet-committed"))?.asOfSeq).toBe(1);
     });
 
     it("rolls back every store and sequence on arbitrary callback failure", async () => {

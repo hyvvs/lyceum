@@ -74,13 +74,13 @@ describe("independent review regression evidence", () => {
     expect(await store.getLastSeq()).toBe(1);
   });
 
-  it("observes rejection from arbitrary thenables returned by a synchronous callback", async () => {
+  it("rejects custom thenables without invoking user-controlled then methods", async () => {
     const store = createInMemoryStorage();
-    let rejectionHandled = false;
+    let thenCalled = false;
     // biome-ignore lint/suspicious/noThenProperty: deliberately tests an untrusted thenable.
     const returnedThenable = Object.defineProperty({}, "then", {
       value: (_resolve: unknown, reject?: (reason: Error) => void) => {
-        rejectionHandled = typeof reject === "function";
+        thenCalled = true;
         reject?.(new Error("SYNTHETIC_PRIVATE_REJECTION"));
       },
     });
@@ -92,7 +92,56 @@ describe("independent review regression evidence", () => {
     ).rejects.toMatchObject({ code: "async_transaction" });
     await Promise.resolve();
     await Promise.resolve();
-    expect(rejectionHandled).toBe(true);
+    expect(thenCalled).toBe(false);
+    expect(await store.getLastSeq()).toBe(0);
+  });
+
+  it("cannot hide a native async callback using a forged Symbol.toStringTag", async () => {
+    const store = createInMemoryStorage();
+    let invoked = false;
+    const disguised = async () => {
+      invoked = true;
+      await Promise.resolve();
+    };
+    Object.defineProperty(disguised, Symbol.toStringTag, { value: "Function" });
+    await expect(store.transaction(disguised)).rejects.toMatchObject({
+      code: "async_transaction",
+    });
+    expect(invoked).toBe(false);
+    expect(await store.getLastSeq()).toBe(0);
+  });
+
+  it("does not execute getter-backed StorageError code fields while sanitizing exceptions", async () => {
+    const store = createInMemoryStorage();
+    let getterCalled = false;
+    const forged = new StorageError("invalid_input");
+    Object.defineProperty(forged, "code", {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        throw new Error("SYNTHETIC_PRIVATE_PAYLOAD");
+      },
+    });
+    await expect(
+      store.transaction(() => {
+        throw forged;
+      }),
+    ).rejects.toMatchObject({
+      code: "transaction_aborted",
+      message: "transaction_aborted",
+    });
+    expect(getterCalled).toBe(false);
+  });
+
+  it("consumes genuine rejected Promise results without unhandled rejection or commit", async () => {
+    const store = createInMemoryStorage();
+    await expect(
+      store.transaction((tx) => {
+        tx.append([attempt("discarded-promise")]);
+        return Promise.reject(new Error("synthetic rejection")) as unknown as undefined;
+      }),
+    ).rejects.toMatchObject({ code: "async_transaction" });
+    await Promise.resolve();
     expect(await store.getLastSeq()).toBe(0);
   });
 

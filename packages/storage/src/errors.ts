@@ -20,7 +20,9 @@ export function safeStorageError(error: unknown, fallback: StorageErrorCode): St
   let code = fallback;
   try {
     if (error instanceof StorageError) {
-      const candidate: unknown = error.code;
+      // Never invoke an accessor-backed .code supplied by caller JavaScript.
+      const descriptor = Object.getOwnPropertyDescriptor(error, "code");
+      const candidate: unknown = descriptor && "value" in descriptor ? descriptor.value : null;
       if (typeof candidate === "string" && CODES.has(candidate)) {
         code = candidate as StorageErrorCode;
       }
