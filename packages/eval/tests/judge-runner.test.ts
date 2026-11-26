@@ -212,52 +212,52 @@ describe("unavailable LLM judge and evaluation runner", () => {
   });
 
   it("never serializes injected judge free-text or extra fields as response evidence", async () => {
-    const secret = "PRIVATE_SENTINEL_FROM_RESPONSE_NOT_FOR_REPORT";
+    const fixtureSentinel = "PRIVATE_SENTINEL_FROM_RESPONSE_NOT_FOR_REPORT";
     const scenario = makeScenario("judge-sanitization-001", { must: ["Acts carefully."] }, ["llm"]);
     const injectedJudge: LlmJudge = {
       async evaluate(request) {
         return {
           status: "evaluated",
-          reason: secret,
+          reason: fixtureSentinel,
           expectations: request.expectations.map((expectation) => ({
             ...expectation,
             status: "passed" as const,
-            reason: secret,
-            responseText: secret,
+            reason: fixtureSentinel,
+            responseText: fixtureSentinel,
           })),
         };
       },
     };
     const [result] = await runEvaluation([scenario], {
-      provider: new ScriptedProvider({ [scenario.id]: [scriptedResponse(secret)] }),
+      provider: new ScriptedProvider({ [scenario.id]: [scriptedResponse(fixtureSentinel)] }),
       llmJudge: injectedJudge,
     });
     expect(result?.classification).toBe("error");
-    expect(JSON.stringify(result)).not.toContain(secret);
+    expect(JSON.stringify(result)).not.toContain(fixtureSentinel);
   });
 
   it("sanitizes free-text reasons from a structurally valid injected judge result", async () => {
-    const secret = "PRIVATE_REASON_SENTINEL_NOT_FOR_REPORT";
+    const fixtureSentinel = "PRIVATE_REASON_SENTINEL_NOT_FOR_REPORT";
     const scenario = makeScenario("judge-reason-001", { must: ["Asks for evidence."] }, ["llm"]);
     const injectedJudge: LlmJudge = {
       async evaluate(request) {
         return {
           status: "evaluated",
-          reason: secret,
+          reason: fixtureSentinel,
           expectations: request.expectations.map((expectation) => ({
             ...expectation,
             status: "passed" as const,
-            reason: secret,
+            reason: fixtureSentinel,
           })),
         };
       },
     };
     const [result] = await runEvaluation([scenario], {
-      provider: new ScriptedProvider({ [scenario.id]: [scriptedResponse(secret)] }),
+      provider: new ScriptedProvider({ [scenario.id]: [scriptedResponse(fixtureSentinel)] }),
       llmJudge: injectedJudge,
     });
     expect(result?.classification).toBe("passed");
-    expect(JSON.stringify(result)).not.toContain(secret);
+    expect(JSON.stringify(result)).not.toContain(fixtureSentinel);
   });
 
   it("does not let a mutable injected judge rewrite canonical expectation text", async () => {
