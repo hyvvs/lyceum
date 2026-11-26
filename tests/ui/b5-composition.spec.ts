@@ -50,6 +50,10 @@ test("B5 integrated compositional blur never nests or exceeds six visible surfac
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(story("dark-full"));
+  // Storybook applies theme/glass globals in a React effect. Do not sample the
+  // initial opaque fallback before the requested full-glass mode is mounted.
+  await expect(page.locator("html")).toHaveAttribute("data-transparency", "full");
+  await expect(page.getByTestId("b5-composition")).toBeVisible();
   const samples: { scroll: number; count: number; nested: string[] }[] = [];
   for (const scroll of [0, 320, 700, 1050, 1400, 1800, 2250, 2700]) {
     await page.evaluate((y) => window.scrollTo(0, y), scroll);

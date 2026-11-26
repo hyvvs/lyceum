@@ -58,7 +58,9 @@ export function StatCard({
   const titleId = useId();
   const hasValue = value !== null && value !== undefined && value !== "";
   const displayedValue =
-    typeof value === "number" ? new Intl.NumberFormat(locale ?? "en-US").format(value) : value;
+    typeof value === "number"
+      ? new Intl.NumberFormat(locale ?? "en-US", { maximumSignificantDigits: 17 }).format(value)
+      : value;
   const values = trend?.samples ?? [];
   let low = Number.POSITIVE_INFINITY;
   let high = Number.NEGATIVE_INFINITY;

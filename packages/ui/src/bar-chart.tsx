@@ -17,6 +17,10 @@ export interface BarChartProps {
   highlightLabel?: string;
   /** BCP-47 locale for displayed numbers; defaults to en-US, independent of direction. */
   locale?: string;
+  /** Optional complete localized scale sentence, including units and grammatical order. */
+  scaleDescription?: (scaleMax: number, units: string) => string;
+  /** Optional complete localized datum/value text, including plural and unit ordering. */
+  formatDatum?: (value: number, units: string) => string;
   className?: string;
 }
 
@@ -30,6 +34,8 @@ export function BarChart({
   emptyLabel = "No data available",
   highlightLabel = "Highlighted",
   locale,
+  scaleDescription,
+  formatDatum,
   className,
 }: BarChartProps) {
   if (!title.trim() || !units.trim()) {
@@ -57,16 +63,30 @@ export function BarChart({
   if (highlightedId !== undefined && !ids.has(highlightedId)) {
     throw new Error("BarChart highlighted id must reference an actual bar.");
   }
-  const formatNumber = new Intl.NumberFormat(locale ?? "en-US");
+  // Preserve nonzero finite values instead of silently rounding tiny values to visual zero.
+  const formatNumber = new Intl.NumberFormat(locale ?? "en-US", {
+    maximumSignificantDigits: 17,
+  });
+  const scaleText = scaleDescription
+    ? scaleDescription(scaleMax, units)
+    : `${scaleLabel}: ${formatNumber.format(0)}–${formatNumber.format(scaleMax)} ${units}`;
+  if (typeof scaleText !== "string" || !scaleText.trim()) {
+    throw new Error("BarChart scale description must be meaningful.");
+  }
+  const datumText = (value: number) => {
+    const text = formatDatum ? formatDatum(value, units) : `${formatNumber.format(value)} ${units}`;
+    if (typeof text !== "string" || !text.trim()) {
+      throw new Error("BarChart value description must be meaningful.");
+    }
+    return text;
+  };
   return (
     <figure
       lang={locale}
       className={["glass", "lyceum-bar-chart", className].filter(Boolean).join(" ")}
     >
       <figcaption>{title}</figcaption>
-      <p className="lyceum-bar-chart__scale">
-        {scaleLabel}: {formatNumber.format(0)}–{formatNumber.format(scaleMax)} {units}
-      </p>
+      <p className="lyceum-bar-chart__scale">{scaleText}</p>
       {data.length === 0 ? (
         <p className="lyceum-bar-chart__empty">{emptyLabel}</p>
       ) : (
@@ -88,9 +108,7 @@ export function BarChart({
                 </div>
                 <p className="lyceum-bar-chart__datum">
                   <strong>{datum.label}</strong>
-                  <span>
-                    {formatNumber.format(datum.value)} {units}
-                  </span>
+                  <span>{datumText(datum.value)}</span>
                   {highlighted && (
                     <span className="lyceum-bar-chart__highlight">★ {highlightLabel}</span>
                   )}

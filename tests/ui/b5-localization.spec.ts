@@ -151,5 +151,28 @@ test("B5 Spanish chart at actual 200%-root text and 320px preserves complete uni
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(321);
   await expect(chart).toContainText("1,25 artículos");
-  await saveEvidence(chart, "bar-es-200-text-narrow.png");
+  if (capture) {
+    mkdirSync(screenshots, { recursive: true });
+    await page.screenshot({
+      path: join(screenshots, "bar-es-200-text-narrow.png"),
+      fullPage: true,
+      animations: "disabled",
+    });
+  }
+});
+
+test("B5 optional complete Spanish grammar retains tiny nonzero chart values", async ({ page }) => {
+  await page.goto(story("barchart", "localized-spanish-grammar"));
+  const chart = page.getByRole("figure", { name: "Valores ficticios de precisión pequeña" });
+  await expect(chart.locator(".lyceum-bar-chart__scale")).toHaveText(
+    "El límite es 0,0004 artículos",
+  );
+  await expect(chart.locator("li")).toContainText("artículos: 0,0002");
+  const bar = await chart.locator(".lyceum-bar-chart__bar").evaluate((node) => ({
+    height: (node as HTMLElement).style.height,
+    px: node.getBoundingClientRect().height,
+  }));
+  expect(bar.height).toBe("50%");
+  expect(bar.px).toBeGreaterThan(0);
+  await expect(chart.locator("[tabindex]")).toHaveCount(0);
 });

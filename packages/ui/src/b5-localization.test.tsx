@@ -176,4 +176,73 @@ describe("B5 consumer-owned localization contract", () => {
     expect(chat).not.toContain("Response in progress");
     expect(chat).not.toContain("No message content");
   });
+
+  test("small but nonzero finite BarChart numbers never display as zero while bars remain nonzero", () => {
+    const html = renderToStaticMarkup(
+      <BarChart
+        title="Small synthetic samples"
+        units="items"
+        scaleMax={0.0004}
+        data={[{ id: "tiny", label: "Sample", value: 0.0002 }]}
+        locale="en-US"
+      />,
+    );
+    expect(html).toContain("Scale: 0–0.0004 items");
+    expect(html).toContain("0.0002 items");
+    expect(html).not.toContain("Scale: 0–0 items");
+    expect(html).toContain('style="height:50%"');
+    const spanish = renderToStaticMarkup(
+      <BarChart
+        title="Cantidades ficticias"
+        units="artículos"
+        scaleMax={0.0004}
+        data={[{ id: "min", label: "Muestra", value: 0.0002 }]}
+        scaleLabel="Escala"
+        locale="es-ES"
+      />,
+    );
+    expect(spanish).toContain("Escala: 0–0,0004 artículos");
+    expect(spanish).toContain("0,0002 artículos");
+  });
+
+  test("tiny numeric StatCard values and assessed mastery percentages remain nonzero", () => {
+    const stat = renderToStaticMarkup(
+      <StatCard label="Tiny synthetic measurement" value={0.0002} locale="es-ES" />,
+    );
+    expect(stat).toContain('data-available="true">0,0002</p>');
+    const negative = renderToStaticMarkup(
+      <StatCard label="Negative synthetic measurement" value={-0.0002} locale="es-ES" />,
+    );
+    expect(negative).toContain(">-0,0002</p>");
+    const ring = renderToStaticMarkup(
+      <MasteryRing
+        label="Very small assessed synthetic estimate"
+        estimate={{ value: 0.000004, lower: 0.000001, upper: 0.000008 }}
+        locale="es-ES"
+        uncertaintyLabel="Incertidumbre"
+      />,
+    ).replace(/[\u00a0\u202f]/g, " ");
+    expect(ring).toContain('data-assessed="true"');
+    expect(ring).toContain("0,0004 %");
+    expect(ring).toContain("Incertidumbre: 0,0001 %–0,0008 %");
+    expect(ring).not.toContain('data-assessed="false"');
+  });
+
+  test("BarChart allows consumer-controlled complete scale and unit grammar without changing geometry", () => {
+    const html = renderToStaticMarkup(
+      <BarChart
+        title="Valores inventados"
+        units="artículos"
+        scaleMax={2.5}
+        data={[{ id: "uno", label: "Semana A", value: 1.25 }]}
+        locale="es-ES"
+        scaleDescription={(max, units) => `El límite es ${max.toLocaleString("es-ES")} ${units}`}
+        formatDatum={(value, units) => `${units}: ${value.toLocaleString("es-ES")}`}
+      />,
+    );
+    expect(html).toContain("El límite es 2,5 artículos");
+    expect(html).toContain("artículos: 1,25");
+    expect(html).not.toContain("Scale:");
+    expect(html).toContain('style="height:50%"');
+  });
 });

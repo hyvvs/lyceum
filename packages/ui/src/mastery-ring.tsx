@@ -46,7 +46,7 @@ export function MasteryRing({
   const labelId = useId();
   const percentage = new Intl.NumberFormat(locale ?? "en-US", {
     style: "percent",
-    maximumFractionDigits: 2,
+    maximumSignificantDigits: 17,
   });
   return (
     <figure

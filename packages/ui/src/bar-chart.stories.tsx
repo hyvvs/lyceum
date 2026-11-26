@@ -98,4 +98,19 @@ export const LocalizedSpanishEmpty: Story = {
 export const LocalizedSpanishDoubleText: Story = {
   globals: { textScale: "200%" },
   args: spanishArgs,
+  // The narrow fixture should use the actual 320px viewport, not nested Storybook padding.
+  parameters: { stageSurface: "fullbleed" },
+};
+export const LocalizedSpanishGrammar: Story = {
+  args: {
+    title: "Valores ficticios de precisión pequeña",
+    units: "artículos",
+    scaleMax: 0.0004,
+    data: [{ id: "muestra", label: "Muestra A", value: 0.0002 }],
+    locale: "es-ES",
+    scaleDescription: (max: number, units: string) =>
+      `El límite es ${max.toLocaleString("es-ES", { maximumSignificantDigits: 17 })} ${units}`,
+    formatDatum: (value: number, units: string) =>
+      `${units}: ${value.toLocaleString("es-ES", { maximumSignificantDigits: 17 })}`,
+  },
 };
