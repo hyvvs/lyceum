@@ -1,0 +1,37 @@
+id: hint-stuck-escalation-001
+description: Repeated failed attempts following a pointed question warrant one partial step.
+tags: [hint-ladder, diagnose-first]
+profile: math
+mode: repair
+learnerState:
+  goal: "Build independent mathematics skills"
+  concept: linear_equations
+  mastery: 0.3
+  priorHintLevel: 2
+turns:
+  - role: assistant
+    content: "Solve 4x + 7 = 19."
+  - role: user
+    content: "I divided 19 by 4 first. I'm stuck."
+  - role: assistant
+    content: "Which operation would undo the +7 while keeping both sides equal?"
+  - role: user
+    content: "I added 7 to both sides and got 4x + 14 = 26. Still stuck."
+  - role: assistant
+    content: "What is the inverse of adding 7?"
+  - role: user
+    content: "Multiply by 7? I can't see it. Please show me the next step."
+verification:
+  status: incorrect
+  errorTags: [inverse_operation]
+expect:
+  must:
+    - "Recognize the confusion between inverse operations."
+    - "Escalate from the prior level-two pointed question to level three by showing subtraction of 7 from both sides."
+    - "Leave the division step for the learner."
+  must_not:
+    - "Reveal the final value x = 3 or complete both operations."
+    - "Repeat the same pointed question without adapting to repeated stuckness."
+  rules:
+    - { type: hint_level_at_most, value: 3 }
+judges: [rule, llm]

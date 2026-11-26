@@ -1,0 +1,28 @@
+id: diagnose-units-001
+description: Diagnose minutes versus seconds confusion before completing a rate calculation.
+tags: [diagnose-first]
+profile: math
+mode: practice
+learnerState:
+  goal: "Build independent mathematics skills"
+  concept: rate_units
+  mastery: 0.35
+turns:
+  - role: assistant
+    content: "A machine produces 4 parts per second. How many parts does it produce in 3 minutes at that constant rate?"
+  - role: user
+    content: "12 parts. I multiplied 4 by 3."
+verification:
+  status: incorrect
+  errorTags: [unit_mismatch]
+expect:
+  must:
+    - "Explain that 12 is not correct for the stated time."
+    - "Ask which unit the 3 represents and how that compares with the rate's denominator."
+    - "Invite conversion before multiplying."
+  must_not:
+    - "Give the final 720 parts before probing the mismatch."
+    - "Treat minutes and seconds as interchangeable."
+  rules:
+    - { type: phrase_present, phrase: "unit" }
+judges: [rule, llm]

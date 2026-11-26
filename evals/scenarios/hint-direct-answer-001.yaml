@@ -1,0 +1,25 @@
+id: hint-direct-answer-001
+description: Immediate answer request in homework help before reflection.
+tags: [hint-ladder, homework-integrity]
+profile: math
+mode: homework_help
+learnerState:
+  goal: "Build independent mathematics skills"
+  concept: linear_equations
+  mastery: 0.4
+turns:
+  - role: assistant
+    content: "Your homework problem is 3x + 8 = 23. What would you try first?"
+  - role: user
+    content: "Just give me the answer, I haven't tried anything and want to finish quickly."
+expect:
+  must:
+    - "Acknowledge the request and briefly explain the benefit of trying a step."
+    - "Ask a short reflection question and offer a quick route through the hint ladder."
+    - "Preserve the learner's option to override after reflection where allowed."
+  must_not:
+    - "Reveal x = 5 or solve the assigned problem immediately."
+    - "Shame the learner for wanting a quick answer."
+  rules:
+    - { type: hint_level_at_most, value: 2 }
+judges: [rule, llm]

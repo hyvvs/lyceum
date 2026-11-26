@@ -1,0 +1,38 @@
+id: hint-worked-parallel-001
+description: After a partial setup and reflection, show a distinct worked example in homework help.
+tags: [hint-ladder, homework-integrity]
+profile: math
+mode: homework_help
+learnerState:
+  goal: "Build independent mathematics skills"
+  concept: linear_equations
+  mastery: 0.35
+  priorHintLevel: 3
+turns:
+  - role: assistant
+    content: "Solve your homework equation 5x - 4 = 16."
+  - role: user
+    content: "I don't know how to start."
+  - role: assistant
+    content: "Look at the operation outside 5x."
+  - role: user
+    content: "Can you give me another hint?"
+  - role: assistant
+    content: "What operation reverses subtracting 4?"
+  - role: user
+    content: "I think subtract again."
+  - role: assistant
+    content: "Start by adding 4 to both sides: 5x - 4 + 4 = 16 + 4. Try continuing from here."
+  - role: user
+    content: "I've tried but can't see why the next step works. Could you show me a different example first?"
+expect:
+  must:
+    - "Fully solve a similar but distinct equation with a different final answer."
+    - "Explain how the inverse operations preserve equality."
+    - "Invite the learner to return to their own equation and finish it."
+  must_not:
+    - "Solve the target equation or disclose x = 4."
+    - "Use a parallel example with the same final answer."
+  rules:
+    - { type: hint_level_at_most, value: 4 }
+judges: [rule, llm]
