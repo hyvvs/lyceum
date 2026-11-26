@@ -1,8 +1,10 @@
-# M0-010 — deterministic evaluation harness skeleton (Draft evidence)
+# M0-010 — deterministic evaluation harness skeleton (accepted infrastructure)
 
 ## Acceptance boundary
 
-M0-010 is **in development `[~]`**, not independently accepted. This package tests a **fixed scripted fixture harness**, not a real tutor, real model, real LLM judge, or real learner outcome. Tutoring-quality acceptance is **INCOMPLETE**, even when the deterministic command exits zero. No M0-011 scenario expansion or M0-007 implementation is authorized. All five original `evals/scenarios/*.yaml` files and their pedagogical expectations remain unchanged.
+**Independent owner acceptance 2026-11-26:** M0-010 deterministic evaluation **infrastructure is ACCEPTED** following the owner's independent review of [PR #26](https://github.com/hyvvs/lyceum/pull/26), actual source and tests, and exact reviewed head `258b6efcf6c9f6f96deb6dcb002953df23a1a76f`. [Exact-head hosted CI 45773976574](https://github.com/hyvvs/lyceum/actions/runs/45773976574) passed Verify, unrestricted Dependency audit and Secret scan. The owner's controlled documentation-only amendment, fresh exact-amendment-head checks, normal squash merge, and exact merged-main verification remain pending at this entry; do not mark task `[x]` before post-merge evidence. Zero formal GitHub reviews accepted for this PR only, without bypassing branch protection. M0-011 is authorized **only after** verified merged main; M0-007 remains blocked.
+
+This is acceptance of a **fixed scripted fixture harness**, not a real tutor, real model, calibrated LLM judge, educational effectiveness or learner outcome. Tutoring-quality acceptance remains **INCOMPLETE**, even when the deterministic command exits zero. All five original `evals/scenarios/*.yaml` files and their pedagogical expectations remain unchanged. Older Draft-only language below is a historical snapshot, not current owner authorization.
 
 The prerequisite M0-006 was accepted and squash-merged via [PR #25](https://github.com/hyvvs/lyceum/pull/25) at `2307a5fbe92b4961b5fa0116fce8ffe2bd334962`; exact merged-main [run 45763339003](https://github.com/hyvvs/lyceum/actions/runs/45763339003) passed Verify, unrestricted Dependency audit and Secret scan. Its `[x]` task marker is in this branch's pending documentation amendment, not the previously protected-main tree.
 
@@ -61,6 +63,6 @@ Following the synthetic fixture correction and CLI filesystem safety edits, the 
 
 Existing manual accessibility restrictions remain untouched: M0-003, M0-004 and M0-017 `[~]`; all 20 qualified native/manual cases including READ-01 BLOCKED/NOT RUN; ADR-0009 FocusScope deferral and ADR-0010 Workbox override removal/full-retest requirements unchanged. This infrastructure-only task does not establish native AT, WCAG signoff, model calibration, model-quality thresholds, learner learning gains, persistence, model portability, regex sandboxing or release acceptance.
 
-## Draft PR checkpoint
+## Historical Draft PR checkpoint (superseded by owner acceptance)
 
-The branch must remain **OPEN, DRAFT, unmerged and not ready**, even after exact-head hosted Verify, unrestricted Dependency audit and Secret scan succeed. M0-010 remains `[~]` pending separate independent owner acceptance; no downstream task is authorized.
+Before owner acceptance the branch was required to remain OPEN, DRAFT, unmerged and not ready. The owner's subsequent independent acceptance explicitly authorizes **controlled merge** after an amended exact-head all-three-CI pass, without bypassing protection. M0-010 remains `[~]` only until exact merged-main success; afterward the owner permits a completion record. M0-011 may begin only after that verification.
