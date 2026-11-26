@@ -104,6 +104,8 @@ export interface StorageTransaction {
  * invocation, before waiting in the serialized writer queue. Transaction-handle
  * writes snapshot immediately at their synchronous handle method invocation.
  * Caller-held objects and returned records cannot mutate committed state.
+ * Each event append batch is limited to 100,000 records, independently of its
+ * eventual number of new events after idempotent replay filtering.
  *
  * A future native/WASM SQLite adapter must match committed read visibility and
  * provide synchronous transaction-local reads within its bounded callback.

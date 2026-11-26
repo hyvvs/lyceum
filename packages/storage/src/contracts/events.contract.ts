@@ -71,6 +71,30 @@ export function eventContract(factory: StorageFactory): void {
       expect((await store.read({ afterSeq: 5 })).events).toEqual([]);
     });
 
+    it("uses a 1,000-event default page and accepts the 10,000-event maximum", async () => {
+      const store = await factory();
+      await store.append(Array.from({ length: 10_001 }, (_, index) => attempt(`bulk-${index}`)));
+      const defaultPage = await store.readEntries();
+      expect(defaultPage.entries).toHaveLength(1000);
+      expect(defaultPage.lastSeq).toBe(1000);
+      const maximumPage = await store.readEntries({ afterSeq: 0, limit: 10_000 });
+      expect(maximumPage.entries).toHaveLength(10_000);
+      expect(maximumPage.entries[0]?.seq).toBe(1);
+      expect(maximumPage.entries[9999]?.seq).toBe(10_000);
+      expect((await store.readEntries({ afterSeq: maximumPage.lastSeq })).entries).toEqual([
+        { seq: 10_001, event: attempt("bulk-10000") },
+      ]);
+    });
+
+    it("rejects oversized event batches without changing the committed sequence", async () => {
+      const store = await factory();
+      await store.append([attempt("already-committed")]);
+      const oversized = Array(100_001).fill(attempt("same-event"));
+      await expect(store.append(oversized)).rejects.toMatchObject({ code: "invalid_event" });
+      expect(await store.getLastSeq()).toBe(1);
+      expect((await store.read()).events.map((event) => event.id)).toEqual(["already-committed"]);
+    });
+
     it("rejects invalid cursors and limits, including future sequence claims", async () => {
       const store = await factory();
       await store.append([attempt("only")]);
