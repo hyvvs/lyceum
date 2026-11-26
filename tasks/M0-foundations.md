@@ -35,10 +35,11 @@ Requirements: Tauri v2 wrapping apps/web; Rust commands for keychain set/get/del
 Acceptance: builds on macOS and one other OS in CI; keychain round-trip test; app starts to themed hello screen under 2.5 s on reference device.
 Ask first if: adding Tauri plugins.
 
-### [ ] M0-006 Storage port and in-memory implementation
+### [~] M0-006 Storage port and in-memory implementation
 Package: packages/core (port), new packages/storage · Depends on: M0-001 · Context: docs/09, docs/02 section 5
 Requirements: define `Storage` port (events, content stores, projections, transactions); in-memory implementation; shared contract test suite (append/read ordering, atomic batches, idempotent import, concurrent writers, large payloads).
 Acceptance: contract suite passes for in-memory; suite is reusable by other implementations.
+**Owner-authorized development checkpoint (2026-11-26):** after independent B5 acceptance, [PR #24](https://github.com/hyvvs/lyceum/pull/24) was squash-merged under ordinary branch protection at actual `main=9bf4c774e258a62ac6b61d60ab7825ddf5dbfa5c`; fresh exact-main [45754130114](https://github.com/hyvvs/lyceum/actions/runs/45754130114) passed Verify, unrestricted Dependency audit and Secret scan **before M0-006 implementation**. Owner explicitly authorized bounded Storage interfaces, `@lyceum/storage` and in-memory adapter, true fail-first shared contracts, fully verified **Draft PR only**. This card is `[~]` because actual development began; it is **not** `[x]` and is subject to separate independent owner acceptance. See [M0-006 QA/contract checkpoint](../docs/qa/m0-006/README.md). No SQLite, native/WASM/OPFS, migrations, M0-007, archive packaging, credential vault, subject algorithms, or production web integration implemented. All M0-003/004/017 `[~]`, all 20 native/manual accessibility cases BLOCKED/NOT RUN, ADR-0009 and ADR-0010 remain binding.
 
 ### [ ] M0-007 SQLite implementations (native + WASM/OPFS)
 Package: packages/storage · Depends on: M0-006, M0-004, M0-005 · Context: docs/09, docs/17 R5
