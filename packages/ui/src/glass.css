@@ -1406,3 +1406,63 @@
     stroke: CanvasText;
   }
 }
+
+/* B5c: substantial tutor text uses reading opacity; learners stay distinct by label and rim. */
+.lyceum-chat-bubble {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  max-width: 100%;
+  width: fit-content;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  color: var(--text-1);
+}
+.lyceum-chat-bubble--tutor {
+  margin-inline-end: auto;
+}
+.lyceum-chat-bubble--learner {
+  margin-inline-start: auto;
+  border-inline-start: var(--border-control) solid var(--accent);
+}
+.lyceum-chat-bubble__speaker {
+  margin: 0;
+  font-size: var(--type-sm);
+  font-weight: 700;
+  color: var(--text-1);
+}
+.lyceum-chat-bubble__content {
+  min-width: 0;
+  max-width: 100%;
+  line-height: var(--leading-reading);
+}
+.lyceum-chat-bubble__content > :first-child {
+  margin-block-start: 0;
+}
+.lyceum-chat-bubble__content > :last-child {
+  margin-block-end: 0;
+}
+.lyceum-chat-bubble__empty {
+  color: var(--text-2);
+}
+.lyceum-chat-bubble__streaming {
+  align-self: flex-start;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-chip);
+  background: var(--surface-raised-solid);
+  font-size: var(--type-sm);
+}
+@media (forced-colors: active) {
+  .lyceum-chat-bubble--learner {
+    border-inline-start-color: Highlight;
+  }
+  .lyceum-chat-bubble__streaming {
+    background: Canvas;
+    border-color: CanvasText;
+    color: CanvasText;
+  }
+}

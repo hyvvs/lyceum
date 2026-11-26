@@ -19,6 +19,7 @@ export function expectedStoryStates(stories: readonly PrimitiveStory[]): string[
       case "Primitives/StatCard":
       case "Primitives/BarChart":
       case "Primitives/MasteryRing":
+      case "Primitives/ChatBubble":
         states = [name];
         break;
       case "Primitives/Dock":

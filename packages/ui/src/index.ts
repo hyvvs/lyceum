@@ -16,3 +16,4 @@ export * from "./segmented-control";
 export * from "./stat-card";
 export * from "./bar-chart";
 export * from "./mastery-ring";
+export * from "./chat-bubble";
