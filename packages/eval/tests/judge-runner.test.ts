@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { type LlmJudge, UnavailableLlmJudge } from "../src/judge.ts";
+import { createEvaluationReport, getEvaluationExitCode } from "../src/report.ts";
 import { runEvaluation } from "../src/runner.ts";
 import { ScenarioSchema } from "../src/scenario-schema.ts";
 import { type ScriptedOutcome, ScriptedProvider } from "../src/scripted-provider.ts";
@@ -96,6 +97,7 @@ describe("unavailable LLM judge and evaluation runner", () => {
     const [result] = await runOne(scenario, scriptedResponse("A pointed question."));
     expect(result?.ruleResults[0]?.status).toBe("unevaluated");
     expect(result?.classification).toBe("incomplete");
+    expect(getEvaluationExitCode(createEvaluationReport(result ? [result] : []))).toBe(1);
   });
 
   it("classifies malformed structured hint metadata as an infrastructure error", async () => {
