@@ -11,20 +11,24 @@ export interface MasteryRingProps {
   /** Null/absent is unassessed, not zero mastery. The consumer provides all interval values. */
   estimate?: MasteryEstimate | null;
   unassessedLabel?: string;
+  /** Consumer-supplied wording for the visible lower/upper interval. */
+  uncertaintyLabel?: string;
+  /** BCP-47 locale for percentage and interval text; independent of probability geometry. */
+  locale?: string;
   className?: string;
 }
 
 const radius = 32;
 const circumference = 2 * Math.PI * radius;
-const percent = (fraction: number) => `${Math.round(fraction * 100)}%`;
-
 export function MasteryRing({
   label,
   estimate,
   unassessedLabel = "Unassessed",
+  uncertaintyLabel = "Uncertainty",
+  locale,
   className,
 }: MasteryRingProps) {
-  if (!label.trim() || !unassessedLabel.trim()) {
+  if (!label.trim() || !unassessedLabel.trim() || !uncertaintyLabel.trim()) {
     throw new Error("MasteryRing needs meaningful label and unassessed wording.");
   }
   if (
@@ -40,9 +44,14 @@ export function MasteryRing({
     );
   }
   const labelId = useId();
+  const percentage = new Intl.NumberFormat(locale ?? "en-US", {
+    style: "percent",
+    maximumFractionDigits: 2,
+  });
   return (
     <figure
       className={["glass", "lyceum-mastery-ring", className].filter(Boolean).join(" ")}
+      lang={locale}
       data-assessed={!!estimate}
     >
       <figcaption id={labelId}>{label}</figcaption>
@@ -71,9 +80,10 @@ export function MasteryRing({
               strokeDasharray={`${estimate.value * circumference} ${circumference}`}
             />
           </svg>
-          <p className="lyceum-mastery-ring__value">{percent(estimate.value)}</p>
+          <p className="lyceum-mastery-ring__value">{percentage.format(estimate.value)}</p>
           <p className="lyceum-mastery-ring__interval">
-            Uncertainty: {percent(estimate.lower)}–{percent(estimate.upper)}
+            {uncertaintyLabel}: {percentage.format(estimate.lower)}–
+            {percentage.format(estimate.upper)}
           </p>
         </>
       ) : (

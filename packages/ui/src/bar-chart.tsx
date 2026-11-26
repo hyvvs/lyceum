@@ -11,6 +11,12 @@ export interface BarChartProps {
   scaleMax: number;
   data: readonly BarChartDatum[];
   highlightedId?: string;
+  /** Caller-owned visible wording; defaults preserve existing English presentations. */
+  scaleLabel?: string;
+  emptyLabel?: string;
+  highlightLabel?: string;
+  /** BCP-47 locale for displayed numbers; defaults to en-US, independent of direction. */
+  locale?: string;
   className?: string;
 }
 
@@ -20,6 +26,10 @@ export function BarChart({
   scaleMax,
   data,
   highlightedId,
+  scaleLabel = "Scale",
+  emptyLabel = "No data available",
+  highlightLabel = "Highlighted",
+  locale,
   className,
 }: BarChartProps) {
   if (!title.trim() || !units.trim()) {
@@ -27,6 +37,9 @@ export function BarChart({
   }
   if (!Number.isFinite(scaleMax) || scaleMax <= 0) {
     throw new Error("BarChart scaleMax must be a finite positive scale.");
+  }
+  if (![scaleLabel, emptyLabel, highlightLabel].every((label) => label.trim())) {
+    throw new Error("BarChart presentation labels must be meaningful.");
   }
   const ids = new Set<string>();
   for (const datum of data) {
@@ -44,14 +57,18 @@ export function BarChart({
   if (highlightedId !== undefined && !ids.has(highlightedId)) {
     throw new Error("BarChart highlighted id must reference an actual bar.");
   }
+  const formatNumber = new Intl.NumberFormat(locale ?? "en-US");
   return (
-    <figure className={["glass", "lyceum-bar-chart", className].filter(Boolean).join(" ")}>
+    <figure
+      lang={locale}
+      className={["glass", "lyceum-bar-chart", className].filter(Boolean).join(" ")}
+    >
       <figcaption>{title}</figcaption>
       <p className="lyceum-bar-chart__scale">
-        Scale: 0–{scaleMax} {units}
+        {scaleLabel}: {formatNumber.format(0)}–{formatNumber.format(scaleMax)} {units}
       </p>
       {data.length === 0 ? (
-        <p className="lyceum-bar-chart__empty">No data available</p>
+        <p className="lyceum-bar-chart__empty">{emptyLabel}</p>
       ) : (
         <ul className="lyceum-bar-chart__bars">
           {data.map((datum) => {
@@ -72,10 +89,10 @@ export function BarChart({
                 <p className="lyceum-bar-chart__datum">
                   <strong>{datum.label}</strong>
                   <span>
-                    {datum.value} {units}
+                    {formatNumber.format(datum.value)} {units}
                   </span>
                   {highlighted && (
-                    <span className="lyceum-bar-chart__highlight">★ Highlighted</span>
+                    <span className="lyceum-bar-chart__highlight">★ {highlightLabel}</span>
                   )}
                 </p>
               </li>

@@ -109,3 +109,38 @@ export const ReducedTransparency: Story = {
 export const Opaque: Story = { globals: { transparency: "off" }, render: () => <ChoiceDemo /> };
 export const ReducedMotion: Story = { globals: { motion: "off" }, render: () => <ChoiceDemo /> };
 export const Interactive: Story = { render: () => <ChoiceDemo /> };
+
+export const LocalizedSpanishEmpty: Story = {
+  args: {
+    groupLabel: "Modo de ejemplo",
+    name: "modo-vacio",
+    value: "",
+    options: [],
+    emptyLabel: "No hay opciones disponibles",
+    lang: "es-ES",
+    dir: "ltr",
+  },
+};
+
+function SpanishChoices() {
+  const [value, setValue] = useState("breve");
+  return (
+    <div className="storybook-stack">
+      <SegmentedControl
+        groupLabel="Densidad ficticia"
+        name="densidad-ficticia"
+        value={value}
+        options={[
+          { value: "breve", label: "Breve" },
+          { value: "comoda", label: "Cómoda" },
+        ]}
+        onValueChange={setValue}
+        lang="es-ES"
+        dir="ltr"
+      />
+      <output>Selección: {value}</output>
+    </div>
+  );
+}
+
+export const LocalizedSpanishSelected: Story = { render: () => <SpanishChoices /> };

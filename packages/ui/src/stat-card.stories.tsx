@@ -60,3 +60,13 @@ export const DoubleText: Story = { globals: { textScale: "200%" } };
 export const ReducedTransparency: Story = { globals: { transparency: "reduced" } };
 export const Opaque: Story = { globals: { transparency: "off" } };
 export const ReducedMotion: Story = { globals: { motion: "off" } };
+
+export const LocalizedSpanish: Story = {
+  args: {
+    label: "Observaciones ficticias",
+    value: 12345.5,
+    unavailableLabel: "Sin datos",
+    delta: { direction: "decrease", text: "Dos menos", context: "que la muestra previa" },
+    locale: "es-ES",
+  },
+};

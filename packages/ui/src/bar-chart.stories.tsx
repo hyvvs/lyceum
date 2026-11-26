@@ -66,3 +66,36 @@ export const DoubleText: Story = { globals: { textScale: "200%" } };
 export const ReducedTransparency: Story = { globals: { transparency: "reduced" } };
 export const Opaque: Story = { globals: { transparency: "off" } };
 export const ReducedMotion: Story = { globals: { motion: "off" } };
+
+const spanishData = [
+  { id: "cero", label: "Semana A", value: 0 },
+  { id: "uno", label: "Semana B", value: 1.25 },
+  { id: "dos", label: "Semana C", value: 2.5 },
+] as const;
+const spanishArgs = {
+  title: "Frecuencias ficticias",
+  units: "artículos",
+  scaleMax: 10.5,
+  data: spanishData,
+  highlightedId: "uno",
+  scaleLabel: "Escala",
+  emptyLabel: "Sin datos todavía",
+  highlightLabel: "Destacado",
+  locale: "es-ES",
+} as const;
+export const LocalizedSpanish: Story = { args: spanishArgs };
+export const LocalizedSpanishEmpty: Story = {
+  args: {
+    title: "Frecuencias ficticias",
+    units: "artículos",
+    scaleMax: 10.5,
+    data: [],
+    scaleLabel: "Escala",
+    emptyLabel: "Sin datos todavía",
+    locale: "es-ES",
+  },
+};
+export const LocalizedSpanishDoubleText: Story = {
+  globals: { textScale: "200%" },
+  args: spanishArgs,
+};

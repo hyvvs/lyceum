@@ -48,3 +48,13 @@ export const DoubleText: Story = { globals: { textScale: "200%" } };
 export const ReducedTransparency: Story = { globals: { transparency: "reduced" } };
 export const Opaque: Story = { globals: { transparency: "off" } };
 export const ReducedMotion: Story = { globals: { motion: "off" } };
+
+export const LocalizedSpanish: Story = {
+  args: {
+    label: "Probabilidad ficticia",
+    estimate: { value: 0.625, lower: 0.475, upper: 0.775 },
+    unassessedLabel: "Sin evaluar",
+    uncertaintyLabel: "Incertidumbre",
+    locale: "es-ES",
+  },
+};

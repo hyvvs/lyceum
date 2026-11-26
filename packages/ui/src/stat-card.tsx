@@ -20,6 +20,8 @@ export interface StatCardProps {
   delta?: StatDelta;
   trend?: StatTrend;
   unavailableLabel?: string;
+  /** BCP-47 locale for numeric values; explicit preformatted strings are never rewritten. */
+  locale?: string;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export function StatCard({
   delta,
   trend,
   unavailableLabel = "Not available",
+  locale,
   className,
 }: StatCardProps) {
   if (!label.trim() || !unavailableLabel.trim()) {
@@ -54,6 +57,8 @@ export function StatCard({
   }
   const titleId = useId();
   const hasValue = value !== null && value !== undefined && value !== "";
+  const displayedValue =
+    typeof value === "number" ? new Intl.NumberFormat(locale ?? "en-US").format(value) : value;
   const values = trend?.samples ?? [];
   let low = Number.POSITIVE_INFINITY;
   let high = Number.NEGATIVE_INFINITY;
@@ -77,6 +82,7 @@ export function StatCard({
   return (
     <article
       aria-labelledby={titleId}
+      lang={locale}
       className={["glass-raised", "lyceum-stat-card", className].filter(Boolean).join(" ")}
     >
       <div className="lyceum-stat-card__heading">
@@ -88,7 +94,7 @@ export function StatCard({
         <h3 id={titleId}>{label}</h3>
       </div>
       <p className="lyceum-stat-card__value" data-available={hasValue}>
-        {hasValue ? value : unavailableLabel}
+        {hasValue ? displayedValue : unavailableLabel}
       </p>
       {delta && (
         <p className="lyceum-stat-card__delta" data-direction={delta.direction}>
