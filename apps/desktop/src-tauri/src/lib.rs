@@ -10,14 +10,26 @@ use tauri::Manager;
 fn app_data_directory(
     app: tauri::AppHandle,
     webview: tauri::WebviewWindow,
-) -> Result<String, &'static str> {
+) -> Result<(), &'static str> {
     security::require_trusted_invoker(&webview)?;
     let path = app
         .path()
         .app_data_dir()
         .map_err(|_| "app data location unavailable")?;
+    #[cfg(target_os = "macos")]
+    app_data::ensure_macos_app_support_parent(&path)?;
     app_data::ensure_private_directory(&path)?;
-    Ok(path.to_string_lossy().into_owned())
+    // The renderer only needs to know that the scoped directory is ready.
+    // Never disclose the user/profile path over native IPC.
+    if std::env::var_os("LYCEUM_DESKTOP_IPC_SMOKE").is_some() {
+        let key_id = format!("native-smoke-{}", std::process::id());
+        credentials::synthetic_smoke_round_trip(&key_id)?;
+        use std::io::Write;
+        let mut stdout = std::io::stdout().lock();
+        let _ = writeln!(stdout, "LYCEUM_NATIVE_IPC_READY");
+        let _ = stdout.flush();
+    }
+    Ok(())
 }
 
 pub fn run() {

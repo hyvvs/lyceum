@@ -16,7 +16,17 @@ import { PreferenceProvider } from "./settings";
 // Vite eliminates this branch and its Tauri API chunk from ordinary browser/
 // PWA builds. The native app uses a separately hardened desktop CSP build.
 if (import.meta.env.MODE === "desktop") {
-  void import("./desktop-native").then(({ verifyDesktopIpc }) => verifyDesktopIpc());
+  const verifyNativeBridge = () => {
+    void import("./desktop-native").then(({ verifyDesktopIpc }) => verifyDesktopIpc());
+  };
+  // The renderer module executes while the native WebView may still be
+  // navigating from its initial document. Wait until the bundled document's
+  // load event before the first origin-guarded native IPC invocation.
+  if (document.readyState === "complete") {
+    verifyNativeBridge();
+  } else {
+    window.addEventListener("load", verifyNativeBridge, { once: true });
+  }
 }
 
 class ApplicationBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {

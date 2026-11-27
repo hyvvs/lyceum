@@ -9,13 +9,22 @@ describe("desktop IPC handshake", () => {
     invoke.mockReset();
   });
 
-  it("marks the native bridge ready without exposing the directory path", async () => {
+  it("marks the native bridge ready without receiving the directory path", async () => {
     const root = { dataset: { desktopIpc: "" } };
-    invoke.mockResolvedValue("C:\\Users\\example\\AppData\\Roaming\\Lyceum");
+    invoke.mockResolvedValue(undefined);
     await verifyDesktopIpc(root);
     expect(invoke).toHaveBeenCalledWith("app_data_directory");
     expect(root.dataset.desktopIpc).toBe("ready");
-    expect(JSON.stringify(root)).not.toContain("AppData");
+    expect(await invoke.mock.results[0]?.value).toBeUndefined();
+  });
+
+  it("retries a transient startup IPC failure with a strict attempt bound", async () => {
+    const root = { dataset: { desktopIpc: "" } };
+    invoke.mockRejectedValueOnce(new Error("synthetic-transient")).mockResolvedValueOnce(undefined);
+    await verifyDesktopIpc(root);
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(root.dataset.desktopIpc).toBe("ready");
+    expect(JSON.stringify(root)).not.toContain("synthetic-transient");
   });
 
   it("fails closed with no error detail in DOM", async () => {
@@ -23,6 +32,7 @@ describe("desktop IPC handshake", () => {
     invoke.mockRejectedValue(new Error("synthetic-private-error"));
     await verifyDesktopIpc(root);
     expect(root.dataset.desktopIpc).toBe("unavailable");
+    expect(invoke).toHaveBeenCalledTimes(3);
     expect(JSON.stringify(root)).not.toContain("synthetic-private-error");
   });
 });

@@ -35,47 +35,51 @@ export default defineConfig(({ mode }) => ({
         ];
       },
     },
-    VitePWA({
-      registerType: "prompt",
-      injectRegister: null,
-      includeAssets: ["icons/icon-192.png", "icons/icon-512.png"],
-      manifest: {
-        name: "Lyceum — your private learning space",
-        short_name: "Lyceum",
-        description: "An on-device-first, accessible study workspace.",
-        start_url: "/",
-        scope: "/",
-        display: "standalone",
-        background_color: "#101722",
-        theme_color: "#101722",
-        icons: [
-          {
-            src: "/icons/icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "any maskable",
-          },
-          {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable",
-          },
-        ],
-      },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}"],
-        globIgnores: ["**/*.map"],
-        maximumFileSizeToCacheInBytes: 2_000_000,
-        cleanupOutdatedCaches: true,
-        skipWaiting: false,
-        clientsClaim: false,
-        runtimeCaching: [],
-        navigateFallback: "/index.html",
-        navigateFallbackAllowlist: [/^\/$/, /^\/settings\/?$/],
-        navigateFallbackDenylist: [/^\/(?:api|auth|uploads|private|provider|sync)(?:\/|$)/],
-      },
-    }),
+    ...(mode === "desktop"
+      ? []
+      : [
+          VitePWA({
+            registerType: "prompt",
+            injectRegister: null,
+            includeAssets: ["icons/icon-192.png", "icons/icon-512.png"],
+            manifest: {
+              name: "Lyceum — your private learning space",
+              short_name: "Lyceum",
+              description: "An on-device-first, accessible study workspace.",
+              start_url: "/",
+              scope: "/",
+              display: "standalone",
+              background_color: "#101722",
+              theme_color: "#101722",
+              icons: [
+                {
+                  src: "/icons/icon-192.png",
+                  sizes: "192x192",
+                  type: "image/png",
+                  purpose: "any maskable",
+                },
+                {
+                  src: "/icons/icon-512.png",
+                  sizes: "512x512",
+                  type: "image/png",
+                  purpose: "any maskable",
+                },
+              ],
+            },
+            workbox: {
+              globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}"],
+              globIgnores: ["**/*.map"],
+              maximumFileSizeToCacheInBytes: 2_000_000,
+              cleanupOutdatedCaches: true,
+              skipWaiting: false,
+              clientsClaim: false,
+              runtimeCaching: [],
+              navigateFallback: "/index.html",
+              navigateFallbackAllowlist: [/^\/$/, /^\/settings\/?$/],
+              navigateFallbackDenylist: [/^\/(?:api|auth|uploads|private|provider|sync)(?:\/|$)/],
+            },
+          }),
+        ]),
   ],
   build: {
     outDir: "dist",

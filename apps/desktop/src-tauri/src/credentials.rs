@@ -75,6 +75,25 @@ fn credential_delete_native(key_id: &str) -> Result<bool, &'static str> {
     }
 }
 
+pub(crate) fn synthetic_smoke_round_trip(key_id: &str) -> Result<(), &'static str> {
+    struct Cleanup(String);
+    impl Drop for Cleanup {
+        fn drop(&mut self) {
+            let _ = credential_delete_native(&self.0);
+        }
+    }
+    let _cleanup = Cleanup(key_id.to_owned());
+    const SYNTHETIC_SECRET: &str = "synthetic-only-native-smoke-value";
+    credential_set_native(key_id, SYNTHETIC_SECRET)?;
+    let round_trip = credential_get_native(key_id)?;
+    let deleted = credential_delete_native(key_id)?;
+    let absent = credential_get_native(key_id)?.is_none();
+    if round_trip.as_deref() != Some(SYNTHETIC_SECRET) || !deleted || !absent {
+        return Err("credential store unavailable");
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

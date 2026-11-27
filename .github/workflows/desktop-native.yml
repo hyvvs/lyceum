@@ -24,6 +24,7 @@ jobs:
     env:
       RUSTUP_TOOLCHAIN: "1.94.0"
       LYCEUM_RUN_KEYCHAIN_TESTS: "1"
+      LYCEUM_KEEP_ACL_PROBE: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -57,12 +58,37 @@ jobs:
         run: cargo +1.94.0 fmt --manifest-path apps/desktop/src-tauri/Cargo.toml -- --check
       - name: Native backend tests (including fail-closed URL and key-ID checks)
         run: cargo +1.94.0 test --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
+      - name: Verify Windows app-data DACL inherits a private profile ACL
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $path = Join-Path $env:APPDATA "lyceum-m0-005-acl-probe-$env:GITHUB_RUN_ID"
+          try {
+            if (!(Test-Path -LiteralPath $path -PathType Container)) { throw "ACL probe directory missing" }
+            $acl = Get-Acl -LiteralPath $path
+            $current = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+            if ($acl.Owner -ne $current) { throw "App-data directory owner is not the current user" }
+            $broad = @($acl.Access | Where-Object {
+              $_.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Allow -and
+              $_.IdentityReference.Value -match 'Everyone|\Users$|Authenticated Users|ANONYMOUS' -and
+              $_.FileSystemRights -ne [System.Security.AccessControl.FileSystemRights]::Synchronize
+            })
+            if ($broad.Count -gt 0) { throw "Broad principals have app-data access" }
+            "windowsAppDataAcl=PASS ownerIsCurrentUser=true broadAccessAceCount=0 inherited=$(!$acl.AreAccessRulesProtected)"
+          }
+          finally {
+            if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }
+          }
       - name: Reject Rust warnings and Clippy findings
         run: cargo +1.94.0 clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --locked --all-targets -- -D warnings
       - name: Compile actual desktop application for this native OS
         run: cargo +1.94.0 build --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
       - name: Build real bundled frontend and native executable (not just cargo debug)
         run: pnpm --filter @lyceum/desktop build
+      - name: Assert desktop assets exclude browser PWA service worker
+        run: node -e "const fs=require('node:fs'); for (const file of ['apps/web/dist/sw.js','apps/web/dist/manifest.webmanifest']) if (fs.existsSync(file)) throw new Error('Unexpected browser PWA artifact in desktop build: '+file)"
+      - name: Launch actual native window and verify renderer IPC/keychain
+        run: node apps/desktop/scripts/native-smoke.cjs
       - name: Remove temporary synthetic macOS keychain
         if: always() && runner.os == 'macOS'
         shell: bash
