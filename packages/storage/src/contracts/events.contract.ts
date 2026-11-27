@@ -41,19 +41,91 @@ export function eventContract(factory: StorageFactory): void {
       expect(page.entries[0]?.event.occurredAt).toBe(first.occurredAt);
     });
 
-    it("supports precisely all four current canonical event variants", async () => {
+    it("preserves four historical event variants and supports exactly two authorized settings v1 types", async () => {
       const store = await factory();
       const types = [
         "attempt.recorded",
         "session.started",
         "session.ended",
         "goal.created",
+        "preferences.changed",
+        "privacy.changed",
       ] as const;
       const expected = types.map((type, index) => event(type, `variant-${index}`));
       await store.append(expected);
       expect((await store.read()).events.map((item) => item.type)).toEqual(types);
       expect((await store.read()).events).toEqual(expected);
-      expect(await store.getLastSeq()).toBe(4);
+      expect(await store.getLastSeq()).toBe(6);
+    });
+
+    it("stores canonical settings variants alongside historical events in local append order", async () => {
+      const store = await factory();
+      const first = event("privacy.changed", "new-privacy", "2026-12-31T00:00:00.000Z");
+      const second = event("goal.created", "old-goal", "2026-01-01T00:00:00.000Z");
+      const third = event("preferences.changed", "new-preference", "2026-02-01T00:00:00.000Z");
+      await store.append([first, second, third]);
+      expect(
+        (await store.readEntries()).entries.map(({ seq, event: item }) => [seq, item.type]),
+      ).toEqual([
+        [1, "privacy.changed"],
+        [2, "goal.created"],
+        [3, "preferences.changed"],
+      ]);
+      expect(await store.getLastSeq()).toBe(3);
+    });
+
+    it("deduplicates identical settings events but rejects conflicting IDs across event types", async () => {
+      const store = await factory();
+      const first = event("privacy.changed", "shared-settings-id");
+      await store.append([first, first]);
+      await store.append([first]);
+      expect(await store.getLastSeq()).toBe(1);
+      await expect(
+        store.append([event("preferences.changed", "shared-settings-id")]),
+      ).rejects.toMatchObject({ code: "conflict" });
+      expect(await store.getLastSeq()).toBe(1);
+    });
+
+    it("rejects unknown names, secret fields, generic patches, versions and goal IDs atomically", async () => {
+      const store = await factory();
+      const accepted = event("preferences.changed", "pre-existing");
+      await store.append([accepted]);
+      const eventBase = event("privacy.changed", "bad-setting");
+      for (const corrupt of [
+        {
+          ...eventBase,
+          payload: { ...eventBase.payload, credential: "synthetic forbidden sentinel" },
+        },
+        { ...eventBase, payload: { settings: { localModelsOnly: false } } },
+        { ...eventBase, payload: { setting: "telemetryConsent", value: true } },
+        { ...eventBase, goalId: "synthetic-goal" },
+        { ...eventBase, version: 2 },
+      ]) {
+        await expect(
+          store.append([event("session.started", "valid-before-bad"), corrupt as LyceumEvent]),
+        ).rejects.toMatchObject({ code: "invalid_event" });
+        expect(await store.getLastSeq()).toBe(1);
+      }
+      const persisted = JSON.stringify((await store.readEntries()).entries);
+      expect(persisted).not.toContain("synthetic forbidden sentinel");
+      expect(persisted).not.toContain("credential");
+    });
+
+    it("rejects accessor-backed setting payload values before invoking caller code", async () => {
+      const store = await factory();
+      let calls = 0;
+      const payload = Object.defineProperty({ setting: "telemetryConsent" }, "value", {
+        enumerable: true,
+        get() {
+          calls++;
+          return "granted";
+        },
+      });
+      await expect(
+        store.append([{ ...event("privacy.changed", "accessor-setting"), payload } as LyceumEvent]),
+      ).rejects.toMatchObject({ code: "invalid_event" });
+      expect(calls).toBe(0);
+      expect(await store.getLastSeq()).toBe(0);
     });
 
     it("provides exclusive cursor and bounded limit pagination without duplicates", async () => {
