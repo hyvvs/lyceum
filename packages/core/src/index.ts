@@ -9,3 +9,4 @@ export * from "./learner/bkt";
 export * from "./logger";
 export * from "./ports";
 export * from "./storage";
+export * from "./user-settings";
