@@ -1,8 +1,11 @@
 # ADR-0011: Content-free operational diagnostics
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-27
-- Deciders: project owner (M0-013 implementation authorization); human acceptance pending
+- Accepted: 2026-11-27
+- Deciders: Lyceum project owner (explicit Independent Audit acceptance of M0-013 and ADR-0011)
+
+The owner **ACCEPTED ADR-0011 on 2026-11-27** after independent review of the actual Logger, sanitizer, buffer, error mapping, captured-log regressions, Proxy corrections, and exact-head hosted CI on PR #28. Acceptance preserves the stronger content-free policy, production debug restrictions, immutable in-memory snapshots, and the documented trusted-JavaScript/Proxy boundary. It does not authorize production diagnostics wiring, persistence, telemetry, app/UI integration, learner data, or release.
 
 ## Context
 

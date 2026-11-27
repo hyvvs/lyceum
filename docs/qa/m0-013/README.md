@@ -1,6 +1,6 @@
 # M0-013 — Content-free diagnostics, structured logging and error mapping
 
-**Checkpoint:** implementation and local automated verification complete; publication remains an OPEN DRAFT PR gate. M0-013 remains `[~]` until separate owner acceptance. This document does not authorize readiness, merge, release or overall M0 completion.
+**Owner acceptance (2026-11-27):** M0-013 and ADR-0011 explicitly **ACCEPTED** by independent owner audit. The owner authorized a documentation-only amendment, fresh amended-head three-job CI, controlled PR #28 readiness and normal squash merge, and fresh exact merged-main three-job CI. M0-013 remains `[~]` until that merged-main verification is complete; the completion marker and actual squash/CI evidence will be recorded on the subsequent M0-014 branch pending its publication. No overall M0 completion or release is authorized. Earlier Draft-only references below are historical checkpoints, superseded only by this explicit owner authorization.
 
 ## Scope and boundaries
 
@@ -105,7 +105,7 @@ Three independent reviewers covered architecture, correctness/testing and securi
 
 - All 20 manual accessibility cases, including READ-01, remain **BLOCKED / NOT RUN**. Automated browser/axe results do not change those statuses or certify WCAG/native assistive technology.
 - M0-003, M0-004 and M0-017 remain `[~]`.
-- ADR-0011 remains proposed pending human acceptance. ADR-0009 and ADR-0010 remain binding.
+- ADR-0011 was explicitly accepted by the owner on 2026-11-27; ADR-0009 and ADR-0010 remain binding.
 - M0-011 `[x]` is recorded on verified protected main at squash SHA `3f916d266eacfcaf40542dcc29459abb31f4abd3`, with exact-main run `45932161441` green. Its completion record on this branch remains pending publication with the M0-013 PR merge.
-- M0-013 must stop at an OPEN DRAFT PR with fresh exact-head hosted Verify, unrestricted Dependency audit and Secret scan all successful. Do not mark ready, merge, release or declare overall M0 complete.
-- M0-014 is proposal-only after the verified M0-013 Draft checkpoint; no M0-014 implementation is authorized.
+- **Historical Draft-stage limitation (superseded):** M0-013 originally stopped at OPEN DRAFT with exact-head checks. The owner has since explicitly authorized the controlled merge, subject to amended-head three-job hosted verification, no protection bypass and exact merged-main re-verification. Do not claim release or overall M0 completion.
+- **Historical proposal-only limitation (superseded after merge gate):** M0-014 was initially proposal-only; the owner now authorizes its explicitly bounded implementation on a fresh branch *only after* M0-013 exact merged-main three-job success. No M0-014 source changes are part of PR #28.
