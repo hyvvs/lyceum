@@ -1,5 +1,6 @@
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
+const http = require("node:http");
 const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
@@ -18,6 +19,44 @@ async function reservePort() {
     server.close((error) => (error ? reject(error) : resolve())),
   );
   return port;
+}
+
+async function startNavigationProbeServer() {
+  const requests = [];
+  const server = http.createServer((request, response) => {
+    requests.push({ method: request.method, url: request.url });
+    if (request.url === "/native-smoke-redirect-source") {
+      response.writeHead(302, {
+        "cache-control": "no-store",
+        location: "/native-smoke-untrusted",
+      });
+      response.end();
+      return;
+    }
+    response.writeHead(200, {
+      "cache-control": "no-store",
+      "content-type": "text/html; charset=utf-8",
+    });
+    response.end("<!doctype html><title>Untrusted navigation reached</title>");
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    await new Promise((resolve) => server.close(resolve));
+    throw new Error("could not determine loopback navigation-probe port");
+  }
+  return {
+    requests,
+    url: `http://127.0.0.1:${address.port}/native-smoke-untrusted`,
+    close: () =>
+      new Promise((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+        server.closeAllConnections();
+      }),
+  };
 }
 
 async function waitUntil(check, child, description, timeoutMs = 25_000) {
@@ -86,20 +125,26 @@ async function main() {
   const webViewUserDataDir = isWindows
     ? fs.mkdtempSync(path.join(os.tmpdir(), "lyceum-webview2-smoke-"))
     : null;
-  const env = {
-    ...process.env,
-    LYCEUM_DESKTOP_IPC_SMOKE: "1",
-    ...(isWindows
-      ? {
-          WEBVIEW2_USER_DATA_FOLDER: webViewUserDataDir,
-          WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-address=127.0.0.1 --remote-debugging-port=${port}`,
-        }
-      : {}),
-  };
   let child;
   let stdout = "";
   let browser;
+  let navigationProbeServer;
   try {
+    if (isWindows) navigationProbeServer = await startNavigationProbeServer();
+    const env = {
+      ...process.env,
+      LYCEUM_DESKTOP_IPC_SMOKE: "1",
+      ...(isWindows
+        ? {
+            LYCEUM_WEBVIEW2_USER_DATA_DIR: webViewUserDataDir,
+            LYCEUM_WEBVIEW2_CDP_PORT: String(port),
+            LYCEUM_WEBVIEW2_SMOKE_REDIRECT_SOURCE: new URL(
+              "/native-smoke-redirect-source",
+              navigationProbeServer.url,
+            ).href,
+          }
+        : {}),
+    };
     child = spawn(executable, [], { env, stdio: ["ignore", "pipe", "ignore"] });
     child.on("error", (error) => {
       child.spawnError = error;
@@ -109,7 +154,13 @@ async function main() {
       stdout += chunk;
     });
 
-    await waitUntil(() => stdout.includes(IPC_MARKER), child, "real renderer-to-native IPC");
+    await waitUntil(
+      () =>
+        stdout.includes(IPC_MARKER) &&
+        (!isWindows || stdout.includes("LYCEUM_WEBVIEW_REQUEST_GUARD_READY")),
+      child,
+      "real renderer IPC and native WebView request guard",
+    );
 
     if (isWindows) {
       const { chromium } = require("@playwright/test");
@@ -219,7 +270,121 @@ async function main() {
       if (popup) await popup.close();
       const pagesAfterPopup = browser.contexts().flatMap((context) => context.pages()).length;
       await page.locator("#lyceum-native-smoke-popup").evaluate((button) => button.remove());
-      const untrustedUrl = "http://127.0.0.1:65534/native-smoke-untrusted";
+      const untrustedUrl = navigationProbeServer.url;
+      const untrustedOrigin = new URL(untrustedUrl).origin;
+      let untrustedRequestObserved = false;
+      const untrustedResourceRequests = [];
+      const requestListener = (request) => {
+        if (request.url().startsWith(`${untrustedOrigin}/`)) {
+          untrustedResourceRequests.push({
+            url: request.url(),
+            resourceType: request.resourceType(),
+            navigation: request.isNavigationRequest(),
+          });
+          if (request.isNavigationRequest() && request.url() === untrustedUrl) {
+            untrustedRequestObserved = true;
+          }
+        }
+      };
+      page.on("request", requestListener);
+      const cdpSession = await page.context().newCDPSession(page);
+      await cdpSession.send("Page.setBypassCSP", { enabled: true });
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.waitForFunction(
+        () => document.documentElement.dataset.desktopIpc === "ready",
+        undefined,
+        { timeout: 15_000 },
+      );
+      const redirectProbeOutcome = await page.evaluate(async (origin) => {
+        try {
+          const response = await fetch(`${origin}/native-smoke-redirect-source`, {
+            cache: "no-store",
+            mode: "no-cors",
+            redirect: "follow",
+          });
+          return {
+            status: response.status,
+            type: response.type,
+            redirected: response.redirected,
+            url: response.url,
+          };
+        } catch {
+          // The redirected cross-origin response is intentionally synthetic 403.
+          return { rejected: true };
+        }
+      }, untrustedOrigin);
+      const redirectProbeAttempted = true;
+      await page.evaluate(async (origin) => {
+        const waitForElement = (element, parent) =>
+          new Promise((resolve) => {
+            const finish = () => resolve();
+            element.addEventListener("load", finish, { once: true });
+            element.addEventListener("error", finish, { once: true });
+            parent.append(element);
+            window.setTimeout(finish, 750);
+          });
+        const probes = [
+          fetch(`${origin}/native-smoke-fetch`, { mode: "no-cors" }).catch(() => undefined),
+          new Promise((resolve) => {
+            const source = `fetch(${JSON.stringify(`${origin}/native-smoke-worker`)}, { mode: "no-cors" }).catch(() => undefined).finally(() => postMessage("done"));`;
+            const blobUrl = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+            const worker = new Worker(blobUrl);
+            const finish = () => {
+              worker.terminate();
+              URL.revokeObjectURL(blobUrl);
+              resolve();
+            };
+            worker.addEventListener("message", finish, { once: true });
+            worker.addEventListener("error", finish, { once: true });
+            window.setTimeout(finish, 750);
+          }),
+          waitForElement(
+            Object.assign(document.createElement("script"), {
+              src: `${origin}/native-smoke-script.js`,
+            }),
+            document.head,
+          ),
+          waitForElement(
+            Object.assign(new Image(), { src: `${origin}/native-smoke-image.png` }),
+            document.body,
+          ),
+          waitForElement(
+            Object.assign(document.createElement("iframe"), {
+              src: `${origin}/native-smoke-cross-origin-frame`,
+              title: "native smoke request guard probe",
+            }),
+            document.body,
+          ),
+        ];
+        await Promise.race([
+          Promise.allSettled(probes),
+          new Promise((resolve) => window.setTimeout(resolve, 1500)),
+        ]);
+        for (const frame of document.querySelectorAll(
+          'iframe[title="native smoke request guard probe"]',
+        )) {
+          frame.remove();
+        }
+      }, untrustedOrigin);
+      await page.waitForTimeout(250);
+      const untrustedResourceRequestCount = untrustedResourceRequests.length;
+      const untrustedResourceTypes = [
+        ...new Set(untrustedResourceRequests.map((request) => request.resourceType)),
+      ];
+      const requiredUntrustedResourceTypes = ["fetch", "script", "image"];
+      const allUntrustedResourceTypesObserved = requiredUntrustedResourceTypes.every((type) =>
+        untrustedResourceTypes.includes(type),
+      );
+      const iframeProbeObserved = untrustedResourceRequests.some(
+        (request) => request.resourceType === "document" && !request.navigation,
+      );
+      const workerProbeObserved = untrustedResourceRequests.some((request) =>
+        request.url.endsWith("/native-smoke-worker"),
+      );
+      const redirectTargetRequestObserved = untrustedResourceRequests.some(
+        (request) =>
+          request.url === untrustedUrl && request.resourceType === "fetch" && !request.navigation,
+      );
       let navigationListener;
       const navigationPromise = new Promise((resolve) => {
         navigationListener = (frame) => {
@@ -237,8 +402,31 @@ async function main() {
         delay(1500).then(() => false),
       ]);
       page.off("framenavigated", navigationListener);
+      page.off("request", requestListener);
+      const untrustedRequests = [...navigationProbeServer.requests];
+      const redirectSourceRequests = untrustedRequests.filter(
+        (request) => request.url === "/native-smoke-redirect-source",
+      );
+      const untrustedTargetRequests = untrustedRequests.filter(
+        (request) => request.url !== "/native-smoke-redirect-source",
+      );
+      await navigationProbeServer.close();
+      const untrustedRequestCount = untrustedTargetRequests.length;
+      navigationProbeServer = null;
+      const webResourceProbeBlockedCount =
+        stdout.match(/LYCEUM_WEB_RESOURCE_PROBE_BLOCKED/g)?.length ?? 0;
       const remoteNavigationDenied =
-        !remoteNavigationStarted && page.url().startsWith("http://tauri.localhost");
+        !remoteNavigationStarted &&
+        untrustedRequestCount === 0 &&
+        redirectSourceRequests.length === 1 &&
+        redirectTargetRequestObserved &&
+        allUntrustedResourceTypesObserved &&
+        webResourceProbeBlockedCount >= requiredUntrustedResourceTypes.length + 2 &&
+        redirectProbeAttempted &&
+        stdout.includes("LYCEUM_REDIRECT_SOURCE_ALLOWED") &&
+        stdout.includes("LYCEUM_NAVIGATION_PROBE_DENIED") &&
+        stdout.includes("LYCEUM_WEB_RESOURCE_PROBE_BLOCKED") &&
+        page.url().startsWith("http://tauri.localhost");
       const passed = Object.entries(results).every(([key, value]) =>
         key === "origin" ? value === "http://tauri.localhost" : value === true,
       );
@@ -247,6 +435,27 @@ async function main() {
         pagesBeforePopup,
         pagesAfterPopup,
         popupCreated: Boolean(popup),
+        untrustedRequestObserved,
+        untrustedResourceRequestCount,
+        untrustedResourceTypes,
+        allUntrustedResourceTypesObserved,
+        iframeProbeAttempted: true,
+        iframeProbeObserved,
+        workerProbeAttempted: true,
+        workerProbeObserved,
+        redirectTargetRequestObserved,
+        webResourceProbeBlockedCount,
+        redirectProbeAttempted,
+        redirectProbeOutcome,
+        redirectSourceAllowed: stdout.includes("LYCEUM_REDIRECT_SOURCE_ALLOWED"),
+        redirectSourceRequests,
+        untrustedTargetRequests,
+        loopbackGuardObservations: (stdout.match(/LYCEUM_GUARD_OBSERVED_LOOPBACK/g) ?? []).length,
+        untrustedResourceRequests,
+        untrustedRequestCount,
+        untrustedRequests,
+        navigationCallbackDenied: stdout.includes("LYCEUM_NAVIGATION_PROBE_DENIED"),
+        webResourceRequestBlocked: stdout.includes("LYCEUM_WEB_RESOURCE_PROBE_BLOCKED"),
         remoteNavigationDenied,
       };
       console.log("windowsNativeSmokeEvidence", JSON.stringify(evidence));
@@ -276,6 +485,14 @@ async function main() {
       try {
         if (child) await stopChild(child);
       } finally {
+        if (navigationProbeServer) {
+          try {
+            await navigationProbeServer.close();
+          } catch (error) {
+            console.error("navigation probe server cleanup failed:", error.message);
+            process.exitCode = 1;
+          }
+        }
         if (webViewUserDataDir) {
           // WebView2 may finish shutting down its browser subprocess shortly
           // after the host exits; retry transient directory-lock failures.

@@ -75,6 +75,7 @@ fn credential_delete_native(key_id: &str) -> Result<bool, &'static str> {
     }
 }
 
+#[cfg(feature = "native-smoke")]
 pub(crate) fn synthetic_smoke_round_trip(key_id: &str) -> Result<(), &'static str> {
     struct Cleanup(String);
     impl Drop for Cleanup {

@@ -138,15 +138,22 @@ jobs:
           }
       - name: Reject Rust warnings and Clippy findings
         run: cargo +1.94.0 clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Reject warnings in the native-smoke-only Rust feature
+        run: cargo +1.94.0 clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --locked --all-targets --features native-smoke -- -D warnings
       - name: Compile actual desktop application for this native OS
         run: cargo +1.94.0 build --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
-      - name: Build real bundled frontend and native executable (not just cargo debug)
-        run: pnpm --filter @lyceum/desktop build
+      - name: Build native smoke executable with test-only diagnostics
+        run: pnpm --filter @lyceum/desktop build:native-smoke
       - name: Assert desktop assets exclude browser PWA service worker
         run: |
           node -e "const fs=require('node:fs'); for (const file of ['apps/web/dist/sw.js','apps/web/dist/manifest.webmanifest']) if (fs.existsSync(file)) throw new Error('Unexpected browser PWA artifact in desktop build: '+file)"
       - name: Launch actual native window and verify renderer IPC/keychain
         run: node apps/desktop/scripts/native-smoke.cjs
+      - name: Build ordinary feature-off production executable
+        run: pnpm --filter @lyceum/desktop build
+      - name: Assert production executable excludes native-smoke controls
+        run: |
+          node -e "const fs=require('node:fs'); const path=require('node:path'); const file=path.join('apps/desktop/src-tauri/target/release', process.platform==='win32'?'lyceum-desktop.exe':'lyceum-desktop'); const bytes=fs.readFileSync(file); const markers=['LYCEUM_DESKTOP_IPC_SMOKE','LYCEUM_WEBVIEW2_CDP_PORT','LYCEUM_WEBVIEW2_SMOKE_REDIRECT_SOURCE','LYCEUM_REDIRECT_SOURCE_ALLOWED','--remote-debugging-port','LYCEUM_NATIVE_IPC_READY','LYCEUM_NAVIGATION_PROBE_DENIED','LYCEUM_WEB_RESOURCE_PROBE_BLOCKED']; const found=markers.filter(marker=>bytes.includes(Buffer.from(marker))); if(found.length) throw new Error('Production executable contains native-smoke controls: '+found.join(', ')); console.log('productionSmokeFeatureAbsent=PASS')"
       - name: Remove temporary synthetic macOS keychain
         if: always() && runner.os == 'macOS'
         shell: bash

@@ -17,8 +17,74 @@ fn permitted_origin(url: &Url, development: bool, windows: bool) -> bool {
     url.scheme() == scheme && url.host_str() == Some(host) && url.port_or_known_default() == port
 }
 
+fn permitted_ipc_request(url: &Url, method: &str) -> bool {
+    // Tauri 2.12.7's IPC protocol encodes the command name in the path
+    // (`ipc://localhost/{command}`); Wry 0.57.4 maps it to this HTTP origin.
+    // The command segment is therefore intentionally variable, but must be
+    // exactly one non-empty segment. The protocol accepts POST and OPTIONS.
+    url.username().is_empty()
+        && url.password().is_none()
+        && url.scheme() == "http"
+        && url.host_str() == Some("ipc.localhost")
+        && url.port_or_known_default() == Some(80)
+        && url.query().is_none()
+        && url.fragment().is_none()
+        && matches!(method, "POST" | "OPTIONS")
+        && url.path_segments().is_some_and(|mut segments| {
+            let Some(command) = segments.next() else {
+                return false;
+            };
+            !command.is_empty()
+                && !command.to_ascii_lowercase().contains("%2f")
+                && !command.to_ascii_lowercase().contains("%5c")
+                && segments.next().is_none()
+        })
+}
+
+fn permitted_web_resource(
+    url: &Url,
+    development: bool,
+    windows: bool,
+    fetch: bool,
+    method: &str,
+) -> bool {
+    permitted_origin(url, development, windows) || (fetch && permitted_ipc_request(url, method))
+}
+
+pub(crate) fn allows_web_resource_request(url: &Url, fetch: bool, method: &str) -> bool {
+    permitted_web_resource(
+        url,
+        cfg!(debug_assertions),
+        cfg!(target_os = "windows"),
+        fetch,
+        method,
+    )
+}
+
+pub(crate) fn app_url() -> Url {
+    let origin = if cfg!(debug_assertions) {
+        "http://127.0.0.1:5173/"
+    } else if cfg!(target_os = "windows") {
+        "http://tauri.localhost/"
+    } else {
+        "tauri://localhost/"
+    };
+    Url::parse(origin).expect("the bundled Lyceum origin is a valid URL")
+}
+
 pub(crate) fn allows_navigation(url: &Url) -> bool {
-    permitted_origin(url, cfg!(debug_assertions), cfg!(target_os = "windows"))
+    let allowed = permitted_origin(url, cfg!(debug_assertions), cfg!(target_os = "windows"));
+    #[cfg(feature = "native-smoke")]
+    if !allowed
+        && url.host_str() == Some("127.0.0.1")
+        && std::env::var_os("LYCEUM_DESKTOP_IPC_SMOKE").is_some()
+    {
+        use std::io::Write;
+        let mut stdout = std::io::stdout().lock();
+        let _ = writeln!(stdout, "LYCEUM_NAVIGATION_PROBE_DENIED");
+        let _ = stdout.flush();
+    }
+    allowed
 }
 
 #[cfg(test)]
@@ -94,5 +160,124 @@ mod tests {
             );
         }
         assert!(Url::parse("http://%").is_err());
+    }
+
+    #[test]
+    fn web_resource_guard_allows_only_app_and_fetch_ipc_requests() {
+        for (raw, development, windows, fetch, method, expected) in [
+            ("http://tauri.localhost/", false, true, false, "GET", true),
+            ("http://127.0.0.1:5173/", true, true, false, "GET", true),
+            (
+                "http://ipc.localhost/__invoke",
+                false,
+                true,
+                true,
+                "POST",
+                true,
+            ),
+            (
+                "http://ipc.localhost/plugin%3A__TAURI_CHANNEL__%7Cfetch",
+                false,
+                true,
+                true,
+                "POST",
+                true,
+            ),
+            (
+                "http://ipc.localhost/__invoke",
+                false,
+                true,
+                true,
+                "OPTIONS",
+                true,
+            ),
+            (
+                "http://ipc.localhost/__invoke",
+                false,
+                true,
+                true,
+                "GET",
+                false,
+            ),
+            (
+                "http://ipc.localhost/__invoke",
+                false,
+                true,
+                true,
+                "PUT",
+                false,
+            ),
+            ("http://ipc.localhost/", false, true, true, "POST", false),
+            (
+                "http://ipc.localhost/arbitrary/path",
+                false,
+                true,
+                true,
+                "POST",
+                false,
+            ),
+            (
+                "http://ipc.localhost/arbitrary%2fpath",
+                false,
+                true,
+                true,
+                "POST",
+                false,
+            ),
+            (
+                "http://ipc.localhost/arbitrary%5cpath",
+                false,
+                true,
+                true,
+                "POST",
+                false,
+            ),
+            (
+                "http://ipc.localhost/__invoke?next=https://evil.test",
+                false,
+                true,
+                true,
+                "POST",
+                false,
+            ),
+            (
+                "http://ipc.localhost/__invoke#fragment",
+                false,
+                true,
+                true,
+                "POST",
+                false,
+            ),
+            (
+                "http://ipc.localhost/__invoke",
+                false,
+                true,
+                false,
+                "POST",
+                false,
+            ),
+            ("http://127.0.0.1:65534/", false, true, false, "GET", false),
+            ("https://example.com/", false, true, false, "GET", false),
+            (
+                "http://tauri.localhost.evil.test/",
+                false,
+                true,
+                false,
+                "GET",
+                false,
+            ),
+        ] {
+            assert_eq!(
+                permitted_web_resource(
+                    &Url::parse(raw).unwrap(),
+                    development,
+                    windows,
+                    fetch,
+                    method,
+                ),
+                expected,
+                "unexpected web resource policy for {method} {raw}"
+            );
+        }
     }
 }

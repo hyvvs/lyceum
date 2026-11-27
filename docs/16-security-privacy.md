@@ -68,6 +68,8 @@ Desktop OS keychain; web encrypted IndexedDB vault with passphrase or WebAuthn P
 
 The app contacts only: configured providers, hosts for model downloads the learner initiated, URLs the learner asked to fetch, and (if enabled) update and opt-in telemetry endpoints. `connect-src` and Tauri allowlists enforce this. All connections use TLS except localhost and learner-declared local-network endpoints (clearly labeled as unencrypted).
 
+The Windows desktop shell adds a narrower WebView2 HTTP(S) request guard: before the bundled app origin is loaded, it requires `ICoreWebView2_22` and registers HTTP and HTTPS filters for all WebView2 request-source kinds. It permits the exact bundled app origin plus the Tauri IPC transport (`ipc.localhost`, FETCH context, POST/OPTIONS, one command path segment); other HTTP(S) requests receive synthetic 403 responses. If request inspection fails, the guard attempts a deny response; if it cannot create or set that response, the process exits rather than continuing without the guard. This is defense-in-depth for HTTP(S), not a complete renderer network-egress boundary. No `file://` filter is installed, and WebSocket, WebRTC/ICE and other non-HTTP(S) channels are not established as covered. CSP and this guard must not be described as a universal network firewall.
+
 ## 9. Supply chain
 
 Lockfile, frozen installs in CI, dependency audit, license check, minimal dependencies, pinned GitHub Actions, secret scanning, signed releases and update manifests, reproducible build goal, SBOM per release, review of any postinstall scripts, Pyodide and model-runtime assets vendored or integrity-checked (hash pinned), model downloads verified by SHA-256.
