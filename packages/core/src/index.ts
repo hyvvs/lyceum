@@ -1,4 +1,5 @@
 export * from "./concept-graph";
+export * from "./diagnostics-buffer";
 export * from "./diagnostics-privacy";
 export * from "./domain-profile";
 export * from "./events";
