@@ -70,12 +70,60 @@ export const GoalCreated = z.object({
   }),
 });
 
+/** Narrow local identifiers for NEW settings events only. Historical event envelopes are unchanged. */
+export const SettingsEventIdentifierSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/)
+  .refine((value) => value !== "constructor" && value !== "prototype" && value !== "__proto__");
+
+// New user-level schemas intentionally omit goalId altogether. Using
+// z.never().optional() would still accept an own goalId: undefined in direct
+// Zod parsing, contrary to the strict user-only event contract.
+const settingsEnvelope = {
+  id: SettingsEventIdentifierSchema,
+  deviceId: SettingsEventIdentifierSchema,
+  userId: SettingsEventIdentifierSchema,
+  occurredAt: envelope.occurredAt,
+};
+
+/** Initial v1 user-level setting: no goalId, arbitrary patches or appearance fields. */
+export const PreferencesChanged = z.strictObject({
+  ...settingsEnvelope,
+  type: z.literal("preferences.changed"),
+  version: z.literal(1),
+  payload: z.strictObject({
+    setting: z.literal("mockExamExtendedTime"),
+    value: z.union([z.null(), z.literal(1.25), z.literal(1.5)]),
+  }),
+});
+
+/** Initial v1 user-level privacy input; consent is never inferred from absence. */
+export const PrivacyChanged = z.strictObject({
+  ...settingsEnvelope,
+  type: z.literal("privacy.changed"),
+  version: z.literal(1),
+  payload: z.discriminatedUnion("setting", [
+    z.strictObject({
+      setting: z.literal("localModelsOnly"),
+      value: z.union([z.boolean(), z.null()]),
+    }),
+    z.strictObject({
+      setting: z.literal("telemetryConsent"),
+      value: z.union([z.enum(["granted", "denied"]), z.null()]),
+    }),
+  ]),
+});
+
 export const LyceumEventSchema = z.discriminatedUnion("type", [
   AttemptRecorded,
   SessionStarted,
   SessionEnded,
   GoalCreated,
+  PreferencesChanged,
+  PrivacyChanged,
 ]);
 
 export type LyceumEvent = z.infer<typeof LyceumEventSchema>;
 export type AttemptRecordedEvent = z.infer<typeof AttemptRecorded>;
+export type PreferencesChangedEvent = z.infer<typeof PreferencesChanged>;
+export type PrivacyChangedEvent = z.infer<typeof PrivacyChanged>;
