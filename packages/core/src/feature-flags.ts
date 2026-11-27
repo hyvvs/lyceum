@@ -88,16 +88,29 @@ function ownData(input: unknown, keys: readonly string[], error: string): Record
 /** Validates all metadata (including duplicate IDs) for CI and test fixtures. */
 export function validateFeatureFlagRegistry(input: unknown): readonly FeatureFlagDefinition[] {
   try {
+    if (!Array.isArray(input) || Object.getPrototypeOf(input) !== Array.prototype) {
+      throw Error("invalid_flag_registry");
+    }
+    const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length");
+    const length = lengthDescriptor?.value;
+    if (typeof length !== "number" || !Number.isSafeInteger(length) || length > 32 || length < 0) {
+      throw Error("invalid_flag_registry");
+    }
+    const keys = Reflect.ownKeys(input);
     if (
-      !Array.isArray(input) ||
-      Object.getPrototypeOf(input) !== Array.prototype ||
-      input.length > 32
+      keys.length !== length + 1 ||
+      !keys.includes("length") ||
+      keys.some(
+        (key) =>
+          key !== "length" &&
+          (typeof key !== "string" || !/^(0|[1-9]\d*)$/.test(key) || Number(key) >= length),
+      )
     ) {
       throw Error("invalid_flag_registry");
     }
     const seen = new Set<string>();
     const valid: FeatureFlagDefinition[] = [];
-    for (let index = 0; index < input.length; index++) {
+    for (let index = 0; index < length; index++) {
       const slot = Object.getOwnPropertyDescriptor(input, String(index));
       if (!slot?.enumerable || !("value" in slot)) throw Error("invalid_flag_registry");
       const data = ownData(slot.value, KEYS, "invalid_flag_registry");

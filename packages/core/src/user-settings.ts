@@ -1,4 +1,9 @@
-import { type LyceumEvent, PreferencesChanged, PrivacyChanged } from "./events";
+import {
+  type LyceumEvent,
+  PreferencesChanged,
+  PrivacyChanged,
+  SettingsEventIdentifierSchema,
+} from "./events";
 import type { Clock } from "./ports";
 import { type SequencedEvent, type Storage, StorageError } from "./storage";
 
@@ -57,13 +62,7 @@ export function defaultUserSettings(): Readonly<UserSettings> {
 }
 
 function validIdentifier(value: unknown): value is string {
-  return (
-    typeof value === "string" &&
-    /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value) &&
-    value !== "constructor" &&
-    value !== "prototype" &&
-    value !== "__proto__"
-  );
+  return SettingsEventIdentifierSchema.safeParse(value).success;
 }
 
 function requireUserId(value: unknown): string {
@@ -114,28 +113,71 @@ function parseChange(input: unknown, kind: "preferences.changed" | "privacy.chan
     type: kind,
     payload,
   };
-  const parsed =
-    kind === "preferences.changed"
-      ? PreferencesChanged.safeParse(template)
-      : PrivacyChanged.safeParse(template);
-  if (!parsed.success) throw new StorageError("invalid_input");
-  return parsed.data.payload;
+  try {
+    const parsed =
+      kind === "preferences.changed"
+        ? PreferencesChanged.safeParse(template)
+        : PrivacyChanged.safeParse(template);
+    if (!parsed.success) throw new StorageError("invalid_input");
+    return parsed.data.payload;
+  } catch {
+    // Even a revoked nested Proxy must never propagate raw reflection failures.
+    throw new StorageError("invalid_input");
+  }
 }
 
-function fold(settings: MutableSettings, event: LyceumEvent, userId: string): void {
-  if (event.userId !== userId) return;
-  if (event.type === "preferences.changed") {
-    const valid = PreferencesChanged.safeParse(event);
-    if (!valid.success) throw new StorageError("invalid_event");
-    settings.mockExamExtendedTime = valid.data.payload.value;
-  } else if (event.type === "privacy.changed") {
-    const valid = PrivacyChanged.safeParse(event);
-    if (!valid.success) throw new StorageError("invalid_event");
-    if (valid.data.payload.setting === "localModelsOnly") {
-      settings.localModelsOnly = valid.data.payload.value ?? true;
+function acceptedEventRow(value: unknown): { readonly seq: number; readonly event: unknown } {
+  try {
+    const fields = ownFields(value, ["seq", "event"]);
+    if (typeof fields.seq !== "number" || !Number.isSafeInteger(fields.seq)) throw Error();
+    return { seq: fields.seq, event: fields.event };
+  } catch {
+    throw new StorageError("invalid_event");
+  }
+}
+
+function fold(settings: MutableSettings, event: unknown, userId: string): void {
+  try {
+    if (!event || typeof event !== "object" || Array.isArray(event)) throw Error();
+    const prototype = Object.getPrototypeOf(event);
+    if (prototype !== Object.prototype && prototype !== null) throw Error();
+    const descriptor = Object.getOwnPropertyDescriptor(event, "type");
+    if (!descriptor?.enumerable || !("value" in descriptor)) throw Error();
+    const type = descriptor.value;
+    if (type !== "preferences.changed" && type !== "privacy.changed") return;
+    // Copy own DATA descriptors into fresh plain structures before Zod ever
+    // inspects an event. This also prevents a stateful userId/type getter from
+    // making selection disagree with the canonical validated event.
+    const fields = ownFields(event, [
+      "id",
+      "deviceId",
+      "userId",
+      "occurredAt",
+      "type",
+      "version",
+      "payload",
+    ]);
+    const payload = ownFields(fields.payload, ["setting", "value"]);
+    const input = { ...fields, payload };
+    if (type === "preferences.changed") {
+      const parsed = PreferencesChanged.safeParse(input);
+      if (!parsed.success) throw Error();
+      if (parsed.data.userId !== userId) return;
+      settings.mockExamExtendedTime = parsed.data.payload.value;
     } else {
-      settings.telemetryConsent = valid.data.payload.value ?? "unset";
+      const parsed = PrivacyChanged.safeParse(input);
+      if (!parsed.success) throw Error();
+      if (parsed.data.userId !== userId) return;
+      if (parsed.data.payload.setting === "localModelsOnly") {
+        settings.localModelsOnly = parsed.data.payload.value ?? true;
+      } else {
+        settings.telemetryConsent = parsed.data.payload.value ?? "unset";
+      }
     }
+  } catch {
+    // Core cannot sandbox executable JS/Proxy traps; it can reject reflection
+    // failures without exposing arbitrary exception messages or updating state.
+    throw new StorageError("invalid_event");
   }
 }
 
@@ -147,8 +189,9 @@ export function reconstructUserSettings(
   const selected = requireUserId(userId);
   const settings = freshDefaults();
   let lastSeq = 0;
-  for (const row of entries) {
-    if (!Number.isSafeInteger(row.seq) || row.seq <= lastSeq) {
+  for (const source of entries) {
+    const row = acceptedEventRow(source);
+    if (row.seq <= lastSeq) {
       throw new StorageError("invalid_event");
     }
     lastSeq = row.seq;
@@ -211,8 +254,9 @@ export function createUserSettingsStore(
           limit: Math.min(1000, head - cursor),
         });
         if (page.entries.length === 0) throw new StorageError("invalid_event");
-        for (const row of page.entries) {
-          if (!Number.isSafeInteger(row.seq) || row.seq !== cursor + 1 || row.seq > head) {
+        for (const source of page.entries) {
+          const row = acceptedEventRow(source);
+          if (row.seq !== cursor + 1 || row.seq > head) {
             throw new StorageError("invalid_event");
           }
           fold(settings, row.event, selected);

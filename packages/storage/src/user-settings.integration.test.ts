@@ -49,6 +49,25 @@ describe("M0-014 public Storage + settings integration", () => {
     expect(await storage.getLastSeq()).toBe(0);
   });
 
+  it("rejects locally unsafe IDs on the new canonical settings events at Storage boundary", async () => {
+    const storage = createInMemoryStorage();
+    const valid = canonical("valid-id", "privacy.changed", {
+      setting: "telemetryConsent",
+      value: "granted",
+    });
+    for (const userId of ["synthetic user", "__proto__", "constructor", "../synthetic"]) {
+      await expect(
+        storage.append([{ ...valid, id: `synthetic-${userId.length}`, userId }]),
+      ).rejects.toMatchObject({
+        code: "invalid_event",
+      });
+    }
+    expect(await storage.getLastSeq()).toBe(0);
+    await storage.append([valid]);
+    const settings = await createUserSettingsStore(storage, clock).read(context.userId);
+    expect(settings.settings.telemetryConsent).toBe("granted");
+  });
+
   it("reconstructs multiple user/device changes with timestamp inversion", async () => {
     const storage = createInMemoryStorage();
     await storage.append([

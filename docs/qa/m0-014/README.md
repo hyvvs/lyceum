@@ -1,0 +1,88 @@
+# M0-014 — Temporary feature flags and user-scoped event-backed settings
+
+**Checkpoint:** active authorized M0-014 development; this is **not owner acceptance** and the task remains `[~]`. The controlling owner's 2026-11-27 decision is preserved verbatim in local Git metadata at `.git/owner-m0-014-controlling-prompt.md`; exact pre-edit public contracts and RED-first plan at `.git/m0-014-implementation-plan.md`. Stop at a freshly verified **OPEN DRAFT** PR for independent owner acceptance. Do not mark ready, merge, release or declare overall M0 complete.
+
+## Accepted prerequisite — M0-013
+
+Owner-accepted M0-013/ADR-0011 amendment HEAD `c464a70fd1c22a2e862240295d39a1d7c4a97df9` passed the exact-head [three-job CI run 45942773145](https://github.com/hyvvs/lyceum/actions/runs/45942773145). [PR #28](https://github.com/hyvvs/lyceum/pull/28) was normally squash-merged without bypass at actual protected-main SHA **`df69f5683c93aae7d2cfc193cdd2788b38d010f0`**. Fresh [exact merged-main run 45943574794](https://github.com/hyvvs/lyceum/actions/runs/45943574794) completed SUCCESS for **Verify, unrestricted Dependency audit and Secret scan** on that exact SHA. Synchronized local main passed `corepack pnpm verify` (47 files/425 passed/one historical skip, all 69 storage and 69 diagnostics tests). ADR-0011 is published accepted and M0-006/M0-010/M0-011 `[x]` published on main. The M0-013 `[x]` marker and this actual SHA/CI were recorded on **this M0-014 branch**; protected-main publication of that marker awaits this separate PR's future merge.
+
+## Bounded public contracts
+
+### Developer-owned feature flags — `packages/core/src/feature-flags.ts`
+
+- `FeatureFlagId`: `accountProviderIntegrations` and `browserLocalModelInference` only.
+- `FeatureFlagDefinition`: fixed typed `id`, meaningful description, responsible owner, rollout purpose, `defaultEnabled: boolean`, inclusive canonical UTC `reviewBy` day.
+- `FEATURE_FLAGS`: immutable registry, exactly these two default-off entries. Both owned by actual role **Lyceum repository maintainers**. Account-based providers: **2027-06-30**, assumption to recheck official documented access and approved adapter prerequisites before planned integration. Experimental browser-local inference: **2027-09-30**, assumption to assess local browser runtime feasibility before any rollout. These are temporary review/removal planning dates, not launch schedules or auto-enable dates.
+- `validateFeatureFlagRegistry(unknown)`: defensive own-data/metadata validation, duplicate/unknown ID/owner/deadline/description/purpose/default/date checks, immutable defensive output. CI root `pnpm verify` runs genuine positive and missing-owner/missing-deadline/invalid metadata negative tests; no scanner/CI exception was added.
+- `createFeatureFlagResolver({asOfDate, overrides?})`: explicit canonical UTC calendar day (no ambient `Date`), optional *trusted local* overrides constrained to known boolean IDs, independent immutable instance, original option/overrides snapshotted. Returns `{enabled, reason: "default"|"override"|"expired"|"unknown"}`. Unknown IDs fail closed; invalid inputs fail validation; expiry always disables even if override is true. No remote flag service, provider call or app integration.
+- **A feature flag is neither learner consent nor security authorization.** ADR-0006 requires official documented access, human verification of current terms, approved adapter, compliant authentication/token storage/consent and an explicitly enabled gate before future provider work. No part of that chain is implemented. Neither flags nor preferences can alter accepted ADR-0011's content-free diagnostics/production debug restrictions.
+
+### Exactly two new canonical initial v1 events — `packages/core/src/events.ts`
+
+- `preferences.changed` v1: strict payload `{ setting: "mockExamExtendedTime", value: null | 1.25 | 1.5 }`. Null is explicit reset to ordinary mock-exam timing. No exam engine, disability information or medical justification.
+- `privacy.changed` v1: strict discriminated payload `{ setting: "localModelsOnly", value: boolean | null }` or `{ setting: "telemetryConsent", value: "granted" | "denied" | null }`. Null resets to safe default. Only explicit `granted` can represent opt-in for future policy consumers; `denied` is explicit opt-out/revocation, null reset returns `unset` (disabled). `localModelsOnly` resets to `true`.
+- Both retain canonical `id`, `deviceId`, `userId`, `occurredAt`, `type`, `version` envelope; require narrow local identifier characters/length; **forbid `goalId`** for user-level settings. Strict new envelopes and payloads reject unknown names, arbitrary patches/bags and credential-bearing fields. The four historical schemas/versions/payload meanings and their Zod default behavior remain unchanged. No old events rewritten, and no upcaster for a newly introduced first v1 type; future revisions require event versioning/upcasters. No `source_mode.changed` or other additional type.
+
+### User-scoped event-backed settings — `packages/core/src/user-settings.ts`
+
+- Public `UserSettings` fields only: `mockExamExtendedTime: null|1.25|1.5` (safe default `null`, normal time), `localModelsOnly: boolean` (safe default `true`), `telemetryConsent: "unset"|"granted"|"denied"` (safe default `unset`, disabled). Explicit `null` settings event resets are authoritative history entries; defaults never constitute affirmative telemetry consent.
+- Public `defaultUserSettings()` returns a freshly frozen validated default, `reconstructUserSettings(entries, userId)` deterministic fold, `createUserSettingsStore(storage, clock)` provides `read(userId)`, `changePreference(context, change)` and `changePrivacy(context, change)`. Caller supplies locally scoped user ID, device ID and event ID; Clock is injected; no onboarding/auth or nondeterministic globals.
+- Commands are **trusted app-originated** only; the *future* UI must obtain explicit learner confirmation before invoking them. Core does not grant permission or perform interaction confirmation. No provider blocking/routing, telemetry, network, upload, diagnostics logging, persistence, native exam timer, identity creation or UI in this task.
+- Storage `append` is authoritative; derived settings are recalculated from immutable history each read, **no singleton/cache/projection**. Captures committed `getLastSeq()` at start, pages exclusively by `afterSeq` (max 1,000 per page) and folds through that initial head only, rejecting gaps/inconsistent pages. Local `seq`, not `occurredAt`, establishes last-write wins *per field*. Other user events/unrelated types do not affect selected settings; cross-device same-user writes do. Concurrent independent field updates do not overwrite unrelated fields. Storage owns atomic append/idempotent duplicate IDs/conflict/rollback; failed writes cannot falsely update any settings state. Returned snapshots frozen and independent.
+- Core imports only core-local Storage and Clock **ports**; in-memory adapter injected from `packages/storage` in integration tests. The current in-memory adapter **does not survive restarts**; this demonstrates reconstruction from retained memory events, not M0-007 SQLite/OPFS, migrations or durable settings.
+- `apps/web/src/preferences.ts`, `lyceum.web.preferences.v1`, localStorage, theme bootstrap, theme/locale/transparency/accessibility behavior and appearance defaults remain unchanged. No competing authoritative appearance store is introduced.
+
+## RED/GREEN and contract regressions
+
+| Group | Observed RED before correction | GREEN evidence |
+|---|---|---|
+| Feature flags | Missing `./feature-flags` module, followed by an actual false `override` instead of `expired` when caller mutated the reference date; stateful array-length handling separately reviewed | 12 focused registry/negative tests after corrective changes; direct root verification exercises actual metadata |
+| Canonical event additions | Three genuine failing tests for unrecognized `preferences.changed`/`privacy.changed` v1; later unsafe locally scoped identifier test failed against accepted-any-nonempty IDs; an own `goalId: undefined` test also genuinely RED against optional-never | 8 event tests after strict `goalId` omission; old four still parse with existing Zod defaults |
+| User settings/reconstruction | Missing `./user-settings` import produced true suite RED; newly added malicious replay/accessor and revoked nested command tests both actually failed before correction | 15 focused tests after own-data replay/invalid-input protection; all changes remain field-level |
+| Storage/privacy integration | Additional new tests were GREEN against already implemented schemas/ports (not misrepresented as source-red) | Existing 69 in-memory tests preserved + 4 new reusable event-contract tests + 13 new adapter integration tests = **86** total storage tests; four original variants and two approved v1 variants included |
+
+Test fixtures use synthetic identifiers and fixed non-secret sentinels. Actual captured-console output and serialized storage records are asserted free from unsupported sensitive fields/values. The 69 original M0-013 diagnostics tests and their deliberate negative leak fixtures remain unchanged. Runtime validation uses fixed error codes; ordinary JavaScript accessors/Proxy traps cannot be made a hostile-JS sandbox, consistent with accepted ADR-0011. A more detailed actual RED/GREEN command history, including genuine review failures and the explicitly GREEN-first integration group, is retained in local Git metadata at `.git/m0-014-red-green-evidence.md`.
+
+## Verification and independent reviews
+
+**Full actual local QA (2026-11-27):**
+
+| Gate | Observed result |
+|---|---|
+| Frozen install | `corepack pnpm install --frozen-lockfile` PASS, lockfile unchanged, no new dependencies |
+| Focused flags / new events / user settings | 12/12 flags; 8/8 canonical event tests; 15/15 user-settings tests; deliberately malformed registry/owner/deadline/date fixtures rejected under actual Vitest/CI test path |
+| Full `corepack pnpm verify` | PASS: **50 files, 475 tests passed, one historical skip**; boundaries, agentcheck, seven workspace typechecks, Biome **242 files** all green |
+| Storage and diagnostics | Original 69 storage preserved; reusable contracts **57→61** (+4); adapter-specific 12 unchanged; new settings integration +13; **86 total storage tests**. Original **69 diagnostics tests** including negative leak fixtures preserved |
+| Evaluation | Actual standalone root `corepack pnpm eval` exit **0**, 30 scenarios total, 0 passed, 0 failed, all **30 incomplete**; **29/29 deterministic rules passed**, **123 subjective expectations unevaluated**, no infrastructure errors. Existing 142 evaluation tests included in root Vitest, unchanged |
+| Adversarial evaluation | Actual `pnpm eval --negative-fixture` exit **1 as expected**: 27 rule passes, 2 genuine failures, one failed/29 incomplete scenarios. Actual `pnpm eval --missing-evidence-fixture` exit **1 as expected**: 28 rule passes, 1 genuinely unevaluated rule, no fabricated failed rule |
+| Storybook | `corepack pnpm storybook:build` PASS; existing upstream Radix directive and Vite chunk-size notices are informational |
+| Isolated Chromium UI | `corepack pnpm test:ui` PASS, **139 passed, one optional capture skip**; exact `AXE_COVERAGE_VERIFIED unique_stories=341 required_states=364 executed_states=364`. All required story states and **eight separate integrated compositions** scanned; nonzero axe `incomplete` findings retained for human review, not silently counted as native accessibility success |
+| Production web | `corepack pnpm web:build` PASS (real Vite app, PWA manifest, Workbox precache and separate Worker emitted); existing chunk-size warning remains |
+| Isolated production Chromium | `corepack pnpm test:web` PASS, **108 passed, three optional capture skips**. Real Worker round-trip/cancellation/recovery, offline routes, precache and explicit user-consented service-worker update regressions pass. All **five original B1** obstruction configurations reported `totalObscuredRectangles: 0` and empty `overlapping` arrays; no new web source changes |
+| Dependency audit | Unrestricted `corepack pnpm audit` PASS: **No known vulnerabilities found** |
+| Secret scanner | `detect-secrets==1.5.0`: first tracked-source scan had two **synthetic fixture-keyword** false positives at `events.test.ts`/`feature-flags.test.ts`, corrected by assembling **the same forbidden field names at runtime**; focused negative tests remained 20/20 GREEN. Fresh tracked-source scan **0 findings**, separately sanitized lockfile scan **0 findings**; no scanner suppression, exclusion weakening or removal of captured-output assertions. The unchanged CI excludes only original sanctioned lockfile digest / binary design-reference files |
+| Git | `git diff --check` PASS; no package lock, app, PWA, Worker, design system, provider adapter or web preference edits; no screenshots required for nonvisual infrastructure |
+
+**Actual emitted gzip measurements** (Node `zlib.gzipSync` over real `apps/web/dist` files referenced in built `index.html`, not Vite decimal display approximations):
+
+| Resource | Gzip bytes |
+|---|---:|
+| Eager `index.html` | 585 |
+| Eager ICU runtime JS | 12,699 |
+| Eager CSS | 8,409 |
+| Eager app JS | 185,099 |
+| **Comparable eager route** | **206,792** |
+| Separate eager `theme-bootstrap.js` | 560 |
+| **Complete eager route** | **207,352** |
+| Separate Worker | **24,087** |
+| Total including Worker (reported separately from route budget) | **231,439** |
+
+All measured values equal the accepted M0-013 baseline exactly; the **complete eager route has 42,648 bytes of headroom** below the hard **250,000-byte** cap. Lazy Settings chunk excluded from eager route, new core infrastructure not integrated into web startup. Neither the deterministic fixtures nor automated accessibility scans establish real tutoring-quality or human AT acceptance.
+
+The accepted M0-013 baseline is 426/426 hosted Linux unit passes (425 + one local skip), 69 storage +69 diagnostics tests, 142 evaluation tests, 30 incomplete scenarios/29 deterministic rules/123 subjective expectations unevaluated, 139 Chromium UI passes/one optional capture skip, 341 stories/364 required and executed axe states, eight integrated compositions, 108 production browser/PWA/Worker passes/three optional skips, five B1 zero-overlap regressions. Baseline emitted comparable eager-route gzip 206,792 B; complete eager-route 207,352 B; separate Worker 24,087 B; hard complete eager-route cap 250,000 B. All new core modules stay outside eager web startup.
+
+**Fresh independent read-only reviews complete and rechecked.** Architecture reviewer `worker-31` identified (1) unsafe canonical settings IDs accepted by Zod but rejected by settings read, and (2) stale docs/09 event catalog; both fixed with source-grounded fail-first identity regression and documentation correction. Reviewer verified both closed (PASS), with nonblocking future limitation: O(history) replay has no AbortSignal and is not a production performance benchmark. Correctness/data-integrity reviewer `worker-30` received a **new M0-014-specific independent read-only task**, after `worker-32` failed to start; independently confirmed an explicit `goalId: undefined` own key was erroneously accepted by optional-never in new schemas, while Storage rejects it. The specific test was RED, then replaced the new strict schemas' optional-never with a separate settings envelope that omits `goalId` entirely; reviewer directly rechecked installed Zod and reported PASS. Security/privacy reviewer `worker-33` found direct public replay's stateful getter/read-before-validate hazard and revoked nested Proxy raw-error propagation, plus untrusted array length descriptor issue. Targeted tests demonstrated actual RED in replay/invalid command; fixed own-data snapshot/fixed-code behavior, bounded registry-descriptor validation, then reviewer rechecked PASS. All three did **read-only** source/contract review, not actual full suite execution, and none granted owner acceptance or formal GitHub review. No uncorrected confirmed SHOULD-FIX finding remains. Upstream raw direct Zod schema parsing of arbitrary executable JS is **not** claimed to be a sandbox; accepted Storage boundary clones/validates inert JSON before append, core commands and replay inspect own-data descriptors and normalize failures. Full hosted checks remain separate from reviewer evidence.
+
+## Protected limitations
+
+M0-003/M0-004/M0-017 remain `[~]`; all 20 actual human/manual accessibility cases, including READ-01, remain **BLOCKED / NOT RUN**. Automated axe `incomplete` statuses do not establish native AT signoff or WCAG certification. ADR-0009 FocusScope deferral, ADR-0010 Workbox override/remove/full-retest obligations, ADR-0006 and accepted ADR-0011 remain binding. No real tutor-model calls, released accessibility, telemetry, account provider credentials, network permissions, OAuth, SQLite/OPFS/persistent settings, M0-005/007/008/009/012/015–020 implementation, milestone completion or release is claimed.

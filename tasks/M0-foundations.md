@@ -86,7 +86,7 @@ Requirements: write the study protocol (participants, tasks, materials, consent,
 Acceptance: findings note committed; docs 06 and 11 updated with changes it motivates.
 Ask first if: collecting any personal data beyond what the protocol states.
 
-### [~] M0-013 Logger, diagnostics, error mapping
+### [x] M0-013 Logger, diagnostics, error mapping
 Package: packages/core (ports), packages/app (later) · Depends on: M0-001 · Context: docs/14 sections 4 and 5
 Requirements: `Logger` port with levels and redaction helpers; central error-to-message mapper; local diagnostics buffer; unit tests asserting secrets and content never reach logs above `debug`.
 Acceptance: tests include key-pattern scan of captured logs.
@@ -94,10 +94,15 @@ Acceptance: tests include key-pattern scan of captured logs.
 
 **Owner acceptance and controlled merge decision (2026-11-27; supersedes preceding Draft-only stop):** independent owner audit explicitly **ACCEPTED M0-013 and ADR-0011** on reviewed [PR #28](https://github.com/hyvvs/lyceum/pull/28) head `9cca94da4edde1389d8288f8147dc1abb0cf0d3b`, hosted [run 45937628518](https://github.com/hyvvs/lyceum/actions/runs/45937628518) all three mandatory jobs successful. Authorized documentation-only acceptance amendment, fresh exact-head checks, normal squash merge and fresh exact merged-main verification; zero submitted formal reviews explicitly accepted for this PR alone. M0-013 remains `[~]` until successful exact merged-main verification, then `[x]` may be recorded in a subsequent branch amendment, with protected-main publication pending that PR's merge. No diagnostic production wiring, release or overall milestone completion is accepted.
 
-### [ ] M0-014 Feature flags and settings
+**M0-013 completed on verified protected main (2026-11-27):** exact acceptance-amendment HEAD `c464a70fd1c22a2e862240295d39a1d7c4a97df9` passed Verify, unrestricted Dependency audit and Secret scan in [run 45942773145](https://github.com/hyvvs/lyceum/actions/runs/45942773145). PR #28 was normally squash-merged without bypass at **`df69f5683c93aae7d2cfc193cdd2788b38d010f0`**. Fresh [exact merged-main run 45943574794](https://github.com/hyvvs/lyceum/actions/runs/45943574794) **SUCCESS** for all three jobs on that same SHA; synchronized local main also passed `corepack pnpm verify` (425 passed, one historical skip, 69 storage tests). ADR-0011 is published accepted; M0-006/010/011 `[x]` are published. **This M0-013 `[x]` marker is on the subsequent M0-014 branch only; publication to protected main awaits the separate M0-014 PR merge.** No production diagnostics wiring, native accessibility signoff, tutoring-quality or release acceptance.
+
+### [~] M0-014 Feature flags and settings
 Package: packages/core · Depends on: M0-006 · Context: docs/14 section 11
 Requirements: typed flag registry with owner and removal date metadata; settings store through events; flags for gated integrations.
 Acceptance: unit tests; CI check that every flag has an owner and removal date.
+**Development authorized 2026-11-27:** owner-approved scoped user settings with exactly `preferences.changed` v1 and `privacy.changed` v1, and two disabled temporary developer-owned gates. Fresh branch `m0/feature-flags-settings` from verified M0-013 squash main. The full binding scope is preserved locally at `.git/owner-m0-014-controlling-prompt.md`, with exact public contracts/test-first plan at `.git/m0-014-implementation-plan.md`. Existing web appearance store remains untouched. `[~]` means active development only; stop at fully verified OPEN DRAFT PR for separate owner acceptance. No production wiring, telemetry, network or durable persistence.
+
+**M0-014 local QA/reviews checkpoint (2026-11-27; development, NOT owner acceptance):** typed default-OFF flags with explicit owner and 2027 review deadlines; bounded user event-backed exam/time/privacy/telemetry-consent settings; no appearance migration or provider integration. Four scoped implementation commits, observed RED/GREEN regressions and all three fresh independent read-only architecture/correctness/privacy review rechecks PASS. Full frozen install and `corepack pnpm verify` PASS (**50 files, 475 passed, one historical skip**; all 69 diagnostics, original 69 storage plus 17 new storage tests), root evaluation/expected adversarial exits, full Storybook/Chromium 139 pass plus optional skip with 341/364 exact axe reconciliation and eight compositions, real web/PWA/Worker 108 pass plus three optional skips and five B1 zero-overlap cases, unrestricted audit and zero secret findings after synthetic fixture reconciliation, unchanged emitted complete eager gzip **207,352/250,000 bytes**. See [M0-014 QA evidence](../docs/qa/m0-014/README.md). Publication still requires **OPEN DRAFT** PR plus fresh Verify, unrestricted Dependency audit and Secret scan on its exact HEAD. Do not mark `[x]`, ready, merge or self-accept.
 
 ### [ ] M0-015 i18n scaffolding
 Package: packages/ui, apps/web · Depends on: M0-004 · Context: docs/14 section 13

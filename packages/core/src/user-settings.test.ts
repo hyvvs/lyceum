@@ -348,4 +348,67 @@ describe("user-scoped event-backed settings", () => {
     expect(Object.isFrozen(a)).toBe(true);
     expect(rows[0]?.event.type).toBe("preferences.changed");
   });
+
+  it("rejects accessor-backed, stateful and revoked replay events with fixed errors", () => {
+    const original = privacy(1, "telemetryConsent", "granted");
+    let getterCalls = 0;
+    const userAccessor = Object.defineProperty({ ...original.event }, "userId", {
+      enumerable: true,
+      get() {
+        getterCalls++;
+        return context.userId;
+      },
+    });
+    expect(() =>
+      reconstructUserSettings([{ seq: 1, event: userAccessor as LyceumEvent }], context.userId),
+    ).toThrowError(expect.objectContaining({ code: "invalid_event" }));
+    const payloadAccessor = Object.defineProperty({ ...original.event }, "payload", {
+      enumerable: true,
+      get() {
+        getterCalls++;
+        return { setting: "telemetryConsent", value: "granted" };
+      },
+    });
+    expect(() =>
+      reconstructUserSettings([{ seq: 1, event: payloadAccessor as LyceumEvent }], context.userId),
+    ).toThrowError(expect.objectContaining({ code: "invalid_event" }));
+    const sequenceAccessor = Object.defineProperty({ event: original.event }, "seq", {
+      enumerable: true,
+      get() {
+        getterCalls++;
+        return 1;
+      },
+    });
+    expect(() =>
+      reconstructUserSettings([sequenceAccessor as SequencedEvent], context.userId),
+    ).toThrowError(expect.objectContaining({ code: "invalid_event" }));
+    const nested = Object.defineProperty({ setting: "telemetryConsent" }, "value", {
+      enumerable: true,
+      get() {
+        getterCalls++;
+        return "granted";
+      },
+    });
+    const nestedEvent = { ...original.event, payload: nested };
+    expect(() =>
+      reconstructUserSettings([{ seq: 1, event: nestedEvent as LyceumEvent }], context.userId),
+    ).toThrowError(expect.objectContaining({ code: "invalid_event" }));
+    const revoked = Proxy.revocable(original.event, {});
+    revoked.revoke();
+    expect(() =>
+      reconstructUserSettings([{ seq: 1, event: revoked.proxy }], context.userId),
+    ).toThrowError(expect.objectContaining({ code: "invalid_event" }));
+    expect(getterCalls).toBe(0);
+  });
+
+  it("rejects revoked nested command values with a content-free invalid-input code", async () => {
+    const { port, rows } = memoryPort();
+    const store = createUserSettingsStore(port, clock);
+    const revoked = Proxy.revocable({ synthetic: true }, {});
+    revoked.revoke();
+    await expect(
+      store.changePrivacy(context, { setting: "localModelsOnly", value: revoked.proxy } as never),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+    expect(rows).toEqual([]);
+  });
 });

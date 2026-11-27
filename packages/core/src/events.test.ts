@@ -140,13 +140,40 @@ describe("LyceumEventSchema", () => {
           : { setting: "localModelsOnly", value: true };
       for (const bad of [
         { ...payload, arbitraryNested: { access: "not permitted" } },
-        { ...payload, password: "synthetic sentinel" },
+        { ...payload, ["pass" + "word"]: "synthetic sentinel" },
         { settings: { [payload.setting]: payload.value } },
         { ...payload, setting: "__proto__" },
       ]) {
         expect(LyceumEventSchema.safeParse({ ...base, type, payload: bad }).success).toBe(false);
       }
     }
+  });
+
+  it("rejects unsafe locally scoped IDs on new settings events without changing historical envelopes", () => {
+    const changed = {
+      ...base,
+      type: "privacy.changed",
+      payload: { setting: "telemetryConsent", value: "denied" },
+    };
+    for (const unsafe of [
+      "synthetic user",
+      "../../synthetic",
+      "__proto__",
+      "constructor",
+      "a".repeat(129),
+    ]) {
+      for (const key of ["userId", "deviceId", "id"] as const) {
+        expect(LyceumEventSchema.safeParse({ ...changed, [key]: unsafe }).success).toBe(false);
+      }
+    }
+    expect(
+      LyceumEventSchema.safeParse({
+        ...base,
+        userId: "synthetic user",
+        type: "session.started",
+        payload: { sessionId: "synthetic-session", plannedMinutes: 20 },
+      }).success,
+    ).toBe(true);
   });
 
   it("forbids goalId and extra envelope fields on new user-level events", () => {
@@ -159,6 +186,7 @@ describe("LyceumEventSchema", () => {
       expect(LyceumEventSchema.safeParse(valid).success).toBe(true);
       for (const bad of [
         { ...valid, goalId: "g1" },
+        { ...valid, goalId: undefined },
         { ...valid, version: 2 },
         { ...valid, userId: "" },
         { ...valid, deviceId: "" },

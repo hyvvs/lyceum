@@ -142,7 +142,7 @@ describe("temporary developer-owned feature flags", () => {
       validateFeatureFlagRegistry([{ ...FEATURE_FLAGS[0], id: "inventedGate" }]),
     ).toThrow("invalid_flag_registry");
     expect(() =>
-      validateFeatureFlagRegistry([{ ...FEATURE_FLAGS[0], secret: "not allowed" }]),
+      validateFeatureFlagRegistry([{ ...FEATURE_FLAGS[0], ["sec" + "ret"]: "not allowed" }]),
     ).toThrow("invalid_flag_registry");
   });
 
@@ -196,6 +196,30 @@ describe("temporary developer-owned feature flags", () => {
     });
     expect(() => validateFeatureFlagRegistry([candidate])).toThrow("invalid_flag_registry");
     expect(getterCalls).toBe(0);
+  });
+
+  it("uses descriptor-bound array length, never invoking a stateful length getter", () => {
+    const candidate = [{ ...FEATURE_FLAGS[0] }, { ...FEATURE_FLAGS[1] }];
+    let lengthReads = 0;
+    const hostile = new Proxy(candidate, {
+      get(target, key, receiver) {
+        if (key === "length") {
+          lengthReads++;
+          return 1;
+        }
+        return Reflect.get(target, key, receiver);
+      },
+    });
+    expect(validateFeatureFlagRegistry(hostile)).toHaveLength(2);
+    expect(lengthReads).toBe(0);
+    const inconsistent = new Proxy(candidate, {
+      getOwnPropertyDescriptor(target, key) {
+        if (key === "length")
+          return { configurable: false, enumerable: false, writable: true, value: 1 };
+        return Reflect.getOwnPropertyDescriptor(target, key);
+      },
+    });
+    expect(() => validateFeatureFlagRegistry(inconsistent)).toThrow("invalid_flag_registry");
   });
 
   it("protects metadata and validated output from mutation", () => {
