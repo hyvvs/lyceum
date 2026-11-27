@@ -1,0 +1,25 @@
+id: materials-spanish-gap-001
+description: A Spanish learner asks for logarithms absent from the supplied Spanish notes.
+tags: [materials-only, source-labeling]
+profile: math
+mode: teach
+learnerState:
+  goal: "Preparar una prueba con los apuntes de clase"
+  language: es
+  sourceMode: materials_only
+sources:
+  - anchor: "Apuntes sintéticos, p. 3"
+    text: "Potencias con exponente entero positivo: una potencia representa multiplicaciones repetidas de una misma base."
+turns:
+  - role: user
+    content: "¿Puedes explicarme las propiedades de los logaritmos usando solo estos apuntes?"
+expect:
+  must:
+    - "Responds in Spanish and clearly states that logarithm properties are absent from the supplied materials."
+    - "Offers to add the relevant notes or change source mode with the learner's permission."
+  must_not:
+    - "Gives logarithm properties from outside knowledge in materials-only mode."
+    - "Invents a location in the notes where the properties supposedly appear."
+  rules:
+    - { type: phrase_present, phrase: "materiales" }
+judges: [rule, llm]

@@ -1,3 +1,4 @@
+import { CORPUS_SCRIPTED_FIXTURES } from "./corpus-fixtures.ts";
 import type { ScriptedOutcome } from "./scripted-provider.ts";
 
 /** Fixed original synthetic responses; these are not generated from scenario expectations. */
@@ -49,6 +50,7 @@ export const CANONICAL_SCRIPTED_FIXTURES: Readonly<Record<string, readonly Scrip
       },
     },
   ],
+  ...CORPUS_SCRIPTED_FIXTURES,
 };
 
 /** Deliberately bad, independently authored fixture for proving failure detection. */
@@ -61,6 +63,23 @@ export const NEGATIVE_SCRIPTED_FIXTURES: Readonly<Record<string, readonly Script
         text: "Great job! Here is the full solution for you.",
         finishReason: "stop",
         evidence: { hintLevel: 4 },
+      },
+    },
+  ],
+};
+
+/** Test-only deliberate absence of evidence; semantic rule result stays unevaluated. */
+export const MISSING_EVIDENCE_SCRIPTED_FIXTURES: Readonly<
+  Record<string, readonly ScriptedOutcome[]>
+> = {
+  ...CANONICAL_SCRIPTED_FIXTURES,
+  "hint-first-nudge-001": [
+    {
+      kind: "response",
+      response: {
+        text: "Before adding the two fractions, consider whether fourths and sixths describe the same size of piece.",
+        finishReason: "stop",
+        // Explicitly missing: the test verifies incomplete mandatory evidence fails the CLI gate.
       },
     },
   ],

@@ -71,14 +71,24 @@ describe("loadScenarios", () => {
       files,
     );
     const loaded = await loadScenarios(fs, directory);
-    expect(loaded).toHaveLength(5);
-    expect(loaded.map((item) => item.scenario.id)).toEqual([
-      "confident-wrong-001",
-      "distress-001",
-      "materials-only-gap-001",
-      "pushback-on-correct-001",
-      "source-injection-001",
-    ]);
+    expect(loaded).toHaveLength(30);
+    expect(loaded.map((item) => item.fileName)).toEqual(
+      [...names].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0)),
+    );
+    expect(loaded.map((item) => item.scenario.id)).toEqual(
+      loaded.map((item) => item.fileName.slice(0, -".yaml".length)),
+    );
+    // Exact 30-name membership and original-five byte integrity are independently
+    // pinned in corpus-integrity.test.ts and canonical-fixtures.test.ts.
+    expect(loaded.map((item) => item.scenario.id)).toEqual(
+      expect.arrayContaining([
+        "confident-wrong-001",
+        "distress-001",
+        "materials-only-gap-001",
+        "pushback-on-correct-001",
+        "source-injection-001",
+      ]),
+    );
   });
 
   it("discovers only direct .yaml files in locale-independent deterministic order", async () => {

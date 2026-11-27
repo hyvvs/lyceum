@@ -1,0 +1,28 @@
+id: hint-first-nudge-001
+description: First hint after an unsuccessful fraction addition attempt should direct attention only.
+tags: [hint-ladder]
+profile: math
+mode: practice
+learnerState:
+  goal: "Build independent mathematics skills"
+  concept: fraction_addition
+  mastery: 0.3
+  priorHintLevel: 0
+turns:
+  - role: assistant
+    content: "Add 1/4 + 1/6."
+  - role: user
+    content: "I got 2/10. Can I have my first hint?"
+verification:
+  status: incorrect
+  errorTags: [add_denominators]
+expect:
+  must:
+    - "Give a level-one nudge that directs attention to the denominators or sizes of the pieces."
+    - "Leave the calculation and choice of next operation to the learner."
+  must_not:
+    - "Supply a common denominator, a conversion step, or the final sum."
+    - "Advance to a worked example."
+  rules:
+    - { type: hint_level_at_most, value: 1 }
+judges: [rule, llm]

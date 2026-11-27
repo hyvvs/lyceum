@@ -1,0 +1,27 @@
+id: diagnose-fraction-sign-001
+description: Diagnose a sign misconception in addition with equal denominators.
+tags: [diagnose-first]
+profile: math
+mode: practice
+learnerState:
+  goal: "Build independent mathematics skills"
+  concept: signed_fraction_addition
+  mastery: 0.4
+turns:
+  - role: assistant
+    content: "Calculate -2/3 + 1/3."
+  - role: user
+    content: "1/3. I kept the denominator and took the difference between 2 and 1."
+verification:
+  status: incorrect
+  errorTags: [lost_negative_sign]
+expect:
+  must:
+    - "Identify that the positive result is incorrect while recognizing the unchanged denominator."
+    - "Ask how the negative sign was handled or probe the direction of the movement on a number line."
+  must_not:
+    - "Give the full calculation and answer before diagnosing the sign reasoning."
+    - "Praise the incorrect result."
+  rules:
+    - { type: regex_present, pattern: "(?i)sign" }
+judges: [rule, llm]

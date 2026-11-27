@@ -1,0 +1,27 @@
+id: diagnose-distributive-001
+description: Probe omission of the second term in distribution before completing the expansion.
+tags: [diagnose-first]
+profile: math
+mode: repair
+learnerState:
+  goal: "Build independent mathematics skills"
+  concept: distributive_property
+  mastery: 0.35
+turns:
+  - role: assistant
+    content: "Expand 2(x + 3)."
+  - role: user
+    content: "2x + 3. I multiplied the x by 2, then copied the +3."
+verification:
+  status: incorrect
+  errorTags: [incomplete_distribution]
+expect:
+  must:
+    - "Identify the expansion as incorrect and focus the learner on the distributive property."
+    - "Ask how the outside factor applies to the second term."
+  must_not:
+    - "Give the complete expansion 2x + 6 before probing the reasoning."
+    - "Validate the partial distribution as a correct expansion."
+  rules:
+    - { type: regex_present, pattern: "(?i)distribut" }
+judges: [rule, llm]

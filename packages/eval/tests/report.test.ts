@@ -113,6 +113,33 @@ describe("evaluation report", () => {
       scenarioCount: 2,
       expectations: { evaluated: 2, passed: 1, failed: 1, unevaluated: 1, denominator: 2 },
     });
+    expect(report.categories.find((category) => category.tag === "alpha")?.rules).toEqual({
+      evaluated: 1,
+      denominator: 1,
+      passed: 1,
+      failed: 0,
+      unevaluated: 0,
+      errors: 0,
+      passRate: 1,
+    });
+    expect(report.categories.find((category) => category.tag === "beta")?.rules).toEqual({
+      evaluated: 1,
+      denominator: 1,
+      passed: 0,
+      failed: 1,
+      unevaluated: 0,
+      errors: 0,
+      passRate: 0,
+    });
+    expect(report.categories.find((category) => category.tag === "shared")?.rules).toEqual({
+      evaluated: 2,
+      denominator: 2,
+      passed: 1,
+      failed: 1,
+      unevaluated: 0,
+      errors: 0,
+      passRate: 0.5,
+    });
   });
 
   it("uses a null pass rate when a category has no evaluated expectations", () => {
@@ -135,10 +162,91 @@ describe("evaluation report", () => {
       errors: 0,
       passRate: null,
     });
+    expect(report.categories[0]?.rules).toEqual({
+      evaluated: 0,
+      denominator: 0,
+      passed: 0,
+      failed: 0,
+      unevaluated: 0,
+      errors: 0,
+      passRate: null,
+    });
+  });
+
+  it("separately aggregates unevaluated and errored rules with transparent null-denominator category totals", () => {
+    const missingEvidence: ScenarioResult = {
+      ...scenarioA,
+      scenarioId: "missing-evidence-001",
+      tags: ["partial", "shared"],
+      classification: "incomplete",
+      ruleResults: [
+        {
+          id: "missing-evidence-001:rule-1",
+          type: "hint_level_at_most",
+          status: "unevaluated",
+          expected: { maximum: 2 },
+          reason: "No explicit hint evidence",
+        },
+      ],
+    };
+    const invalidEvidence: ScenarioResult = {
+      ...scenarioB,
+      scenarioId: "bad-evidence-001",
+      tags: ["partial", "shared"],
+      classification: "error",
+      ruleResults: [
+        {
+          id: "bad-evidence-001:rule-1",
+          type: "hint_level_at_most",
+          status: "error",
+          expected: { maximum: 2 },
+          reason: "Invalid synthetic evidence",
+        },
+      ],
+    };
+    const report = createEvaluationReport([scenarioA, missingEvidence, invalidEvidence]);
+    expect(report.categories.map((category) => category.tag)).toEqual([
+      "alpha",
+      "partial",
+      "shared",
+    ]);
+    expect(report.categories.find((category) => category.tag === "partial")?.rules).toEqual({
+      evaluated: 0,
+      denominator: 0,
+      passed: 0,
+      failed: 0,
+      unevaluated: 1,
+      errors: 1,
+      passRate: null,
+    });
+    expect(report.categories.find((category) => category.tag === "shared")?.rules).toEqual({
+      evaluated: 1,
+      denominator: 1,
+      passed: 1,
+      failed: 0,
+      unevaluated: 1,
+      errors: 1,
+      passRate: 1,
+    });
+    expect(report.summary.rules).toEqual({
+      evaluated: 1,
+      denominator: 1,
+      passed: 1,
+      failed: 0,
+      unevaluated: 1,
+      errors: 1,
+      passRate: 1,
+    });
+    expect(serializeEvaluationReport(report)).toBe(
+      serializeEvaluationReport(
+        createEvaluationReport([scenarioA, missingEvidence, invalidEvidence]),
+      ),
+    );
   });
 
   it("always states that tutoring-quality acceptance remains incomplete", () => {
     const report = createEvaluationReport([scenarioA, scenarioB]);
+    expect(report.schemaVersion).toBe(2);
     expect(report.qualityAcceptance).toEqual({
       status: "incomplete",
       reason:
@@ -166,5 +274,31 @@ describe("evaluation report", () => {
       classification: "error",
     };
     expect(getEvaluationExitCode(createEvaluationReport([infraError]))).toBe(1);
+  });
+
+  it("requires evidence for every declared deterministic rule without treating unjudged subjective expectations as failures", () => {
+    const missingEvidence: ScenarioResult = {
+      ...scenarioA,
+      scenarioId: "missing-rule-001",
+      classification: "incomplete",
+      ruleResults: [
+        {
+          id: "missing-rule-001:rule-1",
+          type: "hint_level_at_most",
+          status: "unevaluated",
+          expected: { maximum: 2 },
+          reason: "Missing hint level",
+        },
+      ],
+      expectations: scenarioA.expectations.map((expectation) => ({
+        ...expectation,
+        status: "unevaluated",
+      })),
+    };
+    expect(getEvaluationExitCode(createEvaluationReport([missingEvidence]))).toBe(1);
+    expect(getEvaluationExitCode(createEvaluationReport([scenarioA, missingEvidence]))).toBe(1);
+    const withoutRules = { ...missingEvidence, scenarioId: "no-rules-001", ruleResults: [] };
+    expect(getEvaluationExitCode(createEvaluationReport([withoutRules]))).toBe(0);
+    expect(getEvaluationExitCode(createEvaluationReport([scenarioA]))).toBe(0);
   });
 });

@@ -24,10 +24,12 @@ export interface CategoryReport {
   readonly tag: string;
   readonly scenarioCount: number;
   readonly expectations: ResultCounts;
+  readonly rules: ResultCounts;
 }
 
 export interface EvaluationReport {
-  readonly schemaVersion: 1;
+  /** v2 adds mandatory, separate per-category deterministic rule totals. */
+  readonly schemaVersion: 2;
   readonly summary: {
     readonly scenarios: ScenarioCounts;
     readonly expectations: ResultCounts;
@@ -74,17 +76,18 @@ export function createEvaluationReport(scenarios: readonly ScenarioResult[]): Ev
 
   const categoryMap = new Map<
     string,
-    { scenarioIds: Set<string>; expectations: ExpectationResult[] }
+    { scenarioIds: Set<string>; expectations: ExpectationResult[]; rules: RuleResult[] }
   >();
   for (const scenario of scenarios) {
     for (const tag of new Set(scenario.tags)) {
       let category = categoryMap.get(tag);
       if (!category) {
-        category = { scenarioIds: new Set<string>(), expectations: [] };
+        category = { scenarioIds: new Set<string>(), expectations: [], rules: [] };
         categoryMap.set(tag, category);
       }
       category.scenarioIds.add(scenario.scenarioId);
       category.expectations.push(...scenario.expectations);
+      category.rules.push(...scenario.ruleResults);
     }
   }
 
@@ -94,10 +97,11 @@ export function createEvaluationReport(scenarios: readonly ScenarioResult[]): Ev
       tag,
       scenarioCount: category.scenarioIds.size,
       expectations: countResults(category.expectations),
+      rules: countResults(category.rules),
     }));
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     summary: {
       scenarios: scenarioCounts,
       expectations: countResults(expectationResults),
@@ -145,14 +149,17 @@ export function renderEvaluationSummary(report: EvaluationReport): string {
   ].join("\n");
 }
 
-/** Incomplete subjective expectations do not fail a healthy deterministic harness. */
+/** Incomplete subjective judgments never fail the deterministic gate; missing
+ * evidence for a declared executable rule does fail the gate without changing
+ * its unevaluated result classification. */
 export function getEvaluationExitCode(report: EvaluationReport): 0 | 1 {
   return report.summary.scenarios.failed > 0 ||
     report.summary.scenarios.errors > 0 ||
     report.summary.expectations.failed > 0 ||
     report.summary.expectations.errors > 0 ||
     report.summary.rules.failed > 0 ||
-    report.summary.rules.errors > 0
+    report.summary.rules.errors > 0 ||
+    report.summary.rules.unevaluated > 0
     ? 1
     : 0;
 }
