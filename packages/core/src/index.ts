@@ -4,6 +4,7 @@ export * from "./diagnostics-privacy";
 export * from "./domain-profile";
 export * from "./error-messages";
 export * from "./events";
+export * from "./feature-flags";
 export * from "./learner/bkt";
 export * from "./logger";
 export * from "./ports";
