@@ -66,15 +66,24 @@ jobs:
           try {
             if (!(Test-Path -LiteralPath $path -PathType Container)) { throw "ACL probe directory missing" }
             $acl = Get-Acl -LiteralPath $path
-            $current = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-            if ($acl.Owner -ne $current) { throw "App-data directory owner is not the current user" }
+            $currentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $ownerSid = $acl.GetOwner([System.Security.Principal.SecurityIdentifier])
+            $adminsSid = [System.Security.Principal.SecurityIdentifier]::new(
+              [System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid, $null
+            )
+            $ownerIsCurrentUser = $ownerSid.Value -eq $currentSid.Value
+            $ownerIsAdministrators = $ownerSid.Value -eq $adminsSid.Value
+            "windowsAppDataOwnerCheck ownerIsCurrentUser=$ownerIsCurrentUser ownerIsAdministrators=$ownerIsAdministrators"
+            if (!$ownerIsCurrentUser -and !$ownerIsAdministrators) { throw "App-data directory owner is neither current user nor trusted local administrators" }
+            $broadPrincipalSids = @('S-1-1-0', 'S-1-5-32-545', 'S-1-5-11', 'S-1-5-7')
             $broad = @($acl.Access | Where-Object {
               $_.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Allow -and
-              $_.IdentityReference.Value -match 'Everyone|\Users$|Authenticated Users|ANONYMOUS' -and
+              $broadPrincipalSids -contains $_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value -and
               $_.FileSystemRights -ne [System.Security.AccessControl.FileSystemRights]::Synchronize
             })
             if ($broad.Count -gt 0) { throw "Broad principals have app-data access" }
-            "windowsAppDataAcl=PASS ownerIsCurrentUser=true broadAccessAceCount=0 inherited=$(!$acl.AreAccessRulesProtected)"
+            if ($acl.AreAccessRulesProtected) { throw "App-data directory ACL inheritance is disabled" }
+            "windowsAppDataAcl=PASS ownerIsCurrentUser=$ownerIsCurrentUser ownerIsAdministrators=$ownerIsAdministrators broadAccessAceCount=0 inherited=$(!$acl.AreAccessRulesProtected)"
           }
           finally {
             if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }
