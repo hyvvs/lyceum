@@ -2,6 +2,7 @@ export * from "./concept-graph";
 export * from "./diagnostics-buffer";
 export * from "./diagnostics-privacy";
 export * from "./domain-profile";
+export * from "./error-messages";
 export * from "./events";
 export * from "./learner/bkt";
 export * from "./logger";
