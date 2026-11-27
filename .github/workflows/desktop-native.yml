@@ -75,7 +75,22 @@ jobs:
             $ownerIsAdministrators = $ownerSid.Value -eq $adminsSid.Value
             "windowsAppDataOwnerCheck ownerIsCurrentUser=$ownerIsCurrentUser ownerIsAdministrators=$ownerIsAdministrators"
             if (!$ownerIsCurrentUser -and !$ownerIsAdministrators) { throw "App-data directory owner is neither current user nor trusted local administrators" }
-            $broadPrincipalSids = @('S-1-1-0', 'S-1-5-32-545', 'S-1-5-11', 'S-1-5-7')
+            # Reject common machine-wide/logon groups, not only localized account names.
+            $broadPrincipalSids = @(
+              'S-1-1-0',       # Everyone
+              'S-1-2-0',       # Local
+              'S-1-5-2',       # Network
+              'S-1-5-4',       # Interactive
+              'S-1-5-6',       # Service
+              'S-1-5-7',       # Anonymous Logon
+              'S-1-5-11',      # Authenticated Users
+              'S-1-5-32-545',  # BUILTIN Users
+              'S-1-5-32-546',  # BUILTIN Guests
+              'S-1-5-32-547',  # BUILTIN Power Users
+              'S-1-5-32-555',  # BUILTIN Remote Desktop Users
+              'S-1-5-113',     # Local account
+              'S-1-5-114'      # Local account and member of Administrators
+            )
             $broad = @($acl.Access | Where-Object {
               $_.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Allow -and
               $broadPrincipalSids -contains $_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value -and
