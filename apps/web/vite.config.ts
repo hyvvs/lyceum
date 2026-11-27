@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     {
@@ -18,7 +18,9 @@ export default defineConfig({
                 "default-src 'self'",
                 "script-src 'self'",
                 "style-src 'self' 'unsafe-inline'",
-                "connect-src 'self'",
+                mode === "desktop"
+                  ? "connect-src 'self' ipc: http://ipc.localhost"
+                  : "connect-src 'self'",
                 "img-src 'self' data:",
                 "font-src 'self'",
                 "worker-src 'self'",
@@ -93,4 +95,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

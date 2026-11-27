@@ -4,6 +4,8 @@
   "files": {
     "ignore": [
       "node_modules",
+      "apps/desktop/src-tauri/target",
+      "apps/desktop/src-tauri/gen",
       "dist",
       "coverage",
       "storybook-static",

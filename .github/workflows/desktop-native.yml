@@ -1,0 +1,91 @@
+name: Desktop native smoke
+
+on:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "apps/web/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/desktop-native.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Native Rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      RUSTUP_TOOLCHAIN: "1.94.0"
+      LYCEUM_RUN_KEYCHAIN_TESTS: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.20.0"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Install pinned stable Rust toolchain
+        run: rustup toolchain install 1.94.0 --profile minimal --component rustfmt --component clippy
+      - name: Create synthetic isolated macOS test keychain
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/lyceum-test.keychain-db"
+          password="$(openssl rand -hex 24)"
+          security create-keychain -p "$password" "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security list-keychains -d user -s "$keychain"
+          security default-keychain -d user -s "$keychain"
+      - name: Build the actual web assets used by the desktop shell
+        run: pnpm web:build
+      - name: Enforce native Rust formatting
+        run: cargo +1.94.0 fmt --manifest-path apps/desktop/src-tauri/Cargo.toml -- --check
+      - name: Native backend tests (including fail-closed URL and key-ID checks)
+        run: cargo +1.94.0 test --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
+      - name: Reject Rust warnings and Clippy findings
+        run: cargo +1.94.0 clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Compile actual desktop application for this native OS
+        run: cargo +1.94.0 build --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
+      - name: Build real bundled frontend and native executable (not just cargo debug)
+        run: pnpm --filter @lyceum/desktop build
+      - name: Remove temporary synthetic macOS keychain
+        if: always() && runner.os == 'macOS'
+        shell: bash
+        run: |
+          keychain="$RUNNER_TEMP/lyceum-test.keychain-db"
+          if test -f "$keychain"; then security delete-keychain "$keychain"; fi
+
+  rust-dependency-policy:
+    name: Rust full dependency advisory and license check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust audit toolchain
+        run: rustup toolchain install 1.94.0 --profile minimal
+      - name: Install exact Rust audit tools
+        run: |
+          cargo +1.94.0 install cargo-audit --version 0.23.0 --locked
+          cargo +1.94.0 install cargo-deny --version 0.19.9 --locked
+      - name: All-target RustSec database audit (no suppressed advisories)
+        run: cargo audit --file apps/desktop/src-tauri/Cargo.lock
+      - name: Complete Rust license, advisories and source gate
+        working-directory: apps/desktop/src-tauri
+        run: cargo deny check licenses advisories sources
