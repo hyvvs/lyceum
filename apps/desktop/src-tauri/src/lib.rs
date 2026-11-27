@@ -56,7 +56,9 @@ pub fn run() {
                 .iter()
                 .find(|window| window.label == "main")
                 .ok_or("main window configuration unavailable")?;
-            let mut main = main.clone();
+            let main = main.clone();
+            #[cfg(target_os = "windows")]
+            let mut main = main;
             let bootstrap = Arc::new(AtomicBool::new(cfg!(target_os = "windows")));
             #[cfg(target_os = "windows")]
             {

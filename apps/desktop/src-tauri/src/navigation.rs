@@ -17,6 +17,7 @@ fn permitted_origin(url: &Url, development: bool, windows: bool) -> bool {
     url.scheme() == scheme && url.host_str() == Some(host) && url.port_or_known_default() == port
 }
 
+#[cfg(any(target_os = "windows", test))]
 fn permitted_ipc_request(url: &Url, method: &str) -> bool {
     // Tauri 2.12.7's IPC protocol encodes the command name in the path
     // (`ipc://localhost/{command}`); Wry 0.57.4 maps it to this HTTP origin.
@@ -41,6 +42,7 @@ fn permitted_ipc_request(url: &Url, method: &str) -> bool {
         })
 }
 
+#[cfg(any(target_os = "windows", test))]
 fn permitted_web_resource(
     url: &Url,
     development: bool,
@@ -51,6 +53,7 @@ fn permitted_web_resource(
     permitted_origin(url, development, windows) || (fetch && permitted_ipc_request(url, method))
 }
 
+#[cfg(target_os = "windows")]
 pub(crate) fn allows_web_resource_request(url: &Url, fetch: bool, method: &str) -> bool {
     permitted_web_resource(
         url,
@@ -61,6 +64,7 @@ pub(crate) fn allows_web_resource_request(url: &Url, fetch: bool, method: &str) 
     )
 }
 
+#[cfg(target_os = "windows")]
 pub(crate) fn app_url() -> Url {
     let origin = if cfg!(debug_assertions) {
         "http://127.0.0.1:5173/"
