@@ -52,6 +52,18 @@ export function event(
           sourceMode: "open",
         },
       });
+    case "preferences.changed":
+      return LyceumEventSchema.parse({
+        ...envelope,
+        type,
+        payload: { setting: "mockExamExtendedTime", value: 1.25 },
+      });
+    case "privacy.changed":
+      return LyceumEventSchema.parse({
+        ...envelope,
+        type,
+        payload: { setting: "telemetryConsent", value: "denied" },
+      });
   }
 }
 

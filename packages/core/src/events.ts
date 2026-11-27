@@ -70,12 +70,46 @@ export const GoalCreated = z.object({
   }),
 });
 
+/** Initial v1 user-level setting: no goalId, arbitrary patches or appearance fields. */
+export const PreferencesChanged = z.strictObject({
+  ...envelope,
+  goalId: z.never().optional(),
+  type: z.literal("preferences.changed"),
+  version: z.literal(1),
+  payload: z.strictObject({
+    setting: z.literal("mockExamExtendedTime"),
+    value: z.union([z.null(), z.literal(1.25), z.literal(1.5)]),
+  }),
+});
+
+/** Initial v1 user-level privacy input; consent is never inferred from absence. */
+export const PrivacyChanged = z.strictObject({
+  ...envelope,
+  goalId: z.never().optional(),
+  type: z.literal("privacy.changed"),
+  version: z.literal(1),
+  payload: z.discriminatedUnion("setting", [
+    z.strictObject({
+      setting: z.literal("localModelsOnly"),
+      value: z.union([z.boolean(), z.null()]),
+    }),
+    z.strictObject({
+      setting: z.literal("telemetryConsent"),
+      value: z.union([z.enum(["granted", "denied"]), z.null()]),
+    }),
+  ]),
+});
+
 export const LyceumEventSchema = z.discriminatedUnion("type", [
   AttemptRecorded,
   SessionStarted,
   SessionEnded,
   GoalCreated,
+  PreferencesChanged,
+  PrivacyChanged,
 ]);
 
 export type LyceumEvent = z.infer<typeof LyceumEventSchema>;
 export type AttemptRecordedEvent = z.infer<typeof AttemptRecorded>;
+export type PreferencesChangedEvent = z.infer<typeof PreferencesChanged>;
+export type PrivacyChangedEvent = z.infer<typeof PrivacyChanged>;
