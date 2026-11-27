@@ -86,7 +86,8 @@ jobs:
       - name: Build real bundled frontend and native executable (not just cargo debug)
         run: pnpm --filter @lyceum/desktop build
       - name: Assert desktop assets exclude browser PWA service worker
-        run: node -e "const fs=require('node:fs'); for (const file of ['apps/web/dist/sw.js','apps/web/dist/manifest.webmanifest']) if (fs.existsSync(file)) throw new Error('Unexpected browser PWA artifact in desktop build: '+file)"
+        run: |
+          node -e "const fs=require('node:fs'); for (const file of ['apps/web/dist/sw.js','apps/web/dist/manifest.webmanifest']) if (fs.existsSync(file)) throw new Error('Unexpected browser PWA artifact in desktop build: '+file)"
       - name: Launch actual native window and verify renderer IPC/keychain
         run: node apps/desktop/scripts/native-smoke.cjs
       - name: Remove temporary synthetic macOS keychain

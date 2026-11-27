@@ -37,7 +37,8 @@ jobs:
       - name: Build real M0-004 web shell
         run: pnpm web:build
       - name: Assert browser PWA artifacts are present
-        run: node -e "const fs=require('node:fs'); for (const file of ['apps/web/dist/sw.js','apps/web/dist/manifest.webmanifest']) if (!fs.existsSync(file)) throw new Error('Missing browser PWA artifact: '+file)"
+        run: |
+          node -e "const fs=require('node:fs'); for (const file of ['apps/web/dist/sw.js','apps/web/dist/manifest.webmanifest']) if (!fs.existsSync(file)) throw new Error('Missing browser PWA artifact: '+file)"
       - name: Test production web routes, worker and offline PWA
         run: pnpm test:web
 
