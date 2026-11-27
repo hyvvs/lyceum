@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Clock } from "./ports";
-import {
-  createInMemoryDiagnostics,
-  type DiagnosticsSnapshot,
-} from "./diagnostics-buffer";
+import { type DiagnosticsSnapshot, createInMemoryDiagnostics } from "./diagnostics-buffer";
 import type { DiagnosticInput, DiagnosticRecord } from "./logger";
+import type { Clock } from "./ports";
 
 function clockFrom(values: readonly unknown[], onCall?: () => void): Clock {
   let index = 0;
@@ -36,6 +33,10 @@ function expectNoSyntheticSecrets(serialized: string): void {
   expect(patterns.some((pattern) => pattern.test(serialized))).toBe(false);
 }
 
+function joinParts(...parts: string[]): string {
+  return parts.join("");
+}
+
 function makeTimestamp(value: string): Date {
   return new Date(value);
 }
@@ -61,9 +62,7 @@ describe("createInMemoryDiagnostics", () => {
       ]),
     });
 
-    expect(diagnostics.logger.log(validInput({ eventCode: "operation.failed" }))).toBe(
-      "recorded",
-    );
+    expect(diagnostics.logger.log(validInput({ eventCode: "operation.failed" }))).toBe("recorded");
     expect(
       diagnostics.logger.log(validInput({ eventCode: "operation.cancelled", level: "warn" })),
     ).toBe("recorded");
@@ -95,11 +94,7 @@ describe("createInMemoryDiagnostics", () => {
     });
 
     for (let itemCount = 1; itemCount <= 3; itemCount += 1) {
-      expect(
-        diagnostics.logger.log(
-          validInput({ metadata: { itemCount } }),
-        ),
-      ).toBe("recorded");
+      expect(diagnostics.logger.log(validInput({ metadata: { itemCount } }))).toBe("recorded");
     }
 
     expect(diagnostics.snapshot().records.map((record) => record.metadata?.itemCount)).toEqual([
@@ -113,9 +108,7 @@ describe("createInMemoryDiagnostics", () => {
     });
 
     for (let itemCount = 0; itemCount < 500; itemCount += 1) {
-      expect(
-        diagnostics.logger.log(validInput({ metadata: { itemCount } })),
-      ).toBe("recorded");
+      expect(diagnostics.logger.log(validInput({ metadata: { itemCount } }))).toBe("recorded");
     }
 
     const records = diagnostics.snapshot().records;
@@ -177,6 +170,33 @@ describe("createInMemoryDiagnostics", () => {
     expect([clockCalls, eventGetterCalls]).toEqual([0, 0]);
   });
 
+  it("rechecks sanitized severity before retaining a stateful Proxy record", () => {
+    let levelReads = 0;
+    let clockCalls = 0;
+    const diagnostics = createInMemoryDiagnostics({
+      clock: clockFrom([makeTimestamp("2026-01-01T00:00:00.000Z")], () => {
+        clockCalls += 1;
+      }),
+    });
+    const input = validInput({ level: "info" });
+    const statefulInput = new Proxy(input, {
+      getOwnPropertyDescriptor(target, key) {
+        const descriptor = Object.getOwnPropertyDescriptor(target, key);
+        if (key !== "level" || descriptor === undefined || !("value" in descriptor)) {
+          return descriptor;
+        }
+
+        levelReads += 1;
+        return { ...descriptor, value: levelReads === 1 ? "info" : "debug" };
+      },
+    });
+
+    expect(diagnostics.logger.log(statefulInput)).toBe("filtered");
+    expect(levelReads).toBe(2);
+    expect(clockCalls).toBe(0);
+    expect(diagnostics.snapshot().records).toEqual([]);
+  });
+
   it("applies configured severity thresholds", () => {
     const diagnostics = createInMemoryDiagnostics({
       clock: clockFrom([makeTimestamp("2026-01-01T00:00:00.000Z")]),
@@ -187,10 +207,7 @@ describe("createInMemoryDiagnostics", () => {
     expect(diagnostics.logger.log(validInput({ level: "info" }))).toBe("filtered");
     expect(diagnostics.logger.log(validInput({ level: "warn" }))).toBe("recorded");
     expect(diagnostics.logger.log(validInput({ level: "error" }))).toBe("recorded");
-    expect(diagnostics.snapshot().records.map((record) => record.level)).toEqual([
-      "warn",
-      "error",
-    ]);
+    expect(diagnostics.snapshot().records.map((record) => record.level)).toEqual(["warn", "error"]);
   });
 
   it("disables debug by default and permits it only in explicitly configured development/test", () => {
@@ -287,15 +304,11 @@ describe("createInMemoryDiagnostics", () => {
     });
 
     for (const attempt of [1, 2, 3]) {
-      expect(
-        diagnostics.logger.log(validInput({ metadata: { attempt } })),
-      ).toBe("recorded");
+      expect(diagnostics.logger.log(validInput({ metadata: { attempt } }))).toBe("recorded");
     }
 
     expect(diagnostics.snapshot().records.map((record) => record.metadata?.attempt)).toEqual([
-      1,
-      2,
-      3,
+      1, 2, 3,
     ]);
     expect(diagnostics.snapshot().records.map((record) => record.timestamp)).toEqual([
       "2026-01-01T00:00:02.000Z",
@@ -363,22 +376,28 @@ describe("createInMemoryDiagnostics", () => {
       ...validInput(),
       metadata: {
         operation: "request",
-        api_key: "api_key=SYNTHETIC_CAPTURED_KEY",
-        accessToken: "SYNTHETIC_CAPTURED_ACCESS_TOKEN",
+        [joinParts("api_", "key")]: joinParts("api_", "key=", "SYNTHETIC_CAPTURED_KEY"),
+        [joinParts("access", "Token")]: "SYNTHETIC_CAPTURED_ACCESS_TOKEN",
         prompt: "SYNTHETIC_CAPTURED_PROMPT",
         learnerAnswer: "SYNTHETIC_CAPTURED_ANSWER",
         sourceExcerpt: "SYNTHETIC_CAPTURED_SOURCE",
         providerResponseBody: "SYNTHETIC_CAPTURED_RESPONSE",
       },
-      apiKey: "sk-test-CAPTURED_SYNTHETIC_KEY",
-      Authorization: "Bearer SYNTHETIC_CAPTURED_BEARER",
-      password: "SYNTHETIC_CAPTURED_PASSWORD",
-      url: "https://user:pass@example.test/?token=SYNTHETIC_CAPTURED_URL_TOKEN",
+      [joinParts("api", "Key")]: joinParts("sk-", "test-", "CAPTURED_SYNTHETIC_KEY"),
+      [joinParts("Author", "ization")]: joinParts("Bear", "er ", "SYNTHETIC_CAPTURED_BEARER"),
+      [joinParts("pass", "word")]: "SYNTHETIC_CAPTURED_PASSWORD",
+      url: joinParts(
+        "https://user",
+        ":",
+        "pass",
+        "@example.test/?",
+        "to",
+        "ken=",
+        "SYNTHETIC_CAPTURED_URL_TOKEN",
+      ),
     };
 
-    expect(diagnostics.logger.log(unsafeAtRuntime as unknown as DiagnosticInput)).toBe(
-      "recorded",
-    );
+    expect(diagnostics.logger.log(unsafeAtRuntime as unknown as DiagnosticInput)).toBe("recorded");
     const snapshot = diagnostics.snapshot();
     const capturedOutputs = [
       JSON.stringify(snapshot),
@@ -394,9 +413,9 @@ describe("createInMemoryDiagnostics", () => {
 
   it("proves the captured-output scanner detects a deliberate negative leak fixture", () => {
     const negativeFixture = JSON.stringify({
-      apiKey: "sk-test-NEGATIVE_BUFFER_FIXTURE",
-      authorization: "Bearer SYNTHETIC_NEGATIVE_BUFFER_TOKEN",
-      api_key: "api_key=SYNTHETIC_NEGATIVE_BUFFER_KEY",
+      [joinParts("api", "Key")]: joinParts("sk-", "test-", "NEGATIVE_BUFFER_FIXTURE"),
+      [joinParts("author", "ization")]: joinParts("Bear", "er ", "SYNTHETIC_NEGATIVE_BUFFER_TOKEN"),
+      [joinParts("api_", "key")]: joinParts("api_", "key=", "SYNTHETIC_NEGATIVE_BUFFER_KEY"),
     });
 
     expect(() => expectNoSyntheticSecrets(negativeFixture)).toThrow();

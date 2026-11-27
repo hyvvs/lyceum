@@ -26,6 +26,20 @@ The local diagnostics implementation uses an injected existing `Clock` and a fix
 
 Central error mapping accepts a consumer-supplied normalized category (`storage`, `provider`, `unknown`) and inspects only own data descriptors for the approved code and bounded retry delay. It never reads raw error messages, causes, stacks, arbitrary custom fields or `toJSON`. It returns typed localization keys and recovery-action identifiers, not English presentation or executable callbacks. Unknown errors receive a fixed generic descriptor with a `copy_diagnostics` action.
 
+### Future consumer resolution example
+
+The later application consumer resolves message keys through the established i18next/ICU translator and maps each recovery identifier through an application-owned action registry. The core descriptor remains data-only:
+
+```ts
+const descriptor = mapOperationalError(error, category);
+const title = t(descriptor.titleKey);
+const explanation = t(descriptor.explanationKey);
+const actions = descriptor.recoveryActions.map((id) => recoveryActionRegistry[id]);
+const retryAfterSeconds = descriptor.retry?.afterSeconds;
+```
+
+`recoveryActionRegistry` owns labels and callbacks at the application boundary; neither callbacks nor translated presentation are stored in the core descriptor. This is an integration example only, not authorization for M0-015, app wiring or UI work in M0-013.
+
 ## Consequences
 
 - Secrets and learner content are structurally excluded at every level rather than redacted after capture. Synthetic key-pattern scans remain defense-in-depth regressions, not proof that arbitrary text can be anonymized.

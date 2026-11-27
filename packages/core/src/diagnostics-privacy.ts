@@ -2,22 +2,19 @@ import {
   DIAGNOSTIC_COMPONENTS,
   DIAGNOSTIC_EVENT_CODES,
   DIAGNOSTIC_OPERATIONS,
-  LOG_LEVELS,
-  NORMALIZED_PROVIDER_ERROR_CODES,
   type DiagnosticComponent,
   type DiagnosticErrorCode,
   type DiagnosticEventCode,
   type DiagnosticInput,
   type DiagnosticMetadata,
   type DiagnosticOperation,
+  LOG_LEVELS,
   type LogLevel,
+  NORMALIZED_PROVIDER_ERROR_CODES,
 } from "./logger";
 import type { StorageErrorCode } from "./storage";
 
-export type DiagnosticSanitizationFailure =
-  | "invalid_record"
-  | "invalid_metadata"
-  | "invalid_value";
+export type DiagnosticSanitizationFailure = "invalid_record" | "invalid_metadata" | "invalid_value";
 
 export type DiagnosticSanitizationResult =
   | { readonly ok: true; readonly value: DiagnosticInput }
@@ -41,9 +38,10 @@ type DataProperty =
   | { readonly kind: "reflection_error" };
 
 function isPlainRecord(value: unknown): value is object {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  if (typeof value !== "object" || value === null) return false;
 
   try {
+    if (Array.isArray(value)) return false;
     const prototype = Object.getPrototypeOf(value);
     return prototype === Object.prototype || prototype === null;
   } catch {
@@ -71,18 +69,12 @@ function isOneOf<const T extends readonly string[]>(
 }
 
 function isDiagnosticErrorCode(value: unknown): value is DiagnosticErrorCode {
-  return (
-    isOneOf(value, STORAGE_ERROR_CODES) ||
-    isOneOf(value, NORMALIZED_PROVIDER_ERROR_CODES)
-  );
+  return isOneOf(value, STORAGE_ERROR_CODES) || isOneOf(value, NORMALIZED_PROVIDER_ERROR_CODES);
 }
 
 function isBoundedInteger(value: unknown, minimum: number, maximum: number): value is number {
   return (
-    typeof value === "number" &&
-    Number.isSafeInteger(value) &&
-    value >= minimum &&
-    value <= maximum
+    typeof value === "number" && Number.isSafeInteger(value) && value >= minimum && value <= maximum
   );
 }
 
@@ -100,10 +92,7 @@ export function sanitizeDiagnosticInput(input: unknown): DiagnosticSanitizationR
 
   const levelProperty = readOwnDataProperty(input, "level");
   const eventCodeProperty = readOwnDataProperty(input, "eventCode");
-  if (
-    levelProperty.kind !== "data" ||
-    eventCodeProperty.kind !== "data"
-  ) {
+  if (levelProperty.kind !== "data" || eventCodeProperty.kind !== "data") {
     return failure("invalid_record");
   }
   if (!isOneOf(levelProperty.value, LOG_LEVELS)) return failure("invalid_value");

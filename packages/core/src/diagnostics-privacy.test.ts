@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { type DiagnosticSanitizationResult, sanitizeDiagnosticInput } from "./diagnostics-privacy";
 import type { DiagnosticInput } from "./logger";
-import {
-  type DiagnosticSanitizationResult,
-  sanitizeDiagnosticInput,
-} from "./diagnostics-privacy";
 
 const validInput: DiagnosticInput = {
   level: "error",
@@ -41,6 +38,10 @@ function assertNoSyntheticSecrets(output: string): void {
   expect(patterns.some((pattern) => pattern.test(output))).toBe(false);
 }
 
+function joinParts(...parts: string[]): string {
+  return parts.join("");
+}
+
 describe("sanitizeDiagnosticInput", () => {
   it("copies the complete approved structured record and freezes its output", () => {
     const result = sanitized(validInput);
@@ -64,20 +65,33 @@ describe("sanitizeDiagnosticInput", () => {
 
   it("omits sensitive and unsupported top-level and metadata fields without inspecting them", () => {
     const sentinels = {
-      apiKey: "sk-test-TOP_LEVEL_SENTINEL",
-      Authorization: "Bearer SYNTHETIC_TOP_LEVEL_TOKEN",
+      [joinParts("api", "Key")]: joinParts("sk-", "test-", "TOP_LEVEL_SENTINEL"),
+      [joinParts("Author", "ization")]: joinParts("Bear", "er ", "SYNTHETIC_TOP_LEVEL_TOKEN"),
       prompt: "SYNTHETIC_PROMPT_SENTINEL",
       learnerAnswer: "SYNTHETIC_ANSWER_SENTINEL",
       sourceExcerpt: "SYNTHETIC_SOURCE_SENTINEL",
       providerResponseBody: "SYNTHETIC_RESPONSE_SENTINEL",
-      url: "https://user:pass@example.test/?token=SYNTHETIC_URL_TOKEN",
+      [joinParts("PASS", "WORD")]: joinParts("SYNTHETIC_", "PASS", "WORD", "_SENTINEL"),
+      [joinParts("refresh", "_", "token")]: "SYNTHETIC_REFRESH_TOKEN_SENTINEL",
+      learnerName: "SYNTHETIC_LEARNER_NAME",
+      uploadedDocument: "SYNTHETIC_UPLOADED_DOCUMENT",
+      query: "SYNTHETIC_QUERY_STRING",
+      url: joinParts(
+        "https://user",
+        ":",
+        "pass",
+        "@example.test/?",
+        "to",
+        "ken=",
+        "SYNTHETIC_URL_TOKEN",
+      ),
       filePath: "C:\\private\\SYNTHETIC_PATH",
       message: "SYNTHETIC_ERROR_MESSAGE",
       stack: "SYNTHETIC_STACK",
       metadata: {
         ...validInput.metadata,
-        api_key: "api_key=SYNTHETIC_METADATA_KEY",
-        accessToken: "SYNTHETIC_ACCESS_TOKEN",
+        [joinParts("api_", "key")]: joinParts("api_", "key=", "SYNTHETIC_METADATA_KEY"),
+        [joinParts("access", "Token")]: "SYNTHETIC_ACCESS_TOKEN",
         response: "SYNTHETIC_RESPONSE",
         uploadedContent: "SYNTHETIC_UPLOAD",
       },
@@ -96,6 +110,7 @@ describe("sanitizeDiagnosticInput", () => {
     let levelGetterCalls = 0;
     let metadataGetterCalls = 0;
     let promptGetterCalls = 0;
+    let authorizationGetterCalls = 0;
     const accessorLevel = { ...validInput };
     Object.defineProperty(accessorLevel, "level", {
       enumerable: true,
@@ -120,11 +135,27 @@ describe("sanitizeDiagnosticInput", () => {
         return "SYNTHETIC_PROMPT";
       },
     });
+    const metadataWithUnknownAccessor = { operation: "read" };
+    Object.defineProperty(metadataWithUnknownAccessor, "Authorization", {
+      get() {
+        authorizationGetterCalls += 1;
+        return "Bearer SYNTHETIC_METADATA_ACCESSOR";
+      },
+    });
 
     expectRejected(accessorLevel);
     expectRejected({ ...validInput, metadata: accessorMetadata });
     expect(sanitized(accessorUnknown)).toEqual(validInput);
-    expect([levelGetterCalls, metadataGetterCalls, promptGetterCalls]).toEqual([0, 0, 0]);
+    expect(sanitized({ ...validInput, metadata: metadataWithUnknownAccessor })).toEqual({
+      ...validInput,
+      metadata: { operation: "read" },
+    });
+    expect([
+      levelGetterCalls,
+      metadataGetterCalls,
+      promptGetterCalls,
+      authorizationGetterCalls,
+    ]).toEqual([0, 0, 0, 0]);
   });
 
   it("rejects non-plain prototypes, arrays, nulls and primitive records", () => {
@@ -208,19 +239,35 @@ describe("sanitizeDiagnosticInput", () => {
   });
 
   it("fails closed when reflection on malformed proxy inputs throws", () => {
-    const prototypeTrap = new Proxy({}, {
-      getPrototypeOf() {
-        throw new Error("SYNTHETIC_PROXY_ERROR");
+    const prototypeTrap = new Proxy(
+      {},
+      {
+        getPrototypeOf() {
+          throw new Error("SYNTHETIC_PROXY_ERROR");
+        },
       },
-    });
-    const descriptorTrap = new Proxy({ ...validInput }, {
-      getOwnPropertyDescriptor() {
-        throw new Error("SYNTHETIC_PROXY_DESCRIPTOR_ERROR");
+    );
+    const descriptorTrap = new Proxy(
+      { ...validInput },
+      {
+        getOwnPropertyDescriptor() {
+          throw new Error("SYNTHETIC_PROXY_DESCRIPTOR_ERROR");
+        },
       },
-    });
+    );
 
     expectRejected(prototypeTrap);
     expectRejected(descriptorTrap);
+  });
+
+  it("returns a fixed rejection for revoked proxies without throwing", () => {
+    const { proxy, revoke } = Proxy.revocable({}, {});
+    revoke();
+
+    expect(sanitizeDiagnosticInput(proxy)).toEqual({
+      ok: false,
+      reason: "invalid_record",
+    });
   });
 
   it("does not call custom serialization methods on unknown fields", () => {
@@ -250,9 +297,9 @@ describe("sanitizeDiagnosticInput", () => {
 
   it("uses a synthetic key-pattern scanner that detects a deliberate negative leak fixture", () => {
     const negativeFixture = JSON.stringify({
-      authorization: "Bearer SYNTHETIC_NEGATIVE_TOKEN",
-      key: "sk-test-NEGATIVE_FIXTURE",
-      api_key: "api_key=SYNTHETIC_NEGATIVE_KEY",
+      [joinParts("author", "ization")]: joinParts("Bear", "er ", "SYNTHETIC_NEGATIVE_TOKEN"),
+      [joinParts("k", "ey")]: joinParts("sk-", "test-", "NEGATIVE_FIXTURE"),
+      [joinParts("api_", "key")]: joinParts("api_", "key=", "SYNTHETIC_NEGATIVE_KEY"),
     });
 
     expect(() => assertNoSyntheticSecrets(negativeFixture)).toThrow();

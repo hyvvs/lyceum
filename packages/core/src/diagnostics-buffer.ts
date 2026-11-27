@@ -1,12 +1,12 @@
+import { sanitizeDiagnosticInput } from "./diagnostics-privacy";
 import {
-  LOG_LEVELS,
   type DiagnosticInput,
   type DiagnosticRecord,
   type DiagnosticWriteResult,
+  LOG_LEVELS,
   type LogLevel,
   type Logger,
 } from "./logger";
-import { sanitizeDiagnosticInput } from "./diagnostics-privacy";
 import type { Clock } from "./ports";
 
 export type DiagnosticEnvironment = "production" | "development" | "test";
@@ -144,7 +144,8 @@ function readConfiguration(options: unknown): {
   if (minimumLevelProperty.kind === "invalid") {
     throw new Error("Invalid diagnostics severity threshold");
   }
-  const minimumLevel = minimumLevelProperty.kind === "missing" ? "info" : minimumLevelProperty.value;
+  const minimumLevel =
+    minimumLevelProperty.kind === "missing" ? "info" : minimumLevelProperty.value;
   if (!isOneOf(minimumLevel, LOG_LEVELS)) {
     throw new Error("Invalid diagnostics severity threshold");
   }
@@ -198,6 +199,11 @@ export function createInMemoryDiagnostics(
 
       const sanitized = sanitizeDiagnosticInput(input);
       if (!sanitized.ok) return "rejected";
+      // A stateful Proxy may report a different approved level during
+      // sanitization; enforce the threshold again on the value we will store.
+      if (LOG_LEVELS.indexOf(sanitized.value.level) > minimumSeverityIndex) {
+        return "filtered";
+      }
 
       const timestamp = readTimestamp(clock, now);
       if (timestamp === undefined) return "rejected";

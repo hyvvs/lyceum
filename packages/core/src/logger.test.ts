@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   DIAGNOSTIC_EVENT_CODES,
-  LOG_LEVELS,
-  NOOP_LOGGER,
   type DiagnosticInput,
+  LOG_LEVELS,
   type Logger,
+  NOOP_LOGGER,
 } from "./logger";
 
 describe("Logger port", () => {
@@ -36,14 +36,17 @@ describe("Logger port", () => {
   });
 
   it("provides an immutable no-op logger that does not inspect records", () => {
-    const record = new Proxy({}, {
-      get() {
-        throw new Error("the no-op logger must not inspect input");
+    const record = new Proxy(
+      {},
+      {
+        get() {
+          throw new Error("the no-op logger must not inspect input");
+        },
+        getOwnPropertyDescriptor() {
+          throw new Error("the no-op logger must not inspect descriptors");
+        },
       },
-      getOwnPropertyDescriptor() {
-        throw new Error("the no-op logger must not inspect descriptors");
-      },
-    });
+    );
 
     expect(Object.isFrozen(NOOP_LOGGER)).toBe(true);
     expect(NOOP_LOGGER.log(record as DiagnosticInput)).toBe("filtered");
