@@ -1,7 +1,8 @@
 const { spawn } = require("node:child_process");
+const fs = require("node:fs");
 const net = require("node:net");
+const os = require("node:os");
 const path = require("node:path");
-const { once } = require("node:events");
 
 const IPC_MARKER = "LYCEUM_NATIVE_IPC_READY";
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -22,8 +23,16 @@ async function reservePort() {
 async function waitUntil(check, child, description, timeoutMs = 25_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    if (child.spawnError) {
+      throw new Error(
+        `native process could not start before ${description}: ${child.spawnError.message}`,
+      );
+    }
     if (child.exitCode !== null) {
       throw new Error(`native process exited before ${description} (code ${child.exitCode})`);
+    }
+    if (child.signalCode !== null) {
+      throw new Error(`native process received ${child.signalCode} before ${description}`);
     }
     if (await check()) return;
     await delay(100);
@@ -31,11 +40,34 @@ async function waitUntil(check, child, description, timeoutMs = 25_000) {
   throw new Error(`timed out waiting for ${description}`);
 }
 
+function waitForExit(child, timeoutMs) {
+  if (!child || child.spawnError || child.exitCode !== null || child.signalCode !== null) {
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    const onExit = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+    const timer = setTimeout(() => {
+      child.removeListener("exit", onExit);
+      resolve(false);
+    }, timeoutMs);
+    child.once("exit", onExit);
+  });
+}
+
 async function stopChild(child) {
-  if (child.exitCode !== null) return;
+  if (!child || child.spawnError || child.exitCode !== null || child.signalCode !== null) {
+    return;
+  }
   child.kill();
-  await Promise.race([once(child, "exit"), delay(5000)]);
-  if (child.exitCode === null) child.kill("SIGKILL");
+  if (!(await waitForExit(child, 5000))) {
+    child.kill("SIGKILL");
+    if (!(await waitForExit(child, 5000))) {
+      throw new Error("native process did not exit after forced termination");
+    }
+  }
 }
 
 async function main() {
@@ -48,24 +80,35 @@ async function main() {
     isWindows ? "lyceum-desktop.exe" : "lyceum-desktop",
   );
   const port = isWindows ? await reservePort() : null;
+  // Give this smoke run an isolated WebView2 profile. Hosted Windows runners
+  // may already have a WebView2 browser process using the default profile;
+  // Chromium can reuse that process and ignore new debugging arguments.
+  const webViewUserDataDir = isWindows
+    ? fs.mkdtempSync(path.join(os.tmpdir(), "lyceum-webview2-smoke-"))
+    : null;
   const env = {
     ...process.env,
     LYCEUM_DESKTOP_IPC_SMOKE: "1",
     ...(isWindows
       ? {
+          WEBVIEW2_USER_DATA_FOLDER: webViewUserDataDir,
           WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-address=127.0.0.1 --remote-debugging-port=${port}`,
         }
       : {}),
   };
-  const child = spawn(executable, [], { env, stdio: ["ignore", "pipe", "ignore"] });
+  let child;
   let stdout = "";
-  child.stdout.setEncoding("utf8");
-  child.stdout.on("data", (chunk) => {
-    stdout += chunk;
-  });
-
   let browser;
   try {
+    child = spawn(executable, [], { env, stdio: ["ignore", "pipe", "ignore"] });
+    child.on("error", (error) => {
+      child.spawnError = error;
+    });
+    child.stdout.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+
     await waitUntil(() => stdout.includes(IPC_MARKER), child, "real renderer-to-native IPC");
 
     if (isWindows) {
@@ -165,15 +208,37 @@ async function main() {
         button.addEventListener("click", () => window.open("about:blank", "_blank"));
         document.body.append(button);
       });
+      let popupListener;
+      const popupPromise = new Promise((resolve) => {
+        popupListener = (popup) => resolve(popup);
+        page.once("popup", popupListener);
+      });
       await page.locator("#lyceum-native-smoke-popup").click();
-      await page.waitForTimeout(250);
+      const popup = await Promise.race([popupPromise, delay(1000).then(() => null)]);
+      if (!popup) page.off("popup", popupListener);
+      if (popup) await popup.close();
       const pagesAfterPopup = browser.contexts().flatMap((context) => context.pages()).length;
       await page.locator("#lyceum-native-smoke-popup").evaluate((button) => button.remove());
-      await page.evaluate(() => {
-        window.location.href = "http://127.0.0.1:65534/native-smoke-untrusted";
+      const untrustedUrl = "http://127.0.0.1:65534/native-smoke-untrusted";
+      let navigationListener;
+      const navigationPromise = new Promise((resolve) => {
+        navigationListener = (frame) => {
+          if (frame === page.mainFrame() && frame.url() === untrustedUrl) resolve(true);
+        };
+        page.on("framenavigated", navigationListener);
       });
-      await page.waitForTimeout(500);
-      const remoteNavigationDenied = page.url().startsWith("http://tauri.localhost");
+      await page.evaluate((url) => {
+        window.setTimeout(() => {
+          window.location.href = url;
+        }, 0);
+      }, untrustedUrl);
+      const remoteNavigationStarted = await Promise.race([
+        navigationPromise,
+        delay(1500).then(() => false),
+      ]);
+      page.off("framenavigated", navigationListener);
+      const remoteNavigationDenied =
+        !remoteNavigationStarted && page.url().startsWith("http://tauri.localhost");
       const passed = Object.entries(results).every(([key, value]) =>
         key === "origin" ? value === "http://tauri.localhost" : value === true,
       );
@@ -181,10 +246,11 @@ async function main() {
         ...results,
         pagesBeforePopup,
         pagesAfterPopup,
+        popupCreated: Boolean(popup),
         remoteNavigationDenied,
       };
       console.log("windowsNativeSmokeEvidence", JSON.stringify(evidence));
-      if (!passed || pagesAfterPopup !== pagesBeforePopup || !remoteNavigationDenied) {
+      if (!passed || popup || pagesAfterPopup !== pagesBeforePopup || !remoteNavigationDenied) {
         throw new Error("packaged Windows WebView native IPC/security assertions failed");
       }
       console.log(
@@ -204,8 +270,30 @@ async function main() {
       );
     }
   } finally {
-    if (browser) await browser.close();
-    await stopChild(child);
+    try {
+      if (browser) await browser.close();
+    } finally {
+      try {
+        if (child) await stopChild(child);
+      } finally {
+        if (webViewUserDataDir) {
+          // WebView2 may finish shutting down its browser subprocess shortly
+          // after the host exits; retry transient directory-lock failures.
+          await delay(500);
+          try {
+            fs.rmSync(webViewUserDataDir, {
+              recursive: true,
+              force: true,
+              maxRetries: 20,
+              retryDelay: 250,
+            });
+          } catch (error) {
+            console.error("WebView2 smoke profile cleanup failed:", error.message);
+            process.exitCode = 1;
+          }
+        }
+      }
+    }
   }
 }
 
