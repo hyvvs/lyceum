@@ -64,6 +64,9 @@ async function main() {
   for (const file of [
     "tests/fixtures/m0-005-reference-prototype.stories.tsx",
     "tests/fixtures/m0-005-reference-prototype.css",
+    "tests/fixtures/m0-005-fidelity-today.tsx",
+    "tests/fixtures/m0-005-fidelity-today.css",
+    "packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp",
     "tests/fixtures/assets/sunlit-room-licensed-pexels-27051764.jpg",
     "packages/ui/src/morphing-rail.tsx",
     "packages/ui/src/morphing-rail.css",
@@ -94,7 +97,9 @@ async function main() {
   await page.getByRole("button", { name: "Sources", exact: true }).click();
   await delay(550);
   await screenshot(page, "03-empty-sources.png");
+  await page.keyboard.press("Control+Shift+D");
   await page.getByRole("button", { name: "Synthetic", exact: true }).click();
+  await page.keyboard.press("Escape");
   await delay(480);
   await screenshot(page, "04-synthetic-sources.png");
   await page.getByRole("button", { name: "Reading", exact: true }).click();
@@ -110,7 +115,9 @@ async function main() {
   await page.getByRole("button", { name: "Collapse navigation" }).click();
   await delay(620);
   await screenshot(page, "07-collapsed-rail.png");
+  await page.keyboard.press("Control+Shift+D");
   await page.getByRole("button", { name: "Empty", exact: true }).click();
+  await page.keyboard.press("Escape");
   await delay(240);
   const movie = page.video();
   await page.close();

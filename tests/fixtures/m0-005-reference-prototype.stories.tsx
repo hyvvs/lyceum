@@ -3,7 +3,9 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Icon } from "../../apps/web/src/icons";
 import { GlassPanel, MorphingRail } from "../../packages/ui/src";
 import "../../packages/ui/src/morphing-rail.css";
+import { FidelityToday } from "./m0-005-fidelity-today";
 import "./m0-005-reference-prototype.css";
+import "./m0-005-fidelity-today.css";
 
 type Scene = "today" | "sources" | "reading" | "setup";
 type DataMode = "empty" | "synthetic";
@@ -30,21 +32,21 @@ const utilityActions = [
 const examplePlan = [
   {
     label: "Revisit an idea",
-    headline: "Return to an idea.",
+    headline: "Recall practice",
     description:
       "Try a short reading about recall, then describe its central thought without looking.",
     readingStep: 0,
   },
   {
     label: "Try a short exercise",
-    headline: "Learn by trying.",
+    headline: "Worked example",
     description:
       "Walk through an imaginary example and notice where your explanation feels uncertain.",
     readingStep: 1,
   },
   {
     label: "Note what changed",
-    headline: "Make room to reflect.",
+    headline: "Reflection check",
     description:
       "Finish with a question you can come back to another day. No answers are recorded here.",
     readingStep: 2,
@@ -78,14 +80,6 @@ const readingPages = [
   },
 ] as const;
 
-function SampleNotice({ synthetic }: { synthetic: boolean }) {
-  return (
-    <output className="rp-status" aria-live="polite">
-      {synthetic ? "SYNTHETIC FIXTURE · NO LEARNER DATA" : "EMPTY STATE · NO LEARNER DATA"}
-    </output>
-  );
-}
-
 export function ReferencePrototype({
   initialScene = "today",
   initialMode = "empty",
@@ -98,8 +92,15 @@ export function ReferencePrototype({
   const [readingStep, setReadingStep] = useState(0);
   const [showReflection, setShowReflection] = useState(false);
   const [goalDraft, setGoalDraft] = useState("");
+  const [devPanelOpen, setDevPanelOpen] = useState(false);
+  const [topPanel, setTopPanel] = useState<"search" | "notifications" | "profile" | null>(null);
+  const [dockTooltipDismissed, setDockTooltipDismissed] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const focusNextScene = useRef(false);
+  const focusPlanOnNavigate = useRef(false);
+  const devPanelRef = useRef<HTMLElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const devPanelWasOpen = useRef(false);
   const synthetic = mode === "synthetic";
   const currentPlan = examplePlan[selectedPlan] ?? examplePlan[0];
   const readingPage = readingPages[readingStep] ?? readingPages[0];
@@ -108,6 +109,7 @@ export function ReferencePrototype({
   function navigate(target: Scene) {
     if (target === scene) return;
     focusNextScene.current = true;
+    setTopPanel(null);
     setScene(target);
   }
 
@@ -124,14 +126,60 @@ export function ReferencePrototype({
     setReadingStep(0);
     setShowReflection(false);
     setGoalDraft("");
+    setDevPanelOpen(false);
+    setTopPanel(null);
     navigate("today");
   }
 
   useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        if (!devPanelOpen) {
+          const active = document.activeElement;
+          returnFocusRef.current =
+            active instanceof HTMLElement && active !== document.body ? active : null;
+        }
+        setDevPanelOpen(!devPanelOpen);
+      }
+      if (event.key === "Escape") {
+        setDevPanelOpen(false);
+        setTopPanel(null);
+        setDockTooltipDismissed(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [devPanelOpen]);
+
+  useEffect(() => {
+    if (devPanelOpen) {
+      devPanelWasOpen.current = true;
+      devPanelRef.current?.querySelector("button")?.focus();
+    } else if (devPanelWasOpen.current) {
+      devPanelWasOpen.current = false;
+      if (returnFocusRef.current?.isConnected) {
+        returnFocusRef.current.focus();
+      } else {
+        document.querySelector<HTMLButtonElement>(".rp-header-round")?.focus();
+      }
+    }
+  }, [devPanelOpen]);
+
+  useEffect(() => {
     if (!focusNextScene.current) return;
     focusNextScene.current = false;
-    if (headingRef.current?.textContent === sceneLabel) headingRef.current.focus();
-  }, [sceneLabel]);
+    if (scene === "today") document.getElementById("rp-main")?.focus();
+    else if (headingRef.current?.textContent === sceneLabel) headingRef.current.focus();
+  }, [scene, sceneLabel]);
+
+  useEffect(() => {
+    if (scene !== "today" || !focusPlanOnNavigate.current) return;
+    focusPlanOnNavigate.current = false;
+    const heading = document.getElementById("rp-today-plan-heading");
+    heading?.scrollIntoView({ block: "center" });
+    heading?.focus({ preventScroll: true });
+  }, [scene]);
 
   return (
     <div className="reference-prototype" data-testid="reference-prototype" data-scene={scene}>
@@ -142,14 +190,153 @@ export function ReferencePrototype({
 
       <div className="rp-frame">
         <header className="rp-header">
-          <div className="rp-brand" aria-label="Lyceum visual prototype">
+          <div className="rp-brand" aria-label="Lyceum">
             <span className="rp-brand-word">
               lyceum<span aria-hidden="true">.</span>
             </span>
-            <span className="rp-brand-descriptor">Learning workspace</span>
+            <span className="rp-brand-descriptor">Workspace</span>
           </div>
 
+          <nav className="rp-top-navigation" aria-label="Main sections">
+            <button
+              type="button"
+              aria-current={scene === "today" ? "page" : undefined}
+              className={scene === "today" ? "is-active" : ""}
+              onClick={() => navigate("today")}
+            >
+              <Icon name="home" /> Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!synthetic) {
+                  navigate("setup");
+                } else if (scene !== "today") {
+                  focusPlanOnNavigate.current = true;
+                  navigate("today");
+                } else {
+                  const heading = document.getElementById("rp-today-plan-heading");
+                  heading?.scrollIntoView({ block: "center" });
+                  heading?.focus({ preventScroll: true });
+                }
+              }}
+            >
+              <Icon name="clock" /> Plan
+            </button>
+            <button
+              type="button"
+              aria-current={scene === "reading" ? "page" : undefined}
+              className={scene === "reading" ? "is-active" : ""}
+              onClick={() => openExampleReading(0)}
+            >
+              <Icon name="spark" /> Practice
+            </button>
+            <button
+              type="button"
+              aria-current={scene === "sources" ? "page" : undefined}
+              className={scene === "sources" ? "is-active" : ""}
+              onClick={() => navigate("sources")}
+            >
+              <Icon name="book" /> Sources
+            </button>
+            <button
+              type="button"
+              aria-current={scene === "setup" ? "page" : undefined}
+              className={scene === "setup" ? "is-active" : ""}
+              onClick={() => navigate("setup")}
+            >
+              <Icon name="settings" /> Models
+            </button>
+          </nav>
+
           <div className="rp-header-actions">
+            {synthetic && <span className="rp-demo-chip">Demo data</span>}
+            <button
+              type="button"
+              className="rp-header-round"
+              aria-label="Search workspace"
+              aria-expanded={topPanel === "search"}
+              onClick={() => setTopPanel((value) => (value === "search" ? null : "search"))}
+            >
+              <span aria-hidden="true">⌕</span>
+            </button>
+            <button
+              type="button"
+              className="rp-header-round"
+              aria-label="Notifications"
+              aria-expanded={topPanel === "notifications"}
+              onClick={() =>
+                setTopPanel((value) => (value === "notifications" ? null : "notifications"))
+              }
+            >
+              <Icon name="clock" />
+              <span className="rp-notification-dot" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="rp-header-round"
+              aria-label="Settings"
+              onClick={() => navigate("setup")}
+            >
+              <Icon name="settings" />
+            </button>
+            <button
+              type="button"
+              className="rp-header-round rp-profile"
+              aria-label="Demo profile"
+              aria-expanded={topPanel === "profile"}
+              onClick={() => setTopPanel((value) => (value === "profile" ? null : "profile"))}
+            >
+              A<span className="rp-profile-dot" aria-hidden="true" />
+            </button>
+          </div>
+        </header>
+
+        {topPanel && (
+          <section
+            className="rp-top-popover"
+            aria-label={
+              topPanel === "search"
+                ? "Workspace search"
+                : topPanel === "notifications"
+                  ? "Notifications"
+                  : "Demo profile"
+            }
+          >
+            {topPanel === "search" && (
+              <>
+                <strong>Quick navigation</strong>
+                <button type="button" onClick={() => navigate("sources")}>
+                  Open Sources
+                </button>
+                <button type="button" onClick={() => navigate("reading")}>
+                  Open Reading
+                </button>
+              </>
+            )}
+            {topPanel === "notifications" && (
+              <>
+                <strong>Notifications</strong>
+                <p>
+                  {synthetic ? "Sample reminder: 12 reviews scheduled." : "No notifications yet."}
+                </p>
+              </>
+            )}
+            {topPanel === "profile" && (
+              <>
+                <strong>Demo profile</strong>
+                <p>Example learner. No account or learning data is connected.</p>
+              </>
+            )}
+          </section>
+        )}
+
+        {devPanelOpen && (
+          <section className="rp-dev-panel" aria-label="Developer controls" ref={devPanelRef}>
+            <h2>Developer controls</h2>
+            <output className="rp-dev-fixture" aria-live="polite">
+              {synthetic ? "SYNTHETIC FIXTURE · NO LEARNER DATA" : "EMPTY STATE · NO LEARNER DATA"}
+            </output>
             <fieldset className="rp-data-switch">
               <legend className="rp-visually-hidden">Demonstration data</legend>
               <button
@@ -170,14 +357,22 @@ export function ReferencePrototype({
               </button>
             </fieldset>
             <button type="button" className="rp-reset" aria-label="Reset prototype" onClick={reset}>
-              <Icon name="clock" />
-              <span>Reset</span>
+              <Icon name="clock" /> Reset
             </button>
-          </div>
-        </header>
+            <button type="button" className="rp-reset" onClick={() => setDevPanelOpen(false)}>
+              Close
+            </button>
+          </section>
+        )}
 
         <div className={expanded ? "rp-layout is-rail-expanded" : "rp-layout"}>
-          <aside className="rp-rail-zone" aria-label="Prototype scene selection">
+          <aside
+            className="rp-rail-zone"
+            aria-label="Prototype scene selection"
+            data-tooltip-dismissed={dockTooltipDismissed ? "true" : "false"}
+            onPointerLeave={() => setDockTooltipDismissed(false)}
+            onFocusCapture={() => setDockTooltipDismissed(false)}
+          >
             <MorphingRail
               ariaLabel="Prototype scenes"
               className="rp-morphing-rail"
@@ -223,120 +418,30 @@ export function ReferencePrototype({
                   {sceneLabel}
                 </h1>
                 <p>
-                  {scene === "today" && "Find your next step, without the noise."}
-                  {scene === "sources" && "A place to return to what you have read."}
-                  {scene === "reading" && "One thought at a time."}
-                  {scene === "setup" && "A place to start."}
+                  {scene === "today" && "Learning overview"}
+                  {scene === "sources" && "Course materials and notes"}
+                  {scene === "reading" && "Reading and reflection"}
+                  {scene === "setup" && "Learning goals and model configuration"}
                 </p>
               </div>
-              <SampleNotice synthetic={synthetic} />
             </div>
 
             <div className="rp-scene" key={scene}>
               {scene === "today" && (
-                <div className="rp-desk-grid">
-                  <GlassPanel
-                    className={synthetic ? "rp-pane rp-today rp-today--sample" : "rp-pane rp-today"}
-                    aria-labelledby="rp-next-heading"
-                  >
-                    <div className="rp-today-content">
-                      <p className="rp-pane-kicker">
-                        {synthetic ? "Your sample day" : "Your first step"}
-                      </p>
-                      <h2 id="rp-next-heading">
-                        {synthetic ? currentPlan.headline : "What would you like to learn?"}
-                      </h2>
-                      <p className="rp-pane-copy">
-                        {synthetic
-                          ? currentPlan.description
-                          : "Begin with a goal that matters to you. There are no sessions, materials or reviews here yet."}
-                      </p>
-                      {!synthetic && (
-                        <div className="rp-goal-draft">
-                          <label htmlFor="rp-goal">Your learning goal</label>
-                          <input
-                            id="rp-goal"
-                            type="text"
-                            value={goalDraft}
-                            maxLength={160}
-                            placeholder="What do you want to understand?"
-                            dir="auto"
-                            autoComplete="off"
-                            onChange={(event) => setGoalDraft(event.target.value)}
-                          />
-                          <p>Draft only. Nothing is saved in this visual preview.</p>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="rp-primary-action"
-                        onClick={() => {
-                          if (synthetic) openExampleReading(currentPlan.readingStep);
-                          else navigate("setup");
-                        }}
-                      >
-                        <span>{synthetic ? "Open sample reading" : "Explore setup"}</span>
-                        <Icon name="arrow" />
-                      </button>
-                    </div>
-                  </GlassPanel>
-                  <GlassPanel
-                    className="rp-context"
-                    aria-label={synthetic ? "Sample plan" : "Learning activity"}
-                  >
-                    {synthetic ? (
-                      <fieldset className="rp-plan-list">
-                        <legend>Example plan</legend>
-                        {examplePlan.map(({ label }, index) => (
-                          <button
-                            key={label}
-                            type="button"
-                            aria-pressed={selectedPlan === index}
-                            className={
-                              selectedPlan === index ? "rp-plan-row is-selected" : "rp-plan-row"
-                            }
-                            onClick={() => setSelectedPlan(index)}
-                          >
-                            <span className="rp-plan-marker" aria-hidden="true" />
-                            <span>{label}</span>
-                          </button>
-                        ))}
-                        <p className="rp-plan-note">
-                          Examples only. No learning progress is recorded.
-                        </p>
-                      </fieldset>
-                    ) : (
-                      <>
-                        <p className="rp-pane-kicker">Your activity</p>
-                        <h3>Nothing is due.</h3>
-                        <p className="rp-today-footnote">
-                          Your space stays quiet until you choose a goal.
-                        </p>
-                        <dl className="rp-activity-list">
-                          <div>
-                            <dt>Learning sessions</dt>
-                            <dd>Not started</dd>
-                          </div>
-                          <div>
-                            <dt>Source library</dt>
-                            <dd>Empty</dd>
-                          </div>
-                          <div>
-                            <dt>Review queue</dt>
-                            <dd>Nothing due</dd>
-                          </div>
-                        </dl>
-                      </>
-                    )}
-                  </GlassPanel>
-                </div>
+                <FidelityToday
+                  synthetic={synthetic}
+                  goalDraft={goalDraft}
+                  onGoalChange={setGoalDraft}
+                  onSetup={() => navigate("setup")}
+                  onOpenReading={openExampleReading}
+                />
               )}
 
               {scene === "sources" && (
                 <GlassPanel className="rp-pane rp-sources" aria-labelledby="rp-library-heading">
                   <p className="rp-pane-kicker">Library</p>
                   <h2 id="rp-library-heading">
-                    {synthetic ? "A library, before it fills up." : "Make room for your sources."}
+                    {synthetic ? "Sample source library" : "No sources yet"}
                   </h2>
                   <p className="rp-pane-copy">
                     {synthetic
@@ -474,7 +579,7 @@ export function ReferencePrototype({
               {scene === "setup" && (
                 <GlassPanel className="rp-pane rp-setup" aria-labelledby="rp-setup-heading">
                   <p className="rp-pane-kicker">Getting started</p>
-                  <h2 id="rp-setup-heading">Start with a direction.</h2>
+                  <h2 id="rp-setup-heading">Learning setup</h2>
                   <p className="rp-pane-copy">
                     In Lyceum, you choose a learning goal and connect a model you trust. This design
                     preview doesn't create accounts, connect providers or save learner information.
@@ -552,6 +657,10 @@ export const ReadingSurface: Story = {
 };
 export const ExpandedRail: Story = { args: { initialScene: "today", initiallyExpanded: true } };
 export const LightGlass: Story = { globals: { theme: "light" }, args: { initialScene: "today" } };
+export const LightSolid: Story = {
+  globals: { theme: "light", transparency: "off" },
+  args: { initialScene: "today" },
+};
 export const SolidFallback: Story = {
   globals: { transparency: "off" },
   args: { initialScene: "today" },

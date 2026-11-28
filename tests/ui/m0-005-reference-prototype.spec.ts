@@ -27,25 +27,33 @@ async function analyzeTaggedAxe(page: Page, name: string) {
 test("prototype starts honestly empty, never inventing learner progress", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(story("empty-today"));
-  await expect(page.getByRole("heading", { level: 1, name: "Today" })).toBeVisible();
-  await expect(page.getByText("EMPTY STATE · NO LEARNER DATA")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "What would you like to learn?" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Nothing is due." })).toBeVisible();
-  await expect(page.getByText("Your space stays quiet until you choose a goal.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Today" })).toHaveCount(1);
+  await expect(page.getByText("No goal yet. Create one to get a plan.")).toBeVisible();
+  await expect(page.getByText("No mastery measurements have been recorded.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Explore setup" })).toBeVisible();
-  await expect(page.getByText("Example plan")).toHaveCount(0);
+  await expect(page.getByText("Demo data")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Synthetic", exact: true })).toHaveCount(0);
+  await expect(page.locator(".rp-today")).toHaveCount(0);
 
+  await page.keyboard.press("Control+Shift+D");
+  await expect(page.getByRole("region", { name: "Developer controls" })).toBeVisible();
+  await expect(page.getByText("EMPTY STATE · NO LEARNER DATA")).toBeVisible();
   await page.getByRole("button", { name: "Synthetic", exact: true }).click();
-  await expect(page.getByText("SYNTHETIC FIXTURE · NO LEARNER DATA")).toBeVisible();
-  await expect(page.getByText("Example plan")).toBeVisible();
-  await page.getByRole("button", { name: "Try a short exercise" }).click();
-  await expect(page.getByRole("heading", { name: "Learn by trying." })).toBeVisible();
-  await page.getByRole("button", { name: "Open sample reading" }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("region", { name: "Developer controls" })).toHaveCount(0);
+  await expect(page.getByText("Demo data")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mastery by topic" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Today's plan" })).toBeVisible();
+  await expect(page.locator(".rp-fidelity-stat")).toHaveCount(4);
+  await page.getByRole("button", { name: "Month" }).click();
+  await expect(page.getByRole("button", { name: "Month" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: /Substitution practice/ }).click();
+  await page.getByRole("button", { name: "Start session" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Reading" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Give the idea some distance" })).toBeVisible();
+  await page.keyboard.press("Control+Shift+D");
   await page.getByRole("button", { name: "Empty", exact: true }).click();
-  await expect(page.getByText("EMPTY STATE · NO LEARNER DATA")).toBeVisible();
-  await expect(page.getByText("Example plan")).toHaveCount(0);
+  await expect(page.getByText("Demo data")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Give the idea some distance" })).toBeVisible();
 });
 
@@ -62,10 +70,76 @@ test("an unsaved learning-goal draft carries into Setup and clears on Reset", as
     .getByRole("button", { name: "Today" })
     .click();
   await expect(draft).toHaveValue("Understand tidal forces");
+  await page.keyboard.press("Control+Shift+D");
   await page.getByRole("button", { name: "Reset prototype" }).click();
   await expect(draft).toHaveValue("");
   await page.reload();
   await expect(page.getByRole("textbox", { name: "Your learning goal" })).toHaveValue("");
+});
+
+test("developer shortcut restores focus and demo disclosure remains visible on phone", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(story("synthetic-today"));
+  await expect(page.getByText("Demo data")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Synthetic", exact: true })).toHaveCount(0);
+  const search = page.getByRole("button", { name: "Search workspace" });
+  await search.focus();
+  await page.keyboard.press("Control+Shift+D");
+  await expect(page.getByRole("region", { name: "Developer controls" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Empty", exact: true })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("region", { name: "Developer controls" })).toHaveCount(0);
+  await expect(search).toBeFocused();
+  await expect(page.getByText("Demo data")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test("combined light theme and solid transparency keeps dashboard panels opaque", async ({
+  page,
+}) => {
+  await page.goto(story("light-solid"));
+  const styles = await page
+    .locator(".rp-fidelity-glass")
+    .first()
+    .evaluate((element) => {
+      const computed = getComputedStyle(element);
+      return { background: computed.backgroundColor, blur: computed.backdropFilter };
+    });
+  expect(styles.background).toBe("rgb(245, 248, 252)");
+  expect(styles.blur).toBe("none");
+  const inputBorder = await page
+    .getByRole("textbox", { name: "Your learning goal" })
+    .evaluate((element) => getComputedStyle(element).borderTopColor);
+  expect(inputBorder).not.toBe("rgb(255, 255, 255)");
+});
+
+test("compact dock tooltip is dismissible and Plan navigates to the actual plan", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(story("synthetic-today"));
+  const dock = page.getByRole("navigation", { name: "Prototype scenes" });
+  const sources = dock.getByRole("button", { name: "Sources" });
+  await sources.hover();
+  await expect
+    .poll(() => sources.evaluate((element) => getComputedStyle(element, "::after").content))
+    .toContain("Sources");
+  await page.keyboard.press("Escape");
+  await expect
+    .poll(() => sources.evaluate((element) => getComputedStyle(element, "::after").content))
+    .toBe("none");
+  await page
+    .getByRole("navigation", { name: "Main sections" })
+    .getByRole("button", { name: "Sources" })
+    .click();
+  await expect(page.getByRole("heading", { level: 1, name: "Sources" })).toBeFocused();
+  await page
+    .getByRole("navigation", { name: "Main sections" })
+    .getByRole("button", { name: "Plan" })
+    .click();
+  await expect(page.getByRole("heading", { name: "Today's plan" })).toBeFocused();
 });
 
 test("phone layout uses real navigation and keeps the canvas inside 390px", async ({ page }) => {
@@ -86,19 +160,19 @@ test("phone layout uses real navigation and keeps the canvas inside 390px", asyn
   expect(size.content).toBeLessThanOrEqual(size.width + 1);
 });
 
-test("phone's last activity row can scroll clear of the fixed navigation", async ({ page }) => {
+test("phone's last plan action can scroll clear of the fixed navigation", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(story("empty-today"));
-  await expect(page.getByText("Review queue")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Explore setup" })).toBeVisible();
   await expect
     .poll(() => page.locator(".rp-scene").evaluate((el) => Number(getComputedStyle(el).opacity)))
     .toBeGreaterThan(0.999);
   await page.evaluate(() => window.scrollTo(0, document.scrollingElement?.scrollHeight ?? 0));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   const positions = await page.evaluate(() => {
-    const last = document.querySelector(".rp-activity-list > div:last-child");
+    const last = document.querySelector(".rp-fidelity-plan-empty button");
     const dock = document.querySelector(".rp-mobile-navigation");
-    if (!last || !dock) throw new Error("Phone activity or dock missing");
+    if (!last || !dock) throw new Error("Phone plan action or dock missing");
     return {
       lastBottom: last.getBoundingClientRect().bottom,
       dockTop: dock.getBoundingClientRect().top,
@@ -188,6 +262,7 @@ test("solid and high-contrast phone chrome does not rely on translucent blur", a
     await expect(
       page.getByRole("navigation", { name: "Compact prototype navigation" }),
     ).toBeVisible();
+    await page.keyboard.press("Control+Shift+D");
     const styles = await page.evaluate(() => {
       const dock = document.querySelector(".rp-mobile-navigation");
       const switcher = document.querySelector(".rp-data-switch");
@@ -281,7 +356,7 @@ test("off-motion and high-contrast render without a spring or background blur", 
   await expect
     .poll(async () => backdrop.evaluate((node) => getComputedStyle(node).backdropFilter))
     .toBe("none");
-  await expect(page.getByText("SYNTHETIC FIXTURE · NO LEARNER DATA")).toBeVisible();
+  await expect(page.getByText("SYNTHETIC FIXTURE · NO LEARNER DATA")).toHaveCount(0);
 });
 
 test("expanded RTL utility spine mirrors to opposite side and does not obscure navigation icons", async ({
@@ -318,22 +393,25 @@ test("expanded RTL utility spine mirrors to opposite side and does not obscure n
   expect(Math.abs(positions.utilityX - positions.expectedSpineCenter)).toBeLessThan(8);
   expect(positions.separation).toBeGreaterThan(80);
   await expect(rail.getByRole("button", { name: "Sources" })).toBeVisible();
-  const copy = await page.locator(".rp-today").evaluate((element) => {
-    const title = element.querySelector("h2");
+  const copy = await page.locator(".rp-fidelity-dashboard").evaluate((element) => {
+    const title = element.querySelector(".rp-fidelity-intro h2");
     const input = element.querySelector("input");
     if (!title || !input) throw new Error("RTL Today content missing");
     return {
-      lensDisplay: getComputedStyle(element, "::before").display,
       englishCopyBidi: getComputedStyle(title).unicodeBidi,
+      englishCopyDirection: getComputedStyle(title).direction,
+      titleDirection: title.dir,
       inputDirection: input.dir,
     };
   });
-  expect(copy.lensDisplay).toBe("none");
-  expect(copy.englishCopyBidi).toBe("plaintext");
+  await expect(page.locator(".rp-today")).toHaveCount(0);
+  expect(["plaintext", "isolate"]).toContain(copy.englishCopyBidi);
+  expect(copy.englishCopyDirection).toBe("ltr");
+  expect(copy.titleDirection).toBe("ltr");
   expect(copy.inputDirection).toBe("auto");
 });
 
-test("all twelve reference workspace variants have no tagged axe violations or horizontal overflow", async ({
+test("all thirteen reference workspace variants have no tagged axe violations or horizontal overflow", async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -344,6 +422,7 @@ test("all twelve reference workspace variants have no tagged axe violations or h
     "reading-surface",
     "expanded-rail",
     "light-glass",
+    "light-solid",
     "solid-fallback",
     "high-contrast",
     "reduced-motion",

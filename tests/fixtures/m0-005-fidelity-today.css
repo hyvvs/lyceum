@@ -1,0 +1,945 @@
+/*
+ * M0 UI fidelity study: floating dark crystal over the owner's specified art.
+ * Only the opt-in Storybook fixture uses this asset or these overrides.
+ * Material, spacing, focus and motion share packages/ui tokens.
+ */
+.reference-prototype[data-scene="today"] {
+  background: var(--backdrop-solid);
+  color: var(--text-1);
+  --rp-fidelity-dim: rgb(255 255 255 / 0.9);
+  --rp-fidelity-muted: rgb(255 255 255 / 0.9);
+}
+
+.reference-prototype[data-scene="today"] .rp-environment {
+  position: absolute;
+  inset: 0;
+  background: var(--backdrop-solid)
+    url("../../packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp") center 44% / cover
+    no-repeat;
+}
+
+.reference-prototype[data-scene="today"] .rp-environment::before {
+  background: var(--backdrop-scrim);
+  opacity: 1;
+}
+
+.reference-prototype[data-scene="today"] .rp-environment::after {
+  display: none;
+}
+
+.reference-prototype[data-scene="today"] {
+  --backdrop-scrim: rgb(8 10 16 / 0.58);
+}
+
+.rp-header {
+  position: relative;
+  z-index: 8;
+  padding-inline: 0;
+}
+
+.rp-brand-descriptor {
+  color: var(--text-2);
+}
+
+.rp-top-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill-float);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.rp-top-navigation button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--type-xs);
+  font-weight: 650;
+  white-space: nowrap;
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+
+.rp-top-navigation button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rp-top-navigation button:is(.is-active, :hover) {
+  background: var(--glass-fill-raised);
+  color: var(--text-1);
+}
+
+.rp-top-navigation button.is-active {
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+.rp-header-actions {
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+}
+
+.rp-demo-chip {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  color: var(--text-2);
+  font-size: var(--type-xs);
+  white-space: nowrap;
+  background: rgb(8 10 16 / 0.4);
+}
+
+.rp-header-round {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill-float);
+  color: var(--text-1);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.rp-header-round > span:first-child {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.rp-header-round svg {
+  width: 20px;
+  height: 20px;
+}
+
+.rp-header-round:hover {
+  background: var(--glass-fill-raised);
+}
+
+.rp-profile {
+  font-size: var(--type-sm);
+  font-weight: 700;
+}
+
+.rp-profile-dot,
+.rp-notification-dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  border: 2px solid var(--backdrop-solid);
+  border-radius: var(--radius-pill);
+  background: var(--positive);
+}
+
+.rp-notification-dot {
+  inset-block-start: 0;
+  inset-block-end: auto;
+  background: var(--danger);
+}
+
+.rp-top-popover,
+.rp-dev-panel {
+  position: absolute;
+  z-index: 20;
+  inset-inline-end: var(--space-6);
+  top: 84px;
+  display: grid;
+  gap: var(--space-3);
+  width: min(310px, calc(100vw - 32px));
+  padding: var(--space-5);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-card);
+  background: var(--surface-solid);
+  color: var(--text-1);
+  box-shadow: var(--glass-shadow);
+}
+
+.rp-top-popover strong,
+.rp-dev-panel h2 {
+  font-size: var(--type-sm);
+  margin: 0;
+}
+
+.rp-dev-fixture {
+  color: var(--text-2);
+  font-size: var(--type-xs);
+}
+
+.rp-top-popover p {
+  color: var(--text-2);
+  font-size: var(--type-sm);
+  line-height: 1.5;
+}
+
+.rp-top-popover button {
+  min-height: var(--target-min);
+  padding: var(--space-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-control);
+  background: var(--glass-fill);
+  color: var(--text-1);
+  text-align: start;
+}
+
+.rp-dev-panel {
+  inset-inline-end: var(--space-5);
+}
+
+.rp-dev-panel .rp-data-switch {
+  background: var(--glass-fill-raised);
+}
+
+.rp-dev-panel .rp-reset {
+  color: var(--text-1);
+  justify-content: flex-start;
+}
+
+.reference-prototype[data-scene="today"] .rp-layout {
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--space-5);
+}
+
+.reference-prototype[data-scene="today"] .rp-layout.is-rail-expanded {
+  grid-template-columns: 304px minmax(0, 1fr);
+}
+
+.reference-prototype[data-scene="today"] .rp-rail-zone {
+  min-height: 0;
+  height: 560px;
+}
+
+.reference-prototype[data-scene="today"] .rp-morphing-rail.morphing-rail {
+  top: 124px;
+  min-height: 410px;
+  height: 410px;
+}
+
+.reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__backdrop {
+  background: rgb(9 12 20 / 0.46);
+}
+
+.reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__glass {
+  stroke: var(--glass-border-raised);
+}
+
+.reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__connected {
+  fill: var(--text-1);
+}
+
+.reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__header,
+.reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__link {
+  color: var(--text-1);
+}
+
+.reference-prototype[data-scene="today"]
+  .rp-morphing-rail
+  .morphing-rail__link[data-active="true"] {
+  color: var(--backdrop-solid);
+}
+
+.reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__toggle {
+  background: var(--glass-fill-raised);
+  color: var(--text-1);
+}
+
+.reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__footer {
+  visibility: hidden;
+}
+
+/* Visual labels for the compact icon-only dock. The accessible name remains
+ * on the actual button, independent of hover or CSS availability. */
+.reference-prototype[data-scene="today"]
+  .rp-morphing-rail[data-expanded="false"]
+  .morphing-rail__link:is(:hover, :focus-visible)::after {
+  content: attr(aria-label);
+  position: absolute;
+  inset-inline-start: calc(100% + var(--space-3));
+  top: 50%;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 160px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-chip);
+  background: var(--surface-solid);
+  color: var(--text-1);
+  font-size: var(--type-xs);
+  font-weight: 650;
+  box-shadow: var(--glass-shadow);
+  pointer-events: auto;
+  z-index: 15;
+}
+
+.reference-prototype[data-scene="today"]
+  .rp-rail-zone[data-tooltip-dismissed="true"]
+  .rp-morphing-rail[data-expanded="false"]
+  .morphing-rail__link::after {
+  content: none;
+}
+
+.reference-prototype[data-scene="today"] .rp-main {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.reference-prototype[data-scene="today"] .rp-main:focus {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-2);
+}
+
+.reference-prototype[data-scene="today"] .rp-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+
+.rp-fidelity-dashboard {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  color: var(--text-1);
+}
+
+.rp-fidelity-dashboard :is(h2, h3, p, label, input) {
+  unicode-bidi: plaintext;
+}
+
+/* Storybook's RTL decorator is an English-copy geometry fixture. The text
+ * itself must retain English punctuation even while the dock is mirrored. */
+[dir="rtl"] .reference-prototype .rp-fidelity-dashboard .rp-fidelity-intro h2,
+.reference-prototype[dir="rtl"] .rp-fidelity-dashboard .rp-fidelity-intro h2 {
+  unicode-bidi: plaintext;
+  direction: ltr !important;
+  text-align: right;
+}
+
+.rp-fidelity-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: 64px;
+}
+
+.rp-fidelity-intro h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.rp-fidelity-intro p {
+  margin: var(--space-2) 0 0;
+  font-size: var(--type-sm);
+  color: var(--rp-fidelity-dim);
+}
+
+.rp-fidelity-periods {
+  display: flex;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+  padding: var(--space-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.rp-fidelity-periods button {
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--rp-fidelity-dim);
+  font-size: var(--type-xs);
+}
+
+.rp-fidelity-periods button.is-selected {
+  background: var(--glass-fill-raised);
+  color: var(--text-1);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+.rp-fidelity-glass {
+  min-width: 0;
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-card);
+  background: var(--glass-fill);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+
+.rp-fidelity-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.rp-fidelity-stat {
+  display: flex;
+  flex-direction: column;
+  min-height: 173px;
+  padding: var(--space-4) var(--space-5);
+  transition: transform var(--motion-base);
+}
+
+.rp-fidelity-stat:hover {
+  transform: translateY(calc(-1 * var(--space-1)));
+}
+
+.rp-fidelity-stat-top,
+.rp-fidelity-stat-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.rp-fidelity-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-control);
+  background: var(--glass-fill-raised);
+  font-size: 1.15rem;
+}
+
+.rp-fidelity-stat-context {
+  color: var(--rp-fidelity-dim);
+  font-size: var(--type-xs);
+}
+
+.rp-fidelity-stat-title {
+  margin-top: var(--space-4);
+  font-size: var(--type-xs);
+  color: var(--rp-fidelity-dim);
+}
+
+.rp-fidelity-stat-value {
+  margin-top: var(--space-1);
+  color: var(--text-1);
+  font-size: clamp(1.65rem, 2.25vw, 2rem);
+  font-weight: 690;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+
+.rp-fidelity-stat-bottom {
+  margin-top: auto;
+  color: var(--rp-fidelity-muted);
+  font-size: var(--type-xs);
+}
+
+.rp-fidelity-spark {
+  width: 94px;
+  height: 28px;
+  flex: 0 0 94px;
+  overflow: visible;
+}
+
+.rp-fidelity-spark polyline {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.65);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rp-fidelity-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(310px, 1fr);
+  gap: var(--space-5);
+}
+
+.rp-fidelity-chart,
+.rp-fidelity-plan {
+  display: flex;
+  flex-direction: column;
+  min-height: 450px;
+  padding: var(--space-5);
+}
+
+.rp-fidelity-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.rp-fidelity-panel-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 670;
+  letter-spacing: -0.02em;
+}
+
+.rp-fidelity-panel-head h3:focus {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-2);
+}
+
+.rp-fidelity-panel-head p,
+.rp-fidelity-panel-metadata {
+  margin: var(--space-1) 0 0;
+  color: var(--rp-fidelity-dim);
+  font-size: var(--type-xs);
+}
+
+.rp-fidelity-panel-metadata {
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.rp-fidelity-bars {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 280px;
+  padding: var(--space-6) var(--space-4) 0;
+}
+
+.rp-fidelity-bar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100%;
+  min-width: 0;
+}
+
+.rp-fidelity-bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: min(100%, 52px);
+  flex: 1;
+  border-radius: var(--radius-control);
+}
+
+.rp-fidelity-bar {
+  width: 100%;
+  min-height: 12px;
+  border-radius: var(--radius-control) var(--radius-control) var(--space-1) var(--space-1);
+  background: rgb(255 255 255 / 0.4);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  transform-origin: bottom;
+  animation: rp-fidelity-grow var(--motion-slow) ease-out both;
+}
+
+.rp-fidelity-bar.is-focus {
+  background: var(--accent);
+  box-shadow: 0 0 24px rgb(59 130 246 / 0.26);
+}
+
+.rp-fidelity-bar-column > span {
+  overflow-wrap: anywhere;
+  color: var(--rp-fidelity-dim);
+  font-size: var(--type-xs);
+  text-align: center;
+}
+
+@keyframes rp-fidelity-grow {
+  from {
+    transform: scaleY(0.04);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.rp-fidelity-tasks {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.rp-fidelity-task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 61px;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: rgb(255 255 255 / 0.04);
+  color: var(--text-1);
+  text-align: start;
+  transition: transform var(--motion-fast), background-color var(--motion-fast);
+}
+
+.rp-fidelity-task:is(:hover, .is-selected) {
+  border-color: var(--glass-border);
+  background: var(--glass-fill-raised);
+}
+
+.rp-fidelity-task > svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin-inline-start: auto;
+  color: var(--rp-fidelity-dim);
+}
+
+.rp-fidelity-task-marker {
+  width: 4px;
+  height: 30px;
+  flex: 0 0 4px;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 0.38);
+}
+
+.rp-fidelity-task.is-selected .rp-fidelity-task-marker {
+  background: rgb(255 255 255 / 0.9);
+}
+
+.rp-fidelity-task-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-1);
+}
+
+.rp-fidelity-task-copy strong {
+  font-size: var(--type-sm);
+  font-weight: 630;
+}
+
+.rp-fidelity-task-copy small {
+  color: var(--rp-fidelity-dim);
+  font-size: var(--type-xs);
+}
+
+.rp-fidelity-start,
+.rp-fidelity-chart-empty button,
+.rp-fidelity-plan-empty button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: var(--type-sm);
+  font-weight: 680;
+}
+
+.rp-fidelity-start {
+  margin-top: var(--space-3);
+}
+
+.rp-fidelity-start svg,
+.rp-fidelity-chart-empty button svg,
+.rp-fidelity-plan-empty button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rp-fidelity-chart-empty,
+.rp-fidelity-plan-empty {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--space-3);
+  flex: 1;
+  max-width: 38ch;
+  color: var(--text-2);
+  font-size: var(--type-sm);
+}
+
+.rp-fidelity-chart-empty p,
+.rp-fidelity-plan-empty p {
+  line-height: 1.5;
+}
+
+.rp-fidelity-chart-empty input {
+  width: min(100%, 380px);
+  min-height: var(--target-min);
+  padding: var(--space-3);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-control);
+  background: rgb(8 10 16 / 0.55);
+  color: var(--text-1);
+}
+
+.rp-fidelity-chart-empty label {
+  color: var(--text-1);
+}
+
+.rp-fidelity-chart-empty small {
+  color: var(--text-2);
+}
+
+.reference-prototype :is(.rp-fidelity-start, .rp-fidelity-task, .rp-header-round):focus-visible,
+.reference-prototype .rp-fidelity-chart-empty input:focus-visible {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-1);
+}
+
+/* Actual solid and contrast-first materials for all dark dashboard panels. */
+:root[data-transparency="off"] .rp-fidelity-glass,
+:root[data-transparency="reduced"] .rp-fidelity-glass,
+:root[data-contrast="high"] .rp-fidelity-glass,
+:root[data-transparency="off"] .rp-top-navigation,
+:root[data-contrast="high"] .rp-top-navigation,
+:root[data-transparency="off"] .rp-header-round,
+:root[data-contrast="high"] .rp-header-round,
+:root[data-transparency="off"] .rp-fidelity-periods,
+:root[data-contrast="high"] .rp-fidelity-periods {
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-transparency="off"] .reference-prototype[data-scene="today"] .rp-environment,
+:root[data-contrast="high"] .reference-prototype[data-scene="today"] .rp-environment {
+  background-image: none;
+}
+
+:root[data-contrast="high"] .rp-fidelity-glass,
+:root[data-contrast="high"] .rp-top-navigation,
+:root[data-contrast="high"] .rp-header-round {
+  border: var(--border-control) solid var(--contrast-border);
+  box-shadow: none;
+}
+
+:root[data-theme="light"] .reference-prototype[data-scene="today"] {
+  --rp-fidelity-dim: #354152;
+  --rp-fidelity-muted: #2d3c4b;
+  --text-1: #101722;
+  --text-2: #344359;
+}
+
+:root[data-theme="light"] .reference-prototype[data-scene="today"] .rp-environment::before {
+  background: rgb(234 240 245 / 0.55);
+}
+
+:root[data-theme="light"] .rp-fidelity-glass {
+  background: rgb(255 255 255 / 0.55);
+  border-color: rgb(255 255 255 / 0.85);
+}
+
+:root[data-theme="light"][data-transparency="off"] .rp-fidelity-glass,
+:root[data-theme="light"][data-transparency="reduced"] .rp-fidelity-glass,
+:root[data-theme="light"][data-contrast="high"] .rp-fidelity-glass,
+:root[data-theme="light"][data-transparency="off"] .rp-top-navigation,
+:root[data-theme="light"][data-transparency="reduced"] .rp-top-navigation,
+:root[data-theme="light"][data-contrast="high"] .rp-top-navigation {
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-theme="light"] .rp-fidelity-task {
+  background: rgb(255 255 255 / 0.22);
+}
+
+:root[data-theme="light"] .rp-fidelity-task:is(.is-selected, :hover) {
+  background: rgb(255 255 255 / 0.65);
+}
+
+:root[data-theme="light"] .rp-fidelity-bar {
+  background: rgb(18 49 73 / 0.36);
+}
+
+:root[data-theme="light"] .rp-fidelity-bar.is-focus {
+  background: var(--accent);
+}
+
+:root[data-theme="light"] .rp-fidelity-chart-empty input {
+  background: #fff;
+}
+
+:root[data-theme="light"][data-transparency="off"] .rp-fidelity-chart-empty input,
+:root[data-theme="light"][data-contrast="high"] .rp-fidelity-chart-empty input {
+  border: var(--border-control) solid var(--text-1);
+  background: var(--surface-solid);
+}
+
+:root[data-theme="light"][data-transparency="off"] .rp-fidelity-periods button.is-selected,
+:root[data-theme="light"][data-contrast="high"] .rp-fidelity-periods button.is-selected {
+  border: var(--border-control) solid var(--text-1);
+  background: color-mix(in srgb, var(--text-1) 28%, var(--surface-solid));
+  color: var(--text-1);
+}
+
+@media (max-width: 1160px) {
+  .rp-fidelity-lower {
+    grid-template-columns: minmax(0, 1.4fr) minmax(290px, 1fr);
+  }
+  .rp-fidelity-stats {
+    gap: var(--space-3);
+  }
+  .rp-fidelity-stat {
+    padding: var(--space-4);
+  }
+  .reference-prototype[data-scene="today"] .rp-layout.is-rail-expanded .rp-fidelity-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reference-prototype[data-scene="today"] .rp-layout.is-rail-expanded .rp-fidelity-lower {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .rp-top-navigation {
+    gap: 0;
+    padding: var(--space-1);
+  }
+  .rp-top-navigation button {
+    padding-inline: var(--space-2);
+  }
+  .rp-top-navigation button svg {
+    display: none;
+  }
+  .reference-prototype[data-scene="today"] .rp-layout,
+  .reference-prototype[data-scene="today"] .rp-layout.is-rail-expanded {
+    display: block;
+  }
+  .reference-prototype[data-scene="today"] .rp-rail-zone {
+    display: none;
+  }
+  .reference-prototype[data-scene="today"] .rp-main {
+    min-height: 0;
+  }
+  .rp-fidelity-lower {
+    grid-template-columns: 1fr;
+  }
+  .rp-fidelity-bars {
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 650px) {
+  .rp-top-navigation {
+    display: none;
+  }
+  .rp-header {
+    flex-wrap: nowrap;
+  }
+  .rp-header-actions {
+    gap: var(--space-1);
+  }
+  .rp-brand-descriptor {
+    display: none;
+  }
+  .rp-header-round {
+    width: 36px;
+    height: 36px;
+  }
+  .rp-demo-chip {
+    padding: var(--space-2);
+    font-size: 0.7rem;
+  }
+  .rp-fidelity-intro {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .rp-fidelity-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rp-fidelity-stat {
+    min-height: 150px;
+  }
+  .rp-fidelity-spark {
+    display: none;
+  }
+  .rp-fidelity-chart,
+  .rp-fidelity-plan {
+    min-height: 390px;
+    padding: var(--space-4);
+  }
+  .rp-fidelity-bars {
+    gap: var(--space-2);
+    padding-inline: 0;
+  }
+  .rp-fidelity-bar-column > span {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .rp-brand-descriptor {
+    display: none;
+  }
+  .rp-header-actions .rp-header-round[aria-label="Search workspace"] {
+    display: none;
+  }
+  .rp-fidelity-stats {
+    gap: var(--space-2);
+  }
+  .rp-fidelity-stat {
+    padding: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .rp-fidelity-bar {
+    animation: none;
+  }
+}
+
+:root[data-motion="off"] .rp-fidelity-bar,
+:root[data-motion="reduced"] .rp-fidelity-bar {
+  animation: none;
+}
+
+:root[data-motion="off"] .rp-fidelity-stat,
+:root[data-motion="reduced"] .rp-fidelity-stat {
+  transition: none;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .rp-fidelity-stat {
+    transition: none;
+    transform: none;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .rp-fidelity-glass,
+  .rp-top-navigation,
+  .rp-header-round,
+  .rp-fidelity-periods {
+    background: var(--surface-solid);
+  }
+}
