@@ -9,7 +9,9 @@
   } catch {
     // Denied/corrupt localStorage is treated as a safe system default.
   }
-  const theme = ["light", "dark", "high-contrast"].includes(saved.theme) ? saved.theme : "system";
+  const theme = ["system", "light", "dark", "high-contrast"].includes(saved.theme)
+    ? saved.theme
+    : "dark";
   const transparency = ["reduced", "off"].includes(saved.transparency)
     ? saved.transparency
     : "full";

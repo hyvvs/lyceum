@@ -1,0 +1,304 @@
+/* Single production Lyceum surface. The approved Today material is shared
+ * with packages/ui/src/glass.css; this image is a public-domain artwork. */
+html {
+  scroll-behavior: auto;
+}
+body {
+  margin: 0;
+  background: var(--backdrop-solid);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+button,
+select,
+input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+a {
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+.lyceum-app {
+  --rp-fidelity-dim: var(--fidelity-muted);
+  --rp-fidelity-muted: var(--fidelity-muted);
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  overflow: clip;
+  color: var(--text-1);
+  background: var(--backdrop-solid);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.lyceum-app button:disabled {
+  cursor: default;
+}
+.lyceum-app button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.lyceum-app :is(button, a, select, input):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.lyceum-app .rp-environment {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--backdrop-solid)
+    url("../../../packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp")
+    var(--fidelity-backdrop-position) / cover no-repeat;
+  filter: brightness(var(--fidelity-backdrop-brightness));
+}
+.lyceum-app .rp-environment::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--backdrop-scrim);
+}
+.lyceum-app .rp-frame {
+  position: relative;
+  max-width: 1632px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+.lyceum-app .rp-skip {
+  position: fixed;
+  top: -120px;
+  left: var(--space-5);
+  z-index: 30;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  color: var(--text-1);
+  background: var(--surface-solid);
+}
+.lyceum-app .rp-skip:focus {
+  top: var(--space-2);
+}
+.lyceum-app .rp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: 60px;
+  margin-bottom: var(--space-5);
+  position: relative;
+  z-index: 8;
+}
+.lyceum-app .rp-brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  min-width: 205px;
+}
+.lyceum-app .rp-brand-word {
+  font-size: 1.55rem;
+  letter-spacing: -.055em;
+  color: #fff;
+}
+.lyceum-app .rp-brand-word span {
+  color: #83d7f7;
+}
+.lyceum-app .rp-brand-descriptor {
+  font-size: var(--type-xs);
+  color: var(--text-2);
+}
+.lyceum-app .rp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.lyceum-app .rp-top-navigation {
+  margin-left: auto;
+}
+.lyceum-app .rp-top-navigation button:disabled {
+  opacity: 0.62;
+}
+.lyceum-app .rp-top-navigation button.is-active {
+  background: var(--glass-fill-raised);
+  color: var(--text-1);
+}
+.lyceum-app .rp-top-navigation button:hover:not(:disabled) {
+  background: var(--glass-fill-raised);
+}
+.lyceum-app .rp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+.lyceum-today-main {
+  margin-left: 86px;
+  min-width: 0;
+  outline-offset: 8px;
+}
+.lyceum-today-dock.lyceum-dock {
+  position: absolute;
+  top: 50%;
+  left: var(--space-6);
+  transform: translateY(-50%);
+  z-index: 6;
+  width: var(--fidelity-dock-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--fidelity-dock-padding);
+  border-radius: var(--radius-pill);
+  background: var(--fidelity-rail-fill);
+  border: 1px solid var(--glass-border-raised);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.lyceum-today-dock button {
+  width: var(--fidelity-dock-disc);
+  height: var(--fidelity-dock-disc);
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--text-2);
+}
+.lyceum-today-dock button:disabled {
+  opacity: 0.65;
+}
+.lyceum-today-dock button.is-active {
+  background: #fff;
+  color: #0a1321;
+  box-shadow: 0 5px 18px rgb(0 0 0 / 0.28);
+}
+.lyceum-today-dock svg {
+  width: 19px;
+  height: 19px;
+}
+.lyceum-app .rp-top-popover {
+  top: 78px;
+  right: var(--space-6);
+}
+.lyceum-popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lyceum-popover-heading button {
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 22px;
+}
+.lyceum-preferences {
+  display: grid;
+  gap: var(--space-2);
+}
+.lyceum-preferences label {
+  color: var(--text-2);
+  font-size: var(--type-xs);
+}
+.lyceum-preferences select {
+  min-height: 44px;
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--surface-solid);
+  color: var(--text-1);
+  border: 1px solid var(--glass-border-raised);
+}
+.lyceum-preferences small {
+  color: var(--text-2);
+  margin-top: var(--space-2);
+}
+.lyceum-error {
+  max-width: 48rem;
+  margin: 20vh auto;
+  padding: 2rem;
+}
+.lyceum-error button,
+.lyceum-error a {
+  display: inline-block;
+  padding: 12px 18px;
+}
+
+@media (max-width: 1140px) {
+  .lyceum-app .rp-brand {
+    min-width: auto;
+  }
+  .lyceum-app .rp-brand-descriptor {
+    display: none;
+  }
+  .lyceum-app .rp-top-navigation button {
+    padding: 0 8px;
+  }
+}
+@media (max-width: 900px) {
+  .lyceum-today-main {
+    margin-left: 0;
+    padding-bottom: 78px;
+  }
+  .lyceum-today-dock.lyceum-dock {
+    position: fixed;
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    flex-direction: row;
+    border-radius: var(--radius-pill);
+  }
+  .lyceum-app .rp-header {
+    gap: var(--space-3);
+  }
+}
+@media (max-width: 650px) {
+  .lyceum-app .rp-frame {
+    padding: var(--space-4);
+  }
+  .lyceum-app .rp-header {
+    flex-wrap: nowrap;
+  }
+  .lyceum-app .rp-top-navigation {
+    display: none;
+  }
+  .lyceum-app .rp-header-actions {
+    gap: 4px;
+  }
+  .lyceum-app .rp-header-round {
+    width: 36px;
+    height: 36px;
+  }
+}
+:root[data-theme="light"] .lyceum-app {
+  --rp-fidelity-dim: var(--fidelity-light-muted);
+  --rp-fidelity-muted: var(--fidelity-light-secondary);
+}
+:root[data-theme="light"] .lyceum-app .rp-environment::before {
+  background: var(--fidelity-backdrop-light-scrim);
+}
+:root[data-transparency="off"] .lyceum-app .rp-environment,
+:root[data-contrast="high"] .lyceum-app .rp-environment {
+  background-image: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lyceum-app button:active:not(:disabled) {
+    transform: none;
+  }
+}

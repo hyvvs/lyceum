@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Icon } from "../../apps/web/src/icons";
+import { Icon } from "./icons";
 
 type Period = "Week" | "Month" | "Term";
 

@@ -1,9 +1,0 @@
-{
-  "build": {
-    "beforeBuildCommand": "node ../../scripts/build-m0-005-native-qa.mjs",
-    "frontendDist": "../../../.git/m0-005-visual-native/dist"
-  },
-  "bundle": {
-    "active": false
-  }
-}

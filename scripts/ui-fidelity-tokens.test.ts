@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 
 const tokens = readFileSync("packages/ui/src/glass.css", "utf8");
-const todaySkin = readFileSync("tests/fixtures/m0-005-fidelity-today.css", "utf8");
+const todaySkin = readFileSync("apps/web/src/today-shell.css", "utf8");
+const dashboardSkin = readFileSync("apps/web/src/today-dashboard.css", "utf8");
 
 function tokenValue(name: string): string {
   const re = new RegExp(`^\\s*${name}:\\s*([^;]+);`, "m");
@@ -59,10 +60,10 @@ describe("M0 shared fidelity material contract", () => {
     }
   });
 
-  test("the QA painting stays outside production-imported shared CSS", () => {
+  test("approved artwork is used only by the real Today surface, never shared primitive CSS", () => {
     expect(todaySkin).toContain("var(--fidelity-backdrop-position)");
     expect(todaySkin).toContain("var(--fidelity-backdrop-brightness)");
-    expect(todaySkin).toContain("var(--fidelity-glass-saturate)");
+    expect(dashboardSkin).toContain("var(--fidelity-glass-saturate)");
     expect(todaySkin).toContain("cole-course-of-empire-preblur.webp");
     expect(tokens).not.toContain("cole-course-of-empire-preblur.webp");
     expect(tokens).not.toContain("docs/design-reference/reference-home.png");

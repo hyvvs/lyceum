@@ -1,181 +1,250 @@
-import { GlassCard, GlassPanel } from "@lyceum/ui";
-import { Link } from "@tanstack/react-router";
+import { Dock, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@lyceum/ui";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./icons";
+import { usePreferences } from "./settings";
+import { FidelityToday } from "./today-dashboard";
 import { useDocumentTitle } from "./use-document-title";
-import { WorkerClient } from "./worker/client";
+
+const sections = [
+  { id: "today", label: "Today", icon: "home" },
+  { id: "plan", label: "Plan", icon: "clock" },
+  { id: "practice", label: "Practice", icon: "spark" },
+  { id: "sources", label: "Sources", icon: "book" },
+  { id: "models", label: "Models", icon: "settings" },
+] as const;
+
+type Overlay = "search" | "notifications" | "settings" | "profile" | "session" | null;
+
+function PreferencesPanel() {
+  const { preferences, storageAvailable, change } = usePreferences();
+  return (
+    <div className="lyceum-preferences">
+      <label htmlFor="lyceum-theme">Theme</label>
+      <select
+        id="lyceum-theme"
+        value={preferences.theme}
+        onChange={(event) => change({ theme: event.target.value as typeof preferences.theme })}
+      >
+        <option value="system">System</option>
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+        <option value="high-contrast">High contrast</option>
+      </select>
+      <label htmlFor="lyceum-transparency">Transparency</label>
+      <select
+        id="lyceum-transparency"
+        value={preferences.transparency}
+        onChange={(event) =>
+          change({ transparency: event.target.value as typeof preferences.transparency })
+        }
+      >
+        <option value="full">Full</option>
+        <option value="reduced">Reduced</option>
+        <option value="off">Off</option>
+      </select>
+      <label htmlFor="lyceum-language">Language</label>
+      <select
+        id="lyceum-language"
+        value={preferences.locale}
+        onChange={(event) => change({ locale: event.target.value as typeof preferences.locale })}
+      >
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+      <small>
+        {storageAvailable
+          ? "Appearance settings saved on this device"
+          : "Settings are not saved in this browser"}
+      </small>
+    </div>
+  );
+}
 
 export function TodayScreen() {
   const { t } = useTranslation();
   useDocumentTitle(t("navigation.today"));
-  const worker = useRef<WorkerClient | null>(null);
-  const currentRequestId = useRef<string | null>(null);
-  const [state, setState] = useState<
-    "idle" | "pending" | "connected" | "cancelled" | "aborted" | "failed"
-  >("idle");
+  const { preferences } = usePreferences();
+  const [overlay, setOverlay] = useState<Overlay>(null);
+  const [read, setRead] = useState(false);
+  const [goalDraft, setGoalDraft] = useState("");
+  const overlayRef = useRef<HTMLElement | null>(null);
+  const overlayTrigger = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    worker.current = createClient();
-    return () => {
-      worker.current?.close();
-      worker.current = null;
-      currentRequestId.current = null;
+    if (!overlay) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOverlay(null);
+        overlayTrigger.current?.focus();
+      }
     };
-  }, []);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [overlay]);
 
-  function createClient(): WorkerClient {
-    return new WorkerClient(
-      new Worker(new URL("./worker/engine.worker.ts", import.meta.url), { type: "module" }),
-      {
-        onCancellationAck: (id) => {
-          if (id !== currentRequestId.current) return;
-          setState((current) => (current === "aborted" ? "cancelled" : current));
-        },
-      },
-    );
+  function showOverlay(next: Overlay, event?: React.MouseEvent<HTMLButtonElement>) {
+    if (event) overlayTrigger.current = event.currentTarget;
+    setOverlay((current) => (current === next ? null : next));
   }
 
-  async function check(cancel: boolean) {
-    let client = worker.current;
-    if (!client) {
-      try {
-        client = createClient();
-        worker.current = client;
-      } catch {
-        setState("failed");
-        return;
-      }
-    }
-    const controller = new AbortController();
-    currentRequestId.current = null;
-    setState("pending");
-    const timer = cancel ? setTimeout(() => controller.abort(), 25) : undefined;
-    try {
-      const answer = await client.probe(cancel ? 250 : 0, controller.signal, (id) => {
-        currentRequestId.current = id;
-      });
-      setState(
-        answer.kind === "aborted"
-          ? "aborted"
-          : answer.kind === "cancelled"
-            ? "cancelled"
-            : "connected",
-      );
-    } catch {
-      if (worker.current === client) {
-        client.close();
-        worker.current = null; // The next action creates a healthy worker.
-      }
-      setState("failed");
-    } finally {
-      if (timer !== undefined) clearTimeout(timer);
-    }
-  }
+  const renderSection = (
+    id: string,
+    label: string,
+    icon: (typeof sections)[number]["icon"],
+    compact: boolean,
+  ) => (
+    <button
+      key={id}
+      type="button"
+      aria-current={id === "today" ? "page" : undefined}
+      aria-label={compact ? label : undefined}
+      title={id === "today" ? label : `${label} · coming soon`}
+      disabled={id !== "today"}
+      className={id === "today" ? "is-active" : ""}
+      onClick={() => {
+        document.getElementById("main-content")?.focus();
+        setOverlay(null);
+      }}
+    >
+      <Icon name={icon} />
+      {!compact && <span>{label}</span>}
+    </button>
+  );
 
   return (
-    <div className="screen today-screen">
-      <GlassPanel level="reading" className="hero" aria-labelledby="welcome-heading">
-        <div className="hero-content">
-          <p className="eyebrow">
-            <span className="eyebrow-line" />
-            {t("app.eyebrow")}
-          </p>
-          <h1 id="welcome-heading" tabIndex={-1}>
-            {t("app.title")}
-          </h1>
-          <p className="lede">{t("app.description")}</p>
-          <Link className="primary-action" to="/settings">
-            <span>{t("app.setupAction")}</span>
-            <Icon name="arrow" />
-          </Link>
-          <p className="hero-disclaimer">
-            <Icon name="shield" />
-            {t("app.notConfigured")}
-          </p>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="orbital orbital-one" />
-          <div className="orbital orbital-two" />
-          <div className="orbital orbital-three" />
-          <div className="orbit-core">
-            <Icon name="spark" />
+    <div
+      className="lyceum-app"
+      data-testid="lyceum-live-today"
+      data-screen="today"
+      data-theme-pref={preferences.theme}
+    >
+      <div className="rp-environment" aria-hidden="true" />
+      <a href="#main-content" className="rp-skip">
+        Skip to main content
+      </a>
+      <div className="rp-frame">
+        <header className="rp-header">
+          <div className="rp-brand" aria-label="Lyceum workspace">
+            <strong className="rp-brand-word">
+              lyceum<span aria-hidden="true">.</span>
+            </strong>
+            <span className="rp-brand-descriptor">Workspace</span>
           </div>
-          <div className="orbit-glint" />
-        </div>
-      </GlassPanel>
-
-      <div className="content-grid">
-        <GlassPanel level="raised" className="setup-card" aria-labelledby="setup-title">
-          <div className="card-topline">
-            <span className="card-icon">
-              <Icon name="spark" />
-            </span>
-            <span className="small-label">{t("setup.steps", { count: 2 })}</span>
-          </div>
-          <h2 id="setup-title">{t("setup.title")}</h2>
-          <ol className="setup-list">
-            <li>
-              <span className="step-number">01</span>
-              <span>{t("setup.first")}</span>
-              <span className="step-status">{t("setup.pending")}</span>
-            </li>
-            <li>
-              <span className="step-number">02</span>
-              <span>{t("setup.second")}</span>
-              <span className="step-status">{t("setup.future")}</span>
-            </li>
-          </ol>
-          <p className="setup-footnote">{t("setup.empty")}</p>
-        </GlassPanel>
-        <div className="side-stack">
-          <GlassCard level="raised" className="mini-card" aria-labelledby="library-heading">
-            <div className="mini-icon">
-              <Icon name="book" />
-            </div>
-            <div>
-              <h2 id="library-heading">{t("panels.library")}</h2>
-              <p>{t("panels.libraryBody")}</p>
-            </div>
-          </GlassCard>
-          <GlassCard className="mini-card" aria-labelledby="session-heading">
-            <div className="mini-icon">
+          <nav className="rp-top-navigation" aria-label="Main sections">
+            {sections.map(({ id, label, icon }) => renderSection(id, label, icon, false))}
+          </nav>
+          <div className="rp-header-actions">
+            <span className="rp-demo-chip">Demo data</span>
+            <button
+              type="button"
+              className="rp-header-round"
+              aria-label="Search workspace"
+              aria-expanded={overlay === "search"}
+              onClick={(e) => showOverlay("search", e)}
+            >
+              ⌕
+            </button>
+            <button
+              type="button"
+              className="rp-header-round"
+              aria-label="Notifications"
+              aria-expanded={overlay === "notifications"}
+              onClick={(e) => showOverlay("notifications", e)}
+            >
               <Icon name="clock" />
+              {!read && <span className="rp-notification-dot" aria-hidden="true" />}
+            </button>
+            <button
+              type="button"
+              className="rp-header-round"
+              aria-label="Settings"
+              aria-expanded={overlay === "settings"}
+              onClick={(e) => showOverlay("settings", e)}
+            >
+              <Icon name="settings" />
+            </button>
+            <button
+              type="button"
+              className="rp-header-round rp-profile"
+              aria-label="Demo profile"
+              aria-expanded={overlay === "profile"}
+              onClick={(e) => showOverlay("profile", e)}
+            >
+              A<span className="rp-profile-dot" aria-hidden="true" />
+            </button>
+          </div>
+        </header>
+
+        {overlay && (
+          <section
+            ref={overlayRef}
+            className="rp-top-popover"
+            aria-label={overlay === "settings" ? "Appearance settings" : `${overlay} information`}
+          >
+            <div className="lyceum-popover-heading">
+              <strong>
+                {overlay === "settings"
+                  ? "Settings"
+                  : overlay === "session"
+                    ? "Study session"
+                    : overlay.charAt(0).toUpperCase() + overlay.slice(1)}
+              </strong>
+              <button type="button" aria-label="Close panel" onClick={() => setOverlay(null)}>
+                ×
+              </button>
             </div>
-            <div>
-              <h2 id="session-heading">{t("panels.session")}</h2>
-              <p>{t("panels.sessionBody")}</p>
-            </div>
-          </GlassCard>
-        </div>
+            {overlay === "settings" && <PreferencesPanel />}
+            {overlay === "search" && (
+              <p>Today is the only available section. Other sections are being rebuilt.</p>
+            )}
+            {overlay === "notifications" && (
+              <>
+                <p>{read ? "No unread notifications." : "Demo reminder: 12 reviews scheduled."}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRead(true);
+                    setOverlay(null);
+                  }}
+                >
+                  Mark as read
+                </button>
+              </>
+            )}
+            {overlay === "profile" && (
+              <p>Demo profile · no learner account or personal progress connected.</p>
+            )}
+            {overlay === "session" && (
+              <p>
+                Session scheduling is a design preview. No learning session was started or saved.
+              </p>
+            )}
+          </section>
+        )}
+
+        <TooltipProvider>
+          <Dock orientation="vertical" className="lyceum-today-dock" aria-label="Section shortcuts">
+            {sections.map(({ id, label, icon }) => (
+              <Tooltip key={id}>
+                <TooltipTrigger asChild>{renderSection(id, label, icon, true)}</TooltipTrigger>
+                <TooltipContent text={label} side="right" />
+              </Tooltip>
+            ))}
+          </Dock>
+        </TooltipProvider>
+
+        <main id="main-content" className="lyceum-today-main" tabIndex={-1}>
+          <h1 className="rp-visually-hidden">Today</h1>
+          <FidelityToday
+            synthetic
+            goalDraft={goalDraft}
+            onGoalChange={setGoalDraft}
+            onSetup={() => setOverlay("settings")}
+            onOpenReading={() => setOverlay("session")}
+          />
+        </main>
       </div>
-      <GlassPanel level="reading" className="worker-card" aria-labelledby="worker-heading">
-        <div className="worker-copy">
-          <h2 id="worker-heading">{t("panels.worker")}</h2>
-          <p>{t("panels.workerBody")}</p>
-        </div>
-        <div className="worker-controls">
-          <output className="worker-status" data-testid="worker-status">
-            {t(`panels.${state}`)}
-          </output>
-          <button
-            type="button"
-            className="secondary-action"
-            disabled={state === "pending"}
-            onClick={() => void check(false)}
-          >
-            {t("panels.check")}
-          </button>
-          <button
-            type="button"
-            className="secondary-action"
-            disabled={state === "pending"}
-            onClick={() => void check(true)}
-          >
-            {t("panels.cancel")}
-          </button>
-        </div>
-      </GlassPanel>
     </div>
   );
 }

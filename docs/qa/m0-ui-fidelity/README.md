@@ -1,5 +1,20 @@
 # M0 UI fidelity — owner-directed Today screen review
 
+## 2026-11-28 live application integration (supersedes prior Storybook-only scope)
+
+The owner explicitly requested that the approved Today become the **only actual app entry route**, and that obsolete shells and parallel UIs be removed. The old prototype source and its original screenshot commands discussed later in this document have therefore been retired. The historical screenshots and scores below remain evidence of the earlier design-study stage, **not** a current runnable Storybook implementation or a new owner-approved rating.
+
+| Real launched web app, 1440 × 900 | Evidence |
+|---|---|
+| [Development Vite app, port 5173](screens/live-today-dev-1440x900.png) | [Browser evidence](screens/live-today-dev-1440x900.json) |
+| [Built production preview, port 4173](screens/live-today-production-1440x900.png) | [Browser evidence](screens/live-today-production-1440x900.json) |
+
+Actual Chromium loads returned 200, no JavaScript errors, four dashboard metric cards, six chart bars, the real artwork asset, zero legacy shell DOM nodes, and zero service-worker registrations/controller or Cache Storage entries in fresh contexts. A seeded Workbox cache and manually installed retirement worker were also verified to clean up in automated Playwright tests. `pnpm verify`, production `@lyceum/web` build, and **6/6** current web E2E checks passed. Actual user browser profiles are not directly inspected; cleanup activates when they load/update to the new application. There is no active PWA offline cache in the new build.
+
+Reproduce with `corepack pnpm --filter @lyceum/web build`, `corepack pnpm --filter @lyceum/web preview --port 4173 --strictPort`, then `node scripts/capture-live-today.mjs http://127.0.0.1:4173`. See `apps/web/README.md`. The previous design-study scores below do not establish final accessibility or owner visual approval.
+
+---
+
 **Branch:** `m0/ui-fidelity`. **Scope:** opt-in synthetic Storybook Today screen and QA scripts only; not the ordinary product router, accepted Windows/macOS Tauri security, stored learner data or release. PR #33 remains its separate open draft, not merged. This work has **not** received owner aesthetic acceptance.
 
 ## Exact current-source screenshot comparison — 1440 × 900

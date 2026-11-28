@@ -8,4 +8,4 @@
 
 **Transformation:** Local, offline PIL resize to 1600 × 993, Gaussian radius 8 px, static WebP quality 75; 20,710 bytes. The original JPEG was kept in an ignored private workspace, not committed.
 
-**Scope:** QA-only Storybook visual prototype. This note records artwork provenance, not independent legal sign-off on the Commons digital reproduction; recheck any required file-page conditions before external distribution or release. Reference screenshots in `docs/design-reference` are *not* used as runtime assets.
+**Scope:** As of 2026-11-28 the owner explicitly authorized moving the glass Today artwork into the live web/desktop frontend. This note records artwork provenance, not independent legal sign-off on the Commons digital reproduction; recheck any required file-page conditions before external distribution or release. Reference screenshots in `docs/design-reference` are *not* used as runtime assets.

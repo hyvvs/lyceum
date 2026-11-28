@@ -12,7 +12,7 @@ describe("device-only validated preferences", () => {
     expect(
       normalizePreferences({ theme: "javascript:evil", locale: "xx", transparency: "unknown" }),
     ).toEqual({
-      theme: "system",
+      theme: "dark",
       locale: "en",
       transparency: "full",
     });
@@ -33,7 +33,7 @@ describe("device-only validated preferences", () => {
       },
     };
     expect(readPreferences(denied)).toEqual({
-      theme: "system",
+      theme: "dark",
       locale: "en",
       transparency: "full",
     });
@@ -42,7 +42,7 @@ describe("device-only validated preferences", () => {
     );
     expect(canReadStorage(denied)).toBe(false);
     expect(readPreferences({ getItem: () => "{not-json" })).toEqual({
-      theme: "system",
+      theme: "dark",
       locale: "en",
       transparency: "full",
     });

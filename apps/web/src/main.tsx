@@ -3,18 +3,15 @@ import { Component, type ErrorInfo, type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import "@lyceum/ui/glass.css";
-import "./shell.css";
-import "./shell-navigation.css";
-import "./shell-panels.css";
-import "./shell-settings.css";
-import "./responsive.css";
+import "./today-shell.css";
+import "./today-dashboard.css";
 import { createTranslations } from "./i18n";
 import { applyPreferences, readPreferences } from "./preferences";
 import { ErrorScreen, router } from "./router";
 import { PreferenceProvider } from "./settings";
 
-// Vite eliminates this branch and its Tauri API chunk from ordinary browser/
-// PWA builds. The native app uses a separately hardened desktop CSP build.
+// Vite eliminates this branch and its Tauri API chunk from ordinary browser
+// builds. The native app uses a separately hardened desktop CSP build.
 if (import.meta.env.MODE === "desktop") {
   const verifyNativeBridge = () => {
     void import("./desktop-native").then(({ verifyDesktopIpc }) => verifyDesktopIpc());
