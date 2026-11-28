@@ -6,15 +6,9 @@ import { usePreferences } from "./settings";
 import { FidelityToday } from "./today-dashboard";
 import { useDocumentTitle } from "./use-document-title";
 
-const sections = [
-  { id: "today", label: "Today", icon: "home" },
-  { id: "plan", label: "Plan", icon: "clock" },
-  { id: "practice", label: "Practice", icon: "spark" },
-  { id: "sources", label: "Sources", icon: "book" },
-  { id: "models", label: "Models", icon: "settings" },
-] as const;
+const sections = [{ id: "today", label: "Today", icon: "home" }] as const;
 
-type Overlay = "search" | "notifications" | "settings" | "profile" | "session" | null;
+type Overlay = "settings" | null;
 
 function PreferencesPanel() {
   const { preferences, storageAvailable, change } = usePreferences();
@@ -66,7 +60,6 @@ export function TodayScreen() {
   useDocumentTitle(t("navigation.today"));
   const { preferences } = usePreferences();
   const [overlay, setOverlay] = useState<Overlay>(null);
-  const [read, setRead] = useState(false);
   const [goalDraft, setGoalDraft] = useState("");
   const overlayRef = useRef<HTMLElement | null>(null);
   const overlayTrigger = useRef<HTMLButtonElement | null>(null);
@@ -99,9 +92,8 @@ export function TodayScreen() {
       type="button"
       aria-current={id === "today" ? "page" : undefined}
       aria-label={compact ? label : undefined}
-      title={id === "today" ? label : `${label} · coming soon`}
-      disabled={id !== "today"}
-      className={id === "today" ? "is-active" : ""}
+      title={label}
+      className="is-active"
       onClick={() => {
         document.getElementById("main-content")?.focus();
         setOverlay(null);
@@ -139,98 +131,43 @@ export function TodayScreen() {
             <button
               type="button"
               className="rp-header-round"
-              aria-label="Search workspace"
-              aria-expanded={overlay === "search"}
-              onClick={(e) => showOverlay("search", e)}
-            >
-              ⌕
-            </button>
-            <button
-              type="button"
-              className="rp-header-round"
-              aria-label="Notifications"
-              aria-expanded={overlay === "notifications"}
-              onClick={(e) => showOverlay("notifications", e)}
-            >
-              <Icon name="clock" />
-              {!read && <span className="rp-notification-dot" aria-hidden="true" />}
-            </button>
-            <button
-              type="button"
-              className="rp-header-round"
               aria-label="Settings"
               aria-expanded={overlay === "settings"}
               onClick={(e) => showOverlay("settings", e)}
             >
               <Icon name="settings" />
             </button>
-            <button
-              type="button"
-              className="rp-header-round rp-profile"
-              aria-label="Demo profile"
-              aria-expanded={overlay === "profile"}
-              onClick={(e) => showOverlay("profile", e)}
-            >
-              A<span className="rp-profile-dot" aria-hidden="true" />
-            </button>
           </div>
         </header>
 
         {overlay && (
-          <section
-            ref={overlayRef}
-            className="rp-top-popover"
-            aria-label={overlay === "settings" ? "Appearance settings" : `${overlay} information`}
-          >
+          <section ref={overlayRef} className="rp-top-popover" aria-label="Appearance settings">
             <div className="lyceum-popover-heading">
-              <strong>
-                {overlay === "settings"
-                  ? "Settings"
-                  : overlay === "session"
-                    ? "Study session"
-                    : overlay.charAt(0).toUpperCase() + overlay.slice(1)}
-              </strong>
+              <strong>Settings</strong>
               <button type="button" aria-label="Close panel" onClick={() => setOverlay(null)}>
                 ×
               </button>
             </div>
-            {overlay === "settings" && <PreferencesPanel />}
-            {overlay === "search" && (
-              <p>Today is the only available section. Other sections are being rebuilt.</p>
-            )}
-            {overlay === "notifications" && (
-              <>
-                <p>{read ? "No unread notifications." : "Demo reminder: 12 reviews scheduled."}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRead(true);
-                    setOverlay(null);
-                  }}
-                >
-                  Mark as read
-                </button>
-              </>
-            )}
-            {overlay === "profile" && (
-              <p>Demo profile · no learner account or personal progress connected.</p>
-            )}
-            {overlay === "session" && (
-              <p>Study sessions are not available yet. No learning session was started or saved.</p>
-            )}
+            <PreferencesPanel />
           </section>
         )}
 
-        <TooltipProvider>
-          <Dock orientation="vertical" className="lyceum-today-dock" aria-label="Section shortcuts">
-            {sections.map(({ id, label, icon }) => (
-              <Tooltip key={id}>
-                <TooltipTrigger asChild>{renderSection(id, label, icon, true)}</TooltipTrigger>
-                <TooltipContent text={label} side="right" />
-              </Tooltip>
-            ))}
-          </Dock>
-        </TooltipProvider>
+        {sections.length > 1 && (
+          <TooltipProvider>
+            <Dock
+              orientation="vertical"
+              className="lyceum-today-dock"
+              aria-label="Section shortcuts"
+            >
+              {sections.map(({ id, label, icon }) => (
+                <Tooltip key={id}>
+                  <TooltipTrigger asChild>{renderSection(id, label, icon, true)}</TooltipTrigger>
+                  <TooltipContent text={label} side="right" />
+                </Tooltip>
+              ))}
+            </Dock>
+          </TooltipProvider>
+        )}
 
         <main id="main-content" className="lyceum-today-main" tabIndex={-1}>
           <h1 className="rp-visually-hidden">Today</h1>
@@ -239,7 +176,6 @@ export function TodayScreen() {
             goalDraft={goalDraft}
             onGoalChange={setGoalDraft}
             onSetup={() => setOverlay("settings")}
-            onOpenReading={() => setOverlay("session")}
           />
         </main>
       </div>

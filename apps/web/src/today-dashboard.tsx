@@ -73,13 +73,11 @@ export function FidelityToday({
   goalDraft,
   onGoalChange,
   onSetup,
-  onOpenReading,
 }: {
   synthetic: boolean;
   goalDraft: string;
   onGoalChange: (text: string) => void;
   onSetup: () => void;
-  onOpenReading: (step: number) => void;
 }) {
   const [period, setPeriod] = useState<Period>("Week");
   const [selectedTask, setSelectedTask] = useState(0);
@@ -224,13 +222,6 @@ export function FidelityToday({
                   <Icon name="arrow" />
                 </button>
               ))}
-              <button
-                type="button"
-                className="rp-fidelity-start"
-                onClick={() => onOpenReading(demoPlan[selectedTask]?.step ?? 0)}
-              >
-                Start session <Icon name="arrow" />
-              </button>
             </div>
           ) : (
             <div className="rp-fidelity-plan-empty">

@@ -18,9 +18,9 @@ test("production entry is only the approved Today dashboard, never a gallery or 
   await expect(
     page.getByRole("navigation", { name: "Main sections" }).getByRole("button", { name: "Today" }),
   ).toHaveAttribute("aria-current", "page");
-  await expect(
-    page.getByRole("navigation", { name: "Main sections" }).getByRole("button", { name: "Plan" }),
-  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: /^(Plan|Practice|Sources|Models)$/ })).toHaveCount(
+    0,
+  );
   await expect(page.locator(".rp-environment")).toHaveCSS(
     "background-image",
     /cole-course-of-empire-preblur/,
@@ -61,14 +61,11 @@ test("settings are part of the one shell, keyboard reachable, persisted locally"
   await expect(page.locator("html")).toHaveAttribute("data-transparency", "off");
 });
 
-test("demo actions give truthful feedback and never start a tutor or provider", async ({
-  page,
-}) => {
+test("unimplemented session has no actionable control", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Month" }).click();
   await expect(page.getByRole("button", { name: "Month" })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Start session" }).click();
-  await expect(page.getByText("No learning session was started or saved.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start session" })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1, name: "Today" })).toHaveCount(1);
 });
 
@@ -93,7 +90,7 @@ test("responsive and contrast fallbacks keep real Today accessible", async ({ pa
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Good evening, Alex" })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Section shortcuts" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Section shortcuts" })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.evaluate(() => {
     document.documentElement.dataset.transparency = "off";
