@@ -87,7 +87,15 @@ test("hover and keyboard focus styling survive theme changes", async ({ page }) 
   await page.goto(story("hover"));
   const hoverTrigger = page.getByRole("button", { name: "Open study preferences" });
   await hoverTrigger.hover();
-  await expect(hoverTrigger).toHaveCSS("filter", "brightness(1.08)");
+  await expect(hoverTrigger).toHaveCSS("filter", "none");
+  await expect
+    .poll(() =>
+      hoverTrigger.evaluate((element) => {
+        const transform = getComputedStyle(element).transform;
+        return transform === "none" ? 0 : new DOMMatrixReadOnly(transform).m42;
+      }),
+    )
+    .toBeLessThan(0);
 
   for (const name of ["default", "light", "high-contrast"]) {
     await page.goto(story(name));

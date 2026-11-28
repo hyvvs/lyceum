@@ -39,7 +39,24 @@ export const Negative: Story = {
   },
 };
 export const NoData: Story = { args: { value: null, icon: undefined } };
-export const Hover: Story = {};
+export const Hover: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Display-only metric: hover, keyboard focus and disabled interaction do not apply to the card itself.",
+      },
+    },
+  },
+};
+export const Loading: Story = {
+  render: (args) => (
+    <div className="storybook-stack" aria-busy="true">
+      <StatCard {...args} value={null} unavailableLabel="Awaiting measurement" />
+      <output>Loading sample measurement…</output>
+    </div>
+  ),
+};
 export const ErrorState: Story = {
   args: { value: null, unavailableLabel: "Measurement unavailable after a failed refresh" },
 };

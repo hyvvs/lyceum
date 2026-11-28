@@ -20,10 +20,24 @@ export function expectedStoryStates(stories: readonly PrimitiveStory[]): string[
       case "Primitives/BarChart":
       case "Primitives/MasteryRing":
       case "Primitives/ChatBubble":
+      case "Primitives/Avatar":
+      case "Primitives/Chip":
+      case "Primitives/EmptyStateCard":
+      case "Primitives/Input":
+      case "Primitives/ListRow":
+      case "Primitives/SkeletonLoader":
         states = [name];
         break;
+      case "Primitives/Popover":
+        states =
+          name === "disabled" || name === "loading" ? ["closed"] : ["popover-open", "closed"];
+        break;
       case "Primitives/Dock":
-        states = [name === "empty" ? "empty" : "tooltip-open"];
+        // Empty, disabled, loading and error fixtures intentionally contain
+        // no operable link. They still receive full axe scans as-is.
+        states = [
+          ["empty", "disabled", "loading", "error-state"].includes(name) ? name : "tooltip-open",
+        ];
         break;
       case "Primitives/Dialog":
         states = [name === "disabled" ? "disabled" : "dialog-open"];

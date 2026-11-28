@@ -136,16 +136,21 @@ for (const [family, selector] of [
           .hover();
       }
       if (slug === "focus") {
+        const control = page
+          .locator(
+            family === "RoundIconButton"
+              ? ".lyceum-round-icon-button"
+              : ".lyceum-segmented-control__input",
+          )
+          .first();
+        // New focus stories intentionally start with the control focused.
+        // Prove keyboard traversal still returns to it rather than pressing
+        // Tab once and accidentally moving *away* from the focused control.
+        await expect(control).toBeFocused();
+        await page.keyboard.press("Shift+Tab");
+        await expect(control).not.toBeFocused();
         await page.keyboard.press("Tab");
-        await expect(
-          page
-            .locator(
-              family === "RoundIconButton"
-                ? ".lyceum-round-icon-button"
-                : ".lyceum-segmented-control__input",
-            )
-            .first(),
-        ).toBeFocused();
+        await expect(control).toBeFocused();
       }
       if (slug === "interactive") {
         if (family === "RoundIconButton") {

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Button } from "./button";
 import { PillNav } from "./pill-nav";
 
 const links = (
@@ -28,7 +29,10 @@ export const Focus: Story = {
     <PillNav
       {...args}
       ref={(node) => {
-        if (node) node.dataset.refProof = "attached";
+        if (node) {
+          node.dataset.refProof = "attached";
+          node.querySelector<HTMLAnchorElement>("a[href]")?.focus();
+        }
       }}
     />
   ),
@@ -58,6 +62,23 @@ export const LongText: Story = {
 };
 export const Loading: Story = {
   args: { "aria-busy": true, children: <output>Preparing navigation</output> },
+};
+export const Disabled: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Navigation itself is passive; an unavailable destination is represented by a disabled action rather than an active link.",
+      },
+    },
+  },
+  args: {
+    children: (
+      <Button disabled variant="ghost">
+        Settings unavailable
+      </Button>
+    ),
+  },
 };
 export const ErrorState: Story = {
   args: { children: <span role="alert">Navigation temporarily unavailable</span> },

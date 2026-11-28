@@ -148,7 +148,7 @@ test("same mounted real Dialog and separately portalled Select survive runtime p
   await assertStillMounted();
   await axeState(page, "initial-dark-full");
   const dark = await computedPopup(page);
-  expect(dark.blur).toContain("blur(");
+  expect(dark.blur).toBe("none");
 
   const steps: { name: string; patch: PreferencePatch }[] = [
     { name: "light-full", patch: { theme: "light" } },
@@ -180,7 +180,7 @@ test("same mounted real Dialog and separately portalled Select survive runtime p
       expect(styles.blur).toBe("none");
     }
     if (step.name === "standard-full" || step.name === "full-restored")
-      expect(styles.blur).toContain("blur(");
+      expect(styles.blur).toBe("none");
     if (step.name === "full-motion") expect(styles.slow).toBe(".45s");
     if (step.name === "reduced-motion") expect(styles.slow).toBe(".15s");
     if (step.name === "off-motion") {

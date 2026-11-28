@@ -22,6 +22,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Blue: Story = {};
+export const Default: Story = {};
 export const Amber: Story = { args: { hue: "amber" } };
 export const Purple: Story = { args: { hue: "purple" } };
 export const Green: Story = { args: { hue: "green" } };
@@ -40,7 +41,7 @@ export const Focus: Story = {
     children: (
       <>
         <h2>Category keyboard</h2>
-        <Button type="button" variant="secondary">
+        <Button type="button" variant="secondary" autoFocus>
           Focused tile action
         </Button>
       </>

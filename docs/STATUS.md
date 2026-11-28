@@ -2,6 +2,83 @@
 
 Shared memory for humans and agents. Newest entries first. Keep entries short. Mark blocked items with `BLOCKED:`.
 
+## 2026-11-28 · Step 2 + Step 3 shared fidelity foundation completed — exact working branch only
+
+Following the controlling inventory below, centralized Today values in `packages/ui/src/glass.css` (offline 8px backdrop preblur, brightness 1, scrim 58%, crystal fill 7%, blur 24px, rim 14%, saturation 140%, deeper `#245acc` blue with white text, 6.16:1). Added/reworked the actual shared components, 7 previously missing modules, Storybook dark/light/solid/high-contrast/200%-text/reduced-motion/RTL/loading/error/focus variations and a genuine 3-view 1440×900 QA gallery. Independent read-only `lyceum-ux-review` of actual gallery screenshots and source exposed docking/scrolling, Popover portal collision/focus and light-theme semantics issues, which were corrected in source and tested; details/screenshots at [shared component QA](qa/m0-ui-fidelity/shared-components.md). **Exact shared-state gates:** `pnpm verify` PASS, Storybook PASS, full Playwright **164 passed + one historical skip**, **465** generated primitive stories/**503** exact fail-closed axe states executed, `web:build` and production fixture-art isolation PASS, unrestricted JS audit PASS. This is a shared component implementation/QA checkpoint, **not** a product screen score or owner acceptance. Next requested visual rounds must occur **Plan → Practice → Sources → Models → Study session → Reading → Setup/goal contract → Settings**, committing/publishing screenshots and honest `docs/20` scores after each and **before** starting the next. **BLOCKED:** authentic full reference parity, human/native accessibility, hardware FPS/blur/physical performance and legal/installer acceptance, owner visual approval and production migration. Existing Draft PR #33 remains open/unmerged; no provider call, persistence/router or M0-007.
+
+## 2026-11-28 · Controlling inventory before M0 UI fidelity expansion — **NO BUILD STARTED**
+
+**Baseline:** local branch `m0/ui-fidelity`, clean at `f25a9f44b965c892ff60714bb2941e1a59b799a8`. Inspected the real `apps/web/src/router.tsx`, `today.tsx`, `settings-screen.tsx`, `main.tsx`, `tests/fixtures/m0-005-reference-prototype.stories.tsx`, `m0-017-v5-composition.stories.tsx`, all `packages/ui/src/*.tsx` exported components, `packages/ui/src/index.ts`, `glass.css`, `docs/20-ui-fidelity-brief.md` and `lyceum-ui-fidelity` skill. **Important distinction:** the owner-liked fidelity **Today is currently a Storybook-only opt-in fixture**, not the production `/` route. The production web/PWA and Tauri router still has **two routes only** (`/`, `/settings`). Below, **OLD** means visually not yet brought to the final dark/transparent fidelity Today standard; **PARTIAL** means matching shared token/semantic infrastructure exists but fidelity appearance, density, motion, 17+/20 screenshot proof or variants still need work; **NEW/REFERENCE** means the Storybook-only Today is already the approved *direction*, not owner-signed-off.
+
+### Actual screens, routes, experimental sections and requested gaps
+
+| Surface | Actual source / availability now | Fidelity status and specific gap |
+|---|---|---|
+| **Web Today** `/` | `apps/web/src/today.tsx`, real route | **OLD**: near-opaque reading-glass hero, orbit/orb illustration, slogan/copy and generic setup/mini cards + worker diagnostic; not the new dashboard |
+| **Web Settings** `/settings` | `apps/web/src/settings-screen.tsx`, real lazy route | **OLD**: near-opaque settings form and simple note, legacy selects, no new shell/hover or cards |
+| **Web error/not found/boot failure** | `router.tsx::ErrorScreen`, `main.tsx::ApplicationBoundary` + static fallback | **OLD**: generic reading-card/error actions, unreviewed in fidelity materials |
+| **Web common shell** | `router.tsx::RootLayout, Brand, Navigation, DockNavigation, SettingsRoute` | **OLD/PARTIAL**: two-item nav and grip dock, atmospheric gradient shapes, legacy status/footer; routes intentionally unchanged |
+| **QA Today (synthetic + honest empty)** | `tests/fixtures/m0-005-fidelity-today.tsx` rendered by `ReferencePrototype` | **NEW/REFERENCE**: real 1440×900 captures, 17/20 provisional self-score, new backdrop; still has local hardcoded scrim/brightness/saturation and motion/material overrides that must move to shared tokens |
+| **QA Sources** | `ReferencePrototype` `scene === "sources"` | **OLD**: previous simple source list/empty card, not the requested tinted library grid |
+| **QA Reading** | `ReferencePrototype` `scene === "reading"` | **OLD/PARTIAL**: functional 3-section reading paper, reflection/continue/previous; old standalone layout instead of full new material system |
+| **QA Setup** | `ReferencePrototype` `scene === "setup"` | **OLD**: simple one-pane actions and ephemeral goal summary; no explicit goal contract screen |
+| **QA Plan** | Top-nav `Plan` shortcut into Today's task panel; no distinct scene | **MISSING**: build dedicated timeline/calendar scene |
+| **QA Practice** | Top-nav `Practice` currently opens the Reading demo; no distinct library scene | **MISSING**: build dedicated tinted-glass practice library |
+| **QA Models** | Top-nav `Models` goes to Setup; no distinct model screen | **MISSING**: build synthetic provider capability/privacy cards, no real model calls |
+| **QA Study session** | No dedicated scene; `openExampleReading` opens Reading | **MISSING**: three-pane plan/chat/concept scene, use near-opaque reading material only for meaningful transcript |
+| **QA Setup/goal contract** | A draft in Today carries to Setup in React state only | **PARTIAL/MISSING**: design contract flow; do not add persistence/provider operations without distinct authorization |
+| **QA Settings** | Only the production Settings route, not a QA scene | **MISSING in fidelity workspace**; retain/validate separate real settings route |
+| **Older M0-017 visual composition** | `tests/fixtures/m0-017-v5-composition.stories.tsx`: `#scene-overview`, `#scene-library`, `#scene-reading`, `#scene-privacy` | **OLD/HISTORICAL fixture**: separate reference experiment, not learner routes; preserve regression coverage, do not confuse with new owner-approved direction |
+| **Storybook preferences/portal harness** | `tests/fixtures/runtime-preferences.stories.tsx` | **INFRA/TEST**: dialog/select/preferences test harness, not a user-facing route; must retain accessibility coverage |
+
+**Existing Storybook fidelity variants:** `EmptyToday`, `SyntheticToday`, `SyntheticSources`, `ReadingSurface`, `ExpandedRail`, `LightGlass`, `LightSolid`, `SolidFallback`, `HighContrast`, `ReducedMotion`, `MotionOff`, `RightToLeft`, `DoubleText`. They are appearance/test variants, not 13 distinct screens.
+
+### Complete exported `packages/ui` component inventory (19 component modules)
+
+| Module and exported components | Current material/style status | Required fidelity work |
+|---|---|---|
+| `glass-panel.tsx`: **GlassPanel** | **PARTIAL** semantic `glass`, `glass-raised`, `glass-float`, `glass-reading` recipes | Dark float/reading separation, hover/focus and backdrop screenshots |
+| `glass-card.tsx`: **GlassCard** | **PARTIAL** two raised/standard recipes | Same crystal treatment, hover lift, state stories |
+| `tint-card.tsx`: **TintCard** | **PARTIAL** five hue options blue/amber/purple/green/red | Controlled tint with one focal accent; check contrast and library states |
+| `stat-card.tsx`: **StatCard** | **OLD/PARTIAL** numeric semantics/delta/trend exist; raised solid icon/delta and uncolored sparkline | Delta pills, directional color, restrained colored trend, optional count-up and accessible fallbacks |
+| `bar-chart.tsx`: **BarChart** | **OLD/PARTIAL** semantic units/values/empty; solid chart track | Frosted vertical bars, one vivid highlight, baseline growth and reduced motion |
+| `pill-nav.tsx`: **PillNav** | **PARTIAL** semantic wrapper with recipe, actual shape consumer-owned | Centered top nav, active/hover shared material and screenshots |
+| `dock.tsx`: **Dock** | **OLD/PARTIAL** pure nav wrapper; consumer owns links/tooltips, active visuals not shared | 56px content-sized dock with single shared-element active disc and accessible tooltips |
+| `morphing-rail.tsx`: **MorphingRail**, helper **connectedSelectionPath** | **PARTIAL** physically connected/interruptible spring; too-wide 72px collapsed dock, legacy expanded rail | Integrate sizing/selection with new compact dock; preserve tested reversible motion |
+| `round-icon-button.tsx`: **RoundIconButton** with `RoundIconBadge` type | **OLD/PARTIAL** status badge and loading semantics but mostly opaque fill | 40px round crystal buttons, badge contrast/keyboard variants |
+| `segmented-control.tsx`: **SegmentedControl** / `SegmentOption` | **OLD/PARTIAL** native radio semantics, old solid options | Glass capsule, selected pill, full state stories |
+| `tabs.tsx`: **Tabs**, **TabsList**, **TabsTrigger**, **TabsContent** | **OLD/PARTIAL** Radix accessible structure, earlier solid look | Glass tabs, focus, RTL and all required variants |
+| `button.tsx`: **Button** | **OLD/PARTIAL** primary/secondary/ghost/danger and loading semantics | Deeper cobalt primary with actual white contrast, one per view, motion |
+| `select.tsx`: **Select**, **SelectTrigger**, **SelectValue**, **SelectContent**, **SelectItem** | **OLD/PARTIAL** Radix keyboard/portal/positioning, solid control/menu | Glass trigger with legible floating menu and solid/contrast fallback |
+| `dialog.tsx`: **Dialog**, **DialogTrigger**, **DialogClose**, **DialogContent** | **PARTIAL** Radix focus/portals and glass content | Dark reading-worthy dialog and distinct overlay, no nested blur |
+| `tooltip.tsx`: **TooltipProvider**, **Tooltip**, **TooltipTrigger**, **TooltipContent** | **PARTIAL** hoverable accessible Radix tooltip | Crystal styling, pointer/focus/escape/hit-test and 200%-text |
+| `toast.tsx`: **ToastProvider**, **ToastViewport**, **Toast**, **ToastTitle**, **ToastDescription**, **ToastAction**, **ToastClose** | **PARTIAL** timeout/pause/priority/stack behavior with old body | Crystal material and action/contrast states, preserve screen-reader priority |
+| `chat-bubble.tsx`: **ChatBubble** | **OLD/PARTIAL** tutor near-opaque reading bubble, learner raised glass with accent border | Distinct cobalt learner vs true glass tutor; transcript contrasts, streaming/error states |
+| `mastery-ring.tsx`: **MasteryRing** | **OLD/PARTIAL** SVG accessible value/uncertainty; plain style | Crisp crystal ring, limited accent, animation and no-data handling |
+| `visually-hidden.tsx`: **VisuallyHidden** | **KEEP** semantic utility, no visible style | Regress accessibility; do not introduce decorative effects |
+
+**Other UI-related `packages/ui` modules, not additional rendered components:** `motion.ts` (motion presets), `morphing-rail.css` (connected rail skin), `glass.css` (theme/material/control surface), `select-inert.ts` (inert/portal helper), `index.ts` (all 19 modules' exports), tests and `*.stories.tsx`. Existing stories cover many dark/light/RTL/200%/loading/error states **unevenly**; this is **not** an assertion of full required state coverage. **Not present as standalone exported components:** ListRow/mode marker, separate generic Input, Popover, Chip/Badge, Avatar, SkeletonLoader, EmptyStateCard; these exist only as screen-local patterns or are absent and require new shared modules/stories.
+
+### All `apps/web/src` React components and visible shell parts
+
+| File / component | Now | Fidelity action |
+|---|---|---|
+| `today.tsx::TodayScreen` | **OLD** production Today hero/orbits/setup cards and worker test control | Needs distinct, authorized parity plan after opt-in acceptance; preserve diagnostic logic |
+| `settings-screen.tsx::SettingsScreen` | **OLD** live preference page | Dark, accessible form/control pass without changing storage semantics |
+| `router.tsx::RootLayout` | **OLD** shared application atmosphere/header/main/footer | Replace generic gradient/shell layout only under explicit production migration gate |
+| `router.tsx::Brand` | **OLD** logo/tagline | Plain functional brand, no slogan |
+| `router.tsx::Navigation` | **OLD** Today + Settings route pills | Align with available real routes; do not fabricate destinations |
+| `router.tsx::DockNavigation` + `useDockTooltipPlacement` helper | **OLD/PARTIAL** two links and old grip | Content-sized dock, active disc, tooltip collision/RTL preservation |
+| `router.tsx::ErrorScreen` | **OLD** error, 404 and retry | Fidelity error/empty treatment |
+| `router.tsx::SettingsRoute` | **INFRA** lazy Suspense wrapper | Preserve semantics, style loading fallback |
+| `main.tsx::ApplicationBoundary` | **INFRA/OLD** error boundary and boot error fallback | Preserve fail-closed behavior, style static error fallback |
+| `icons.tsx::Icon` | **KEEP/PARTIAL** SVG icon factory | Retain semantic/size consistency; test on dark/light |
+| `settings.tsx::PreferenceProvider` | **KEEP LOGIC** React preference context | No visual output of its own; never change learner preference handling as style-only work |
+
+**Supporting `apps/web` modules without rendered components:** `i18n.ts`, `preferences.ts`, `navigation-layout.ts`, `use-document-title.ts`, `use-pwa-update.ts`, `desktop-native.ts`, `worker/client.ts`, `worker/engine.worker.ts`, `worker/protocol.ts`; CSS in `shell.css`, `shell-navigation.css`, `shell-panels.css`, `shell-settings.css`, `responsive.css`. These are not new user screens and their nonvisual/security behavior remains out of scope.
+
+**Stage gate:** this inventory is being posted to the owner **before any style/component implementation**. Next: extract the already rendered Today constants to `packages/ui/src/glass.css`, update shared primitives, run all required Storybook state/UX tests, then implement the eight requested QA screens one at a time and publish each 1440×900 screenshot and scored rubric before beginning the next. All new scenes remain **opt-in Storybook-only** until separate owner authorization; production security, router, persistence, provider integration and Draft PR #33 remain unchanged.
+
 ## 2026-11-28 · Owner UI fidelity pack and new dark floating Today — separate m0/ui-fidelity branch
 
 The owner supplied `APPLY.md`, `docs/20-ui-fidelity-brief.md`, `lyceum-ui-fidelity` skill, real reference captures and a Thomas Cole 1836 `Destruction` painting. Created **new `m0/ui-fidelity`** from earlier Crystal Desk Draft HEAD; pack/AGENTS/docs precedence installed in separate verified setup commit **`ce8d7d4`**. The claimed packaged backdrop directory/license were initially **absent**, so an original Commons-source JPEG was downloaded privately, transformed into a licensed/provenanced **preblurred 1600×993 ~20.7KB WebP** only for the opt-in fixture, and documented in `packages/ui/assets/backdrops/LICENSE.md`. Rebuilt the **Today Storybook screen**, not the production Today/router: backdrop with a dark contrast scrim; separated dark floating glass metric cards, six-topic chart and working plan; centered top nav/right tools; collapsed white-disc morphing dock with Escape-dismissible tooltip; honest empty/unsaved input vs explicitly marked synthetic demo; developer controls and the historic fixture label only on `Ctrl+Shift+D` with keyboard focus restoration; no original sphere/slogans/visible toggle/reset badge. Responsive mobile, RTL, solid/contrast/reduced motion and an explicit light+solid variant preserve fallbacks. **Verified** `pnpm verify` (505 unit passes, 29/29 deterministic rules), Storybook build, focused **15/15** UI Playwright, full **154 passed/one historical skip**, production PWA build and unrestricted JS audit. Axe tagged scans zero reported violations with manual-incomplete cases retained. Real Chromium **before/after 1440×900** captures, dock hover/mobile/RTL/solid stills and full-speed navigation video are at [QA evidence](qa/m0-ui-fidelity/README.md), with transparent **provisional self-score 17/20** and remaining differences; an independent early screenshot reviewer rated the pre-final iteration **15/20** and found the later 17 defensible but not owner acceptance. **BLOCKED:** authenticated original V5/V10, human accessibility, physical pixel/performance/native release/legal checks and separate owner aesthetic approval. Existing [Draft PR #33](https://github.com/hyvvs/lyceum/pull/33) remains **OPEN DRAFT, UNMERGED**; no M0-007 or production rollout.

@@ -38,7 +38,7 @@ export const Focus: Story = {
     children: (
       <>
         <h2>Keyboard card</h2>
-        <Button type="button" variant="secondary">
+        <Button type="button" variant="secondary" autoFocus>
           Focused action
         </Button>
       </>

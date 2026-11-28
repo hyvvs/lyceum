@@ -189,13 +189,15 @@ test("empty, loading and error lists never create selectable phantom options", a
   }
 });
 
-test("full transparency uses one blurred menu, opaque and high contrast none", async ({ page }) => {
-  for (const [name, expected] of [
-    ["full-transparency", "blur"],
-    ["reduced-transparency", "none"],
-    ["opaque", "none"],
-    ["light", "none"],
-    ["high-contrast", "none"],
+test("Select menu is legible on a single near-opaque portal without nested blur", async ({
+  page,
+}) => {
+  for (const name of [
+    "full-transparency",
+    "reduced-transparency",
+    "opaque",
+    "light",
+    "high-contrast",
   ]) {
     await page.goto(story(name));
     await trigger(page).click();
@@ -207,12 +209,17 @@ test("full transparency uses one blurred menu, opaque and high contrast none", a
         if (getComputedStyle(ancestor).backdropFilter !== "none") blurredAncestors++;
         ancestor = ancestor.parentElement;
       }
-      return { filter: getComputedStyle(node).backdropFilter, blurredAncestors };
+      return {
+        filter: getComputedStyle(node).backdropFilter,
+        blurredAncestors,
+        background: getComputedStyle(node).backgroundColor,
+      };
     });
-    // One frosted layer only: even the Radix positioner must not blur underneath.
+    // The non-blurred portal is intentional: nested compositor glass would
+    // reduce contrast and consume the strict six-layer blur budget.
     expect(result.blurredAncestors, `nested blur in ${name}`).toBe(0);
-    if (expected === "none") expect(result.filter).toBe("none");
-    else expect(result.filter).toContain("blur(");
+    expect(result.filter).toBe("none");
+    expect(result.background).toMatch(/^rgb\(/);
     await page.keyboard.press("Escape");
   }
 });

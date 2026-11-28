@@ -63,6 +63,7 @@ export const Hover: Story = {
 };
 export const Focus: Story = { render: () => <DialogDemo focusTrigger /> };
 export const Light: Story = { globals: { theme: "light" }, render: () => <DialogDemo /> };
+export const Dark: Story = { globals: { theme: "dark" }, render: () => <DialogDemo /> };
 export const HighContrast: Story = {
   globals: { contrast: "high", transparency: "off" },
   render: () => <DialogDemo />,

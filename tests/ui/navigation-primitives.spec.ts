@@ -27,7 +27,7 @@ for (const family of ["PillNav", "Dock"] as const) {
         await anchor.focus();
         await expect(anchor).toBeFocused();
       }
-      if (family === "Dock" && state !== "empty") {
+      if (family === "Dock" && !["empty", "disabled", "loading", "error-state"].includes(state)) {
         if (storySlug(entry) === "hover") {
           await anchor.hover();
         } else {
@@ -54,11 +54,14 @@ test("native nav landmarks and native consumer links retain semantics, refs and 
     "aria-current",
     "page",
   );
-  await page.keyboard.press("Tab");
   await expect(primary.getByRole("link", { name: "Today" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(primary.getByRole("link", { name: "Settings" })).toBeFocused();
   await page.keyboard.press("Shift+Tab");
+  await expect(primary.getByRole("link", { name: "Today" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(primary.getByRole("link", { name: "Today" })).not.toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(primary.getByRole("link", { name: "Today" })).toBeFocused();
 
   await page.goto(dock("default"));

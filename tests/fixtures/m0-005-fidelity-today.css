@@ -6,16 +6,19 @@
 .reference-prototype[data-scene="today"] {
   background: var(--backdrop-solid);
   color: var(--text-1);
-  --rp-fidelity-dim: rgb(255 255 255 / 0.9);
-  --rp-fidelity-muted: rgb(255 255 255 / 0.9);
+  --rp-fidelity-dim: var(--fidelity-muted);
+  --rp-fidelity-muted: var(--fidelity-muted);
+  /* The image URL stays fixture-only. Never reference this source asset in the
+   * production-imported packages/ui/src/glass.css. */
+  --fidelity-backdrop-image: url("../../packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp");
 }
 
 .reference-prototype[data-scene="today"] .rp-environment {
   position: absolute;
   inset: 0;
-  background: var(--backdrop-solid)
-    url("../../packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp") center 44% / cover
-    no-repeat;
+  background: var(--backdrop-solid) var(--fidelity-backdrop-image) var(--fidelity-backdrop-position)
+    / cover no-repeat;
+  filter: brightness(var(--fidelity-backdrop-brightness));
 }
 
 .reference-prototype[data-scene="today"] .rp-environment::before {
@@ -25,10 +28,6 @@
 
 .reference-prototype[data-scene="today"] .rp-environment::after {
   display: none;
-}
-
-.reference-prototype[data-scene="today"] {
-  --backdrop-scrim: rgb(8 10 16 / 0.58);
 }
 
 .rp-header {
@@ -51,8 +50,10 @@
   border-radius: var(--radius-pill);
   background: var(--glass-fill-float);
   box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
+  /* The pre-blurred photo supplies refraction behind header chrome. Blur
+   * remains reserved for the six independently floating data surfaces. */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .rp-top-navigation button {
@@ -97,7 +98,7 @@
   color: var(--text-2);
   font-size: var(--type-xs);
   white-space: nowrap;
-  background: rgb(8 10 16 / 0.4);
+  background: var(--fidelity-header-chip);
 }
 
 .rp-header-round {
@@ -112,8 +113,8 @@
   background: var(--glass-fill-float);
   color: var(--text-1);
   box-shadow: inset 0 1px 0 var(--glass-highlight);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .rp-header-round > span:first-child {
@@ -228,10 +229,12 @@
   top: 124px;
   min-height: 410px;
   height: 410px;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__backdrop {
-  background: rgb(9 12 20 / 0.46);
+  background: var(--fidelity-rail-fill);
 }
 
 .reference-prototype[data-scene="today"] .rp-morphing-rail .morphing-rail__glass {
@@ -368,8 +371,8 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
   background: var(--glass-fill);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .rp-fidelity-periods button {
@@ -394,8 +397,8 @@
   border-radius: var(--radius-card);
   background: var(--glass-fill);
   box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--fidelity-glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--fidelity-glass-saturate));
 }
 
 .rp-fidelity-stats {
@@ -470,7 +473,7 @@
 
 .rp-fidelity-spark polyline {
   fill: none;
-  stroke: rgb(255 255 255 / 0.65);
+  stroke: var(--fidelity-sparkline);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -555,7 +558,7 @@
   width: 100%;
   min-height: 12px;
   border-radius: var(--radius-control) var(--radius-control) var(--space-1) var(--space-1);
-  background: rgb(255 255 255 / 0.4);
+  background: var(--fidelity-chart-bar);
   box-shadow: inset 0 1px 0 var(--glass-highlight);
   transform-origin: bottom;
   animation: rp-fidelity-grow var(--motion-slow) ease-out both;
@@ -563,7 +566,7 @@
 
 .rp-fidelity-bar.is-focus {
   background: var(--accent);
-  box-shadow: 0 0 24px rgb(59 130 246 / 0.26);
+  box-shadow: 0 0 var(--glass-blur) var(--fidelity-chart-focus-glow);
 }
 
 .rp-fidelity-bar-column > span {
@@ -597,7 +600,7 @@
   padding: var(--space-2) var(--space-3);
   border: 1px solid transparent;
   border-radius: var(--radius-control);
-  background: rgb(255 255 255 / 0.04);
+  background: var(--fidelity-task-fill);
   color: var(--text-1);
   text-align: start;
   transition: transform var(--motion-fast), background-color var(--motion-fast);
@@ -621,11 +624,11 @@
   height: 30px;
   flex: 0 0 4px;
   border-radius: var(--radius-pill);
-  background: rgb(255 255 255 / 0.38);
+  background: var(--fidelity-task-marker);
 }
 
 .rp-fidelity-task.is-selected .rp-fidelity-task-marker {
-  background: rgb(255 255 255 / 0.9);
+  background: var(--fidelity-task-marker-current);
 }
 
 .rp-fidelity-task-copy {
@@ -696,7 +699,7 @@
   padding: var(--space-3);
   border: 1px solid var(--glass-border-raised);
   border-radius: var(--radius-control);
-  background: rgb(8 10 16 / 0.55);
+  background: var(--fidelity-control-fill);
   color: var(--text-1);
 }
 
@@ -742,19 +745,19 @@
 }
 
 :root[data-theme="light"] .reference-prototype[data-scene="today"] {
-  --rp-fidelity-dim: #354152;
-  --rp-fidelity-muted: #2d3c4b;
+  --rp-fidelity-dim: var(--fidelity-light-muted);
+  --rp-fidelity-muted: var(--fidelity-light-secondary);
   --text-1: #101722;
   --text-2: #344359;
 }
 
 :root[data-theme="light"] .reference-prototype[data-scene="today"] .rp-environment::before {
-  background: rgb(234 240 245 / 0.55);
+  background: var(--fidelity-backdrop-light-scrim);
 }
 
 :root[data-theme="light"] .rp-fidelity-glass {
-  background: rgb(255 255 255 / 0.55);
-  border-color: rgb(255 255 255 / 0.85);
+  background: var(--fidelity-light-panel);
+  border-color: var(--fidelity-light-panel-rim);
 }
 
 :root[data-theme="light"][data-transparency="off"] .rp-fidelity-glass,
@@ -769,15 +772,15 @@
 }
 
 :root[data-theme="light"] .rp-fidelity-task {
-  background: rgb(255 255 255 / 0.22);
+  background: var(--fidelity-light-task);
 }
 
 :root[data-theme="light"] .rp-fidelity-task:is(.is-selected, :hover) {
-  background: rgb(255 255 255 / 0.65);
+  background: var(--fidelity-light-task-hover);
 }
 
 :root[data-theme="light"] .rp-fidelity-bar {
-  background: rgb(18 49 73 / 0.36);
+  background: var(--fidelity-light-bar);
 }
 
 :root[data-theme="light"] .rp-fidelity-bar.is-focus {

@@ -200,6 +200,35 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = { render: () => <ToastDemo /> };
+export const Hover: Story = {
+  render: () => <ToastDemo persistent={false} />,
+  parameters: { docs: { description: { story: "Hover the notification to pause dismissal." } } },
+};
+export const Focus: Story = {
+  render: () => <ToastDemo withAction />,
+  parameters: {
+    docs: {
+      description: {
+        story: "Press F8 to focus the notification region, then Tab to reach its actions.",
+      },
+    },
+  },
+};
+export const Disabled: Story = {
+  render: () => (
+    <ToastProvider label="Study notification">
+      <Toast kind="info" persistent defaultOpen>
+        <ToastTitle>Practice unavailable</ToastTitle>
+        <ToastDescription>This sample action is not available yet.</ToastDescription>
+        <ToastAction altText="Open practice" disabled>
+          View
+        </ToastAction>
+        <ToastClose aria-label="Dismiss notification">Dismiss</ToastClose>
+      </Toast>
+      <ToastViewport label="Notifications" />
+    </ToastProvider>
+  ),
+};
 export const TimedDefault: Story = { render: () => <ToastDemo persistent={false} /> };
 export const TimedShort: Story = {
   render: () => <ToastDemo persistent={false} durationMs={1800} />,

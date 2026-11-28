@@ -60,12 +60,13 @@ test("new surfaces preserve native markup, focus rings, all five controlled hues
     await page.goto(`/iframe.html?id=primitives-${name}--focus&viewMode=story`);
     const button = page.getByRole("button", { name: label });
     await expect(button).toBeVisible();
-    await page.keyboard.press("Tab");
     await expect(button).toBeFocused();
     const bounds = await button.boundingBox();
     expect(bounds?.width).toBeGreaterThanOrEqual(44);
     expect(bounds?.height).toBeGreaterThanOrEqual(44);
     await page.keyboard.press("Shift+Tab");
     await expect(button).not.toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(button).toBeFocused();
   }
 });
