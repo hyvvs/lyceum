@@ -8,6 +8,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
+import { findNativeRustPolicyViolations } from "./check-native-rust-policy.mjs";
 
 const read = (file) => JSON.parse(readFileSync(file, "utf8"));
 const sourceFileName = /\.[cm]?[jt]sx?$/;
@@ -186,6 +187,16 @@ function inspectSource(root, pkg, file, problems) {
 
 export function findBoundaryViolations(root) {
   const problems = [];
+  // Run the always-on reviewed supply-chain rule for actual repository roots.
+  // Minimal package-only test fixtures intentionally lack all three markers;
+  // missing CI/policy inside a real repository with AGENTS.md still fails.
+  if (
+    existsSync(join(root, "AGENTS.md")) ||
+    existsSync(join(root, "scripts", "native-rust-policy.json")) ||
+    existsSync(join(root, ".github", "workflows", "ci.yml"))
+  ) {
+    problems.push(...findNativeRustPolicyViolations(root));
+  }
   const corePkg = read(join(root, "packages/core/package.json"));
   const declaredDependencies = (manifest) =>
     new Set(dependencyFields.flatMap((field) => Object.keys(manifest[field] ?? {})));
