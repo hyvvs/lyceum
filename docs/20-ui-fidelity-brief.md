@@ -1,78 +1,50 @@
-# 20. UI Fidelity Brief (read this before touching any screen)
+# 20. UI Fidelity Brief — owner-controlled, durable rules
 
-Supersedes the vague parts of `docs/18-design-language-glass.md`. Where docs/18 and this brief disagree, **this brief wins**. The reference is `docs/design-reference/` (internal reference only; never ship its images). The first Today screen missed the reference; `docs/design-reference/comparison-today-vs-reference.png` shows how.
+**Read in full before changing any Lyceum UI.** This brief overrides conflicting visual/process guidance in `docs/18-design-language-glass.md`, historical screenshots, previous task sequences, and any old component styling experiment. The real **Today** screen is approved: **do not redesign, simplify, replace, or visually regress Today**. Everything else must become **richer, deeper, more premium than the earlier generic implementations**, at least matching Today's fidelity. Preserve the licensed Thomas Cole painting at `packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp`; never ship images taken from the reference videos. This decision was given by the owner on **2026-11-28** and remains binding until the owner expressly revises it.
 
-## 1. What went wrong (the six misses)
+## Part 1 — permanent visual/material requirements
 
-1. **One giant milky panel.** The reference is *many separate floating panels* with gaps between them. A single near-white container is a card, not glass.
-2. **Fill is far too opaque and light.** Reference glass is a **dark, mostly transparent** fill (white at about 6 to 10 percent over a dark scrim) with blur, so the backdrop shows through. Ours reads as frosted plastic.
-3. **No real backdrop.** Glass needs something to blur: a **photographic scene with structure** (window frames, horizon, warm light, objects). A flat teal gradient gives glass nothing to refract, so it looks fake.
-4. **Empty and decorative.** Half the panel is blank and the hero is a clipped decorative sphere that does nothing. The reference is *dense*: stat cards with numbers and sparklines, a chart, a list. Density with hierarchy is what makes it feel premium.
-5. **Slogan copy.** "Return to an idea.", "A library, before it fills up.", "Find your next step, without the noise." is the exact tone of generic AI-made UI. The reference uses plain labels and numbers.
-6. **Dev scaffolding in the product UI.** The Empty/Synthetic toggle, "Synthetic fixture" badge, and Reset button must not be in the visible chrome.
+1. **One material throughout.** Headers, panes, cards, controls, buttons, text inputs, menus, tooltips, popovers, tutor and learner bubbles are variants of **one layered glass system**: translucent fill, a light gradient rim, inner top highlight, subtle grain, soft inner glow and a soft outer shadow/depth. Use `packages/ui/src/glass.css` tokens and composition primitives. Differences in optical depth and surface elevation establish hierarchy, **not flat navy/black slabs or a second material**. Reading surfaces may increase opacity for legibility but retain the same glass language. Reduced-transparency/forced-colors fallback may be opaque for accessibility; make that fallback polished and explicit rather than turning ordinary UI into flat slabs.
+2. **Light behind the glass.** The approved painting is intentionally retained, but by itself it renders brown/muddy through transparent cards. Layer luminous window-like highlights, subtle bloom and warm-to-cool directional illumination **behind** glass panes, never over text, with restrained grain. Light must reveal refraction and glass edges without creating competing decorations or harming contrast. Do not substitute or delete the painting.
+3. **Disciplined color.** Mostly neutral, dark, translucent glass against the warm scene. Saturated blue is reserved for the **primary action, the learner's own chat bubble, and the single intentionally highlighted data element**. Other chromatic color is allowed only for **category tints on tinted cards** and **semantic status**. Prevent muddy brown fills and navy/saturated-blue clashes. Use shared tokens, including the approved blue value, rather than locally inventing palettes.
+4. **Type hierarchy.** One shared token-driven scale; large light-to-semibold numerals, quiet small labels, one chosen emphasis weight. **Paired labels and values remain on the same line** when applicable (`Algebra 48%`), including chart data, not stranded on separate lines. Balance 200%-text and narrow-view wrapping accessibly without hiding information.
+5. **No visible development scaffolding.** Never render these strings as visible product copy: **“sample”, “QA”, “preview”, “fixture”, “gallery”, “shared components”, “Highlighted”, “Scale: 0–100 %”**. Hidden accessibility-only descriptions may use explanatory language where necessary. Use grounded, believable learner-facing content such as **Alex**, **Chain rule**, **Review integration rules**. The **single `Demo data` chip** is the only visible environment marker on a demo screen. Do not invent real learner achievements, data provenance, sessions, or provider connections; accessible explanations may be hidden, and the single chip explicitly distinguishes demo-only information.
+6. **Composition.** Reuse Today's real grid, gutters and rhythm. Equal-height peers in every row; no orphan buttons, awkward stacked number/label pairs, purposeless space or panel more than roughly **25% empty**. Support short, long, RTL and zoomed text while preserving the hierarchy.
+7. **Rendering quality.** One coherent icon set, consistent stroke and real visibility at Today's icon scale. The mastery ring's progress and uncertainty arcs must share **one exact center**, rounded end caps, and a restrained soft glow. Charts have softly gradient-filled bars, one glowing highlighted data bar, faint gridlines, carefully aligned labels/values, no heavy borders around everything.
+8. **Purposeful variety.** Vary radii, border intensity and button shape **by role**, without mixing material families: primary blue/glowing action, secondary refractive glass, tertiary text-only, and accessible icon controls. No rows of identical heavy outlined buttons.
+9. **Elevate detail, don't simplify.** Gradient rim lights, polished inner glow, subtle grain, chart nuance, hover lift, gentle transitions, controlled shadows and material depth are intentional. Use **`packages/ui/src/motion.ts`** presets (and corresponding shared CSS tokens), with proper reduced-motion/low-transparency/high-contrast fallbacks. Don't invent isolated motion values or animate large `backdrop-filter` radii. Accessibility, measured contrast and performance remain gates.
 
-"Calm" in our docs means *quiet and uncluttered*, **not empty and not pale**. "Legibility beats beauty" applies to long reading text only, not to dashboards.
+## Part 2 — permanent interaction/architecture requirements
 
-## 2. The target, measured (Today screen at 1440 by 900, dark theme default)
+1. **Every visible control works.** Clicking or keyboard-activating each visible interactive element must produce an observable, honest effect: navigate to a real route, change state, open/close a panel, or run an implemented action. No placeholder buttons, inert tabs, decorative fake controls, or “clickable-looking” spans. If a feature is not yet implemented, **hide its control** and show an honest polished empty state instead. Do not falsely imply a session or provider call occurred.
+2. **Inventory before altering.** Identify **all surviving legacy UI and fixture files**, classify each as rework/wire into production, retained development-only and explicitly gated, or delete. Record a file-level inventory in the round's QA notes; no orphaned CSS, prototype, route or browser entry point. Retiring functionality must not silently discard important privacy, keyboard, localization, or accessibility coverage.
+3. **Real shared components.** `packages/ui` owns the shared primitives, tokens, optical surface recipes and motion. **Implement screens in `apps/web`** using real imports from `@lyceum/ui`; never fork shared component markup into Storybook fixtures or screen-local look-alike copies. Storybook exists only as a **development-flagged test surface**, never a real user-facing route. The approved Today is frozen pending an explicit owner change; avoid unintended visual differences there when shared tokens change.
+4. **Functional route tests.** Add **one Playwright spec per implemented route** which enumerates and activates **every visible interactive control**, verifies a meaningful state/URL/action result, checks for errors and dead controls, and includes keyboard, empty/loading/error, reduced-motion, zoom, high-contrast and mobile validations as applicable. No dummy checks that merely count buttons. Keep tests current with the actual built production routes.
+5. **Evidence and quality.** Run `pnpm verify`, a fresh production `apps/web` build, real Playwright and axe checks, and an independent read-only `lyceum-ux-review` of the diff and pixels. Capture **1440 × 900 screenshots from the freshly built production app** (not Storybook or a stale development server) **after every screen round**, plus useful mobile/interaction variants. Open and inspect the PNG. Report the actual route, command, screen, limitations, and comparison with approved Today. A code-only claim or a screenshot of a disconnected test fixture is not proof.
 
-**Backdrop**
-- Full-bleed photographic image, warm dusk or similar, with visible structure. Pre-blurred slightly (about 6 to 10 px) at build time, plus a scrim of about `rgb(8 10 16 / 0.40)`.
-- It must be an image we have rights to (license-free photo with a checked license, or a generated image we own). **Never** the reference video's photo. If no image is available, stop and ask the human for one; do not substitute a gradient and call it done.
+## Mandatory round order / explicit approval barrier
 
-**Glass panels** (see `packages/ui/src/glass.css`; tune, do not replace)
-- Fill: white 6 to 8 percent. Blur 24 to 32 px with `saturate(140%)`. Border 1 px white 12 to 18 percent. Inner top highlight 1 px white 14 percent. Radius 24. Shadow: 0 12px 32px black 30 percent.
-- Text on glass: white 100 / 72 / 52 percent. Body 13 to 14 px, labels 12 px, stat values 28 to 32 px semibold, title 22 to 24 px.
-- `glass-reading` (near-opaque) is **only** for the tutor text column, math, and exam items, never for dashboards.
+**Round 1:** real `packages/ui` shared components, surfaces, controls, charts and icon/motion fidelity; inventory legacy/fixture leftovers and test component interactions. Do **not** redesign Today. Finish this round and request owner review **before starting any screen**.
 
-**Shell**
-- **Top pill nav** centered: Today, Plan, Practice, Sources, Models. Pills are glass-float, icon + label, active pill brighter. **Right cluster:** three 40 px round glass buttons (search/command, notifications with a red badge, settings) plus an avatar with a green status dot.
-- **Left dock:** a 56 px-wide capsule of icon-only buttons, vertically centered, 24 px from the left edge. Active item = a 40 px solid white disc with a dark icon, animated with a shared-element slide. Tooltip label on hover. No second "rail", no tab that merges into a white strip, no workspace card inside the dock.
+**Then exactly one production screen per round, in this order:** **Study session → Sources → Plan → Models → Settings → Practice.** Never silently reorder, batch, or proceed to the next screen without the owner's explicit approval of the preceding round. Screen implementations live in `apps/web`, use shared components, and must expose only working controls. For each screen round: fresh production build, **1440 × 900 production-app screenshot**, interaction/route Playwright test, accessibility/contrast/variants, written comparison, and explicit approval request. **Run the `lyceum-handoff` skill at the end of every round** to verify, commit, update `docs/STATUS.md` and preserve the approval gate across chat restarts. Do not invent a release or merge approval.
 
-**Today layout** (12-column grid, 24 px gaps, panels float with visible backdrop between them)
-- Row 0: greeting "Good evening, {name}" (22 px) with a one-line subtitle; on the right a segmented control (Week / Month / Term) and an Export button.
-- Row 1: **four equal stat cards**: icon chip, label, big value, delta pill (green/red), 24 px sparkline. Lyceum content: Due reviews, Overall mastery (range, for example 62% ± 8), Days to exam, Streak (with grace days).
-- Row 2, left 2/3: **Mastery by topic** panel with frosted bars (white about 40 percent) and **exactly one saturated blue bar** (`#3b82f6`) for the biggest lever. Right 1/3: **Today's plan** list: time, title, colored left marker by mode (review, learn, practice, repair), small avatar-style chips optional.
-- The **Next best action** is the single focal accent: a primary blue button on the plan panel or a wide card in row 1. One saturated element per view.
-- Empty space inside a panel: at most about 25 percent.
+## Quantitative visual check (use evidence, not adjectives)
 
-**Other screens** (same language, different layouts)
-- Study session = the reference's Messages: three panes (session plan | tutor conversation with blue learner bubbles and glass tutor bubbles | concept panel). Center pane uses `glass-reading`.
-- Sources and Practice library = the reference's Saved: grid of **tinted glass cards** (blue, amber, purple, green, red) with icon chip and category tag.
+Each line scores 0/1/2 (miss/partial/verified); required self-check **≥17/20 with no zero**, plus owner approval to advance. A self-score is not owner acceptance.
 
-## 3. Copy rules (tone guide applied to UI)
-
-- Labels are nouns and numbers: "Due reviews", "12", "Days to exam", "21". Buttons are verbs: "Start session", "Review 12 cards".
-- **No taglines, no slogans, no poetic fragments, no sentence-style headings with trailing periods, no "without the noise" phrasing.**
-- Greeting is "Good evening, {name}". Subtitles state facts ("3 topics need attention before your exam").
-- Empty states are plain and actionable: "No goal yet. Create one to get a plan." with a button.
-- Microcopy never explains the design ("Synthetic fixture · no learner data", "Examples only").
-
-## 4. Demo data and developer tools
-
-- Use realistic **demo data** for dashboards (names, numbers, trends) so the UI looks like the real product. Mark it with one small "Demo data" chip in the top bar at most.
-- Developer toggles (Empty/Synthetic, Reset, fixtures) live in a hidden dev panel opened with `Ctrl+Shift+D`, not in the visible UI.
-
-## 5. Motion (verify by recording, not by reading code)
-
-Page change: content fades in from a blur and rises 12 px, cards stagger in (40 to 60 ms), hover lifts cards 4 px, dock indicator slides between items, bars grow from the baseline, numbers count up once. Use `packages/ui/src/motion.ts` presets. Record a screen capture of a full navigation loop and compare it with the reference clip frame by frame.
-
-## 6. Scoring rubric (agents must score themselves with evidence)
-
-Score each 0 to 2 (0 miss, 1 partial, 2 matches). **Pass = 17 or more of 20, with no zeros.**
-
-| # | Criterion | Check |
+| # | Criterion | Evidence required |
 |---|---|---|
-| 1 | Photographic backdrop with depth | Structure visible through panels |
-| 2 | Glass fill dark and mostly transparent | Backdrop clearly shows through each panel |
-| 3 | Multiple separate panels, visible gaps | No single container holding everything |
-| 4 | Top pill nav and right round buttons | As specified |
-| 5 | Icon-only dock capsule, white active disc | No extra rail, tooltips work |
-| 6 | Dense, real-looking data | Stat cards with sparklines, chart, plan list |
-| 7 | One focal accent | Single blue bar and primary button, nothing else saturated |
-| 8 | Typography and contrast | Sizes per section 2; contrast measured on the backdrop |
-| 9 | Copy and cleanliness | Passes section 3; no dev scaffolding visible |
-| 10 | Motion | Blur-in, stagger, hover lift, shared-element dock, count-up, reduced-motion fallback |
+| 1 | Backdrop retains the painting with meaningful light | Source of light behind glass visible in real screenshot |
+| 2 | Unified multi-depth glass, not slab surfaces | Every surface shares translucent, rimmed material |
+| 3 | Detached layered panels and correct gutters | Actual grid, equal-height peers and no orphan control |
+| 4 | Navigation and controls are functional | All visible controls cause tested behavior |
+| 5 | Dock/toolbar icon consistency | Shared icon size/stroke, strong focus/hover |
+| 6 | Rich, plausible content and truthful demo data | Single `Demo data` chip; no forbidden visible words |
+| 7 | Color discipline | One highlighted data element, learner/primary blue, semantic tints only |
+| 8 | Readability and precise alignment | Paired labels/values, arc centers, measurable contrast |
+| 9 | Polished role hierarchy | No generic empty slabs, matching glass buttons/input/popovers |
+| 10 | Motion and fallback quality | Preset-based hover/entrance, reduced-motion/opacity/contrast proof |
 
-## 7. Process (see the `lyceum-ui-fidelity` skill)
+## Persistence and review
 
-Never claim a match from code. Capture screenshots at 1440 by 900 (dark theme), place them beside the reference crops, score the rubric, list the top five differences, fix, and repeat up to three rounds, then report before/after screenshots with scores. If you cannot view images, say so and stop.
+This brief is a repo-level **durable instruction**, not a claim about ChatGPT account Memory. The same hard requirements and round order are duplicated in **`AGENTS.md` invariant 13**, **`packages/ui/AGENTS.md`**, and checklists of **`.agents/skills/lyceum-ui-fidelity/SKILL.md`** and **`.agents/skills/lyceum-ux-review/SKILL.md`**. Read all before editing, update `docs/STATUS.md` with actual branch/commit/evidence, and invoke `.agents/skills/lyceum-handoff/SKILL.md` each round. Never import an auxiliary component-look stylesheet; delete it if introduced. The only shared visual authority is `packages/ui/src/glass.css`.

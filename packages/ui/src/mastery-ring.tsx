@@ -15,6 +15,8 @@ export interface MasteryRingProps {
   uncertaintyLabel?: string;
   /** BCP-47 locale for percentage and interval text; independent of probability geometry. */
   locale?: string;
+  /** Explicit opt-in for the one chromatically highlighted datum in a view. */
+  highlighted?: boolean;
   className?: string;
 }
 
@@ -26,6 +28,7 @@ export function MasteryRing({
   unassessedLabel = "Unassessed",
   uncertaintyLabel = "Uncertainty",
   locale,
+  highlighted = false,
   className,
 }: MasteryRingProps) {
   if (!label.trim() || !unassessedLabel.trim() || !uncertaintyLabel.trim()) {
@@ -53,8 +56,14 @@ export function MasteryRing({
       className={["glass", "lyceum-mastery-ring", className].filter(Boolean).join(" ")}
       lang={locale}
       data-assessed={!!estimate}
+      data-highlighted={highlighted || undefined}
     >
-      <figcaption id={labelId}>{label}</figcaption>
+      <figcaption className="lyceum-mastery-ring__readout" id={labelId}>
+        <span>{label}</span>
+        {estimate && (
+          <p className="lyceum-mastery-ring__value">{percentage.format(estimate.value)}</p>
+        )}
+      </figcaption>
       {estimate ? (
         <>
           <svg
@@ -68,19 +77,20 @@ export function MasteryRing({
               className="lyceum-mastery-ring__uncertainty"
               cx="50"
               cy="50"
-              r={radius + 8}
-              strokeDasharray={`${(estimate.upper - estimate.lower) * 2 * Math.PI * (radius + 8)} ${2 * Math.PI * (radius + 8)}`}
-              strokeDashoffset={-estimate.lower * 2 * Math.PI * (radius + 8)}
+              r={radius + 11}
+              strokeLinecap="round"
+              strokeDasharray={`${(estimate.upper - estimate.lower) * 2 * Math.PI * (radius + 11)} ${2 * Math.PI * (radius + 11)}`}
+              strokeDashoffset={-estimate.lower * 2 * Math.PI * (radius + 11)}
             />
             <circle
               className="lyceum-mastery-ring__progress"
               cx="50"
               cy="50"
               r={radius}
+              strokeLinecap="round"
               strokeDasharray={`${estimate.value * circumference} ${circumference}`}
             />
           </svg>
-          <p className="lyceum-mastery-ring__value">{percentage.format(estimate.value)}</p>
           <p className="lyceum-mastery-ring__interval">
             {uncertaintyLabel}: {percentage.format(estimate.lower)}–
             {percentage.format(estimate.upper)}

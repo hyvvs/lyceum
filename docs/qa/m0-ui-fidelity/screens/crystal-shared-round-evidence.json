@@ -1,0 +1,27 @@
+[
+  {
+    "scene": "overview",
+    "kind": "dev-only-Storybook-build",
+    "status": 200,
+    "errors": []
+  },
+  {
+    "scene": "controls",
+    "kind": "dev-only-Storybook-build",
+    "status": 200,
+    "errors": []
+  },
+  {
+    "scene": "feedback",
+    "kind": "dev-only-Storybook-build",
+    "status": 200,
+    "errors": []
+  },
+  {
+    "scene": "approved Today",
+    "kind": "real-production-web-build",
+    "status": 200,
+    "heading": "Today",
+    "errors": []
+  }
+]

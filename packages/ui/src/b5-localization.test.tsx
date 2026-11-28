@@ -52,7 +52,7 @@ describe("B5 consumer-owned localization contract", () => {
     expect(html).toContain("0 artículos");
     expect(html).toContain("1,25 artículos");
     expect(html).toContain("2,5 artículos");
-    expect(html).toContain("★ Destacado");
+    expect(html).toContain("Destacado");
     expect(html).not.toContain("Highlighted");
     expect(html).not.toContain("1.25 artículos");
     expect(html.match(/data-highlighted="true"/g)).toHaveLength(1);

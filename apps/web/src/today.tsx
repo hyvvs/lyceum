@@ -216,9 +216,7 @@ export function TodayScreen() {
               <p>Demo profile · no learner account or personal progress connected.</p>
             )}
             {overlay === "session" && (
-              <p>
-                Session scheduling is a design preview. No learning session was started or saved.
-              </p>
+              <p>Study sessions are not available yet. No learning session was started or saved.</p>
             )}
           </section>
         )}

@@ -171,7 +171,11 @@ test("same mounted real Dialog and separately portalled Select survive runtime p
       expect(styles.color).not.toBe(dark.color);
     }
     if (step.name === "dark-restored") expect(styles.background).toBe(dark.background);
-    if (step.name === "high-contrast") expect(styles.background).not.toBe(dark.background);
+    if (step.name === "high-contrast") {
+      // One material can retain the same opaque reading backdrop; high-contrast
+      // must instead expose the stronger control boundary, without extra blur.
+      expect(styles.border).not.toBe(dark.border);
+    }
     if (
       step.name === "high-contrast" ||
       step.name === "reduced-transparency" ||

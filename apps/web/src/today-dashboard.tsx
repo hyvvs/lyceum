@@ -143,7 +143,7 @@ export function FidelityToday({
           <div className="rp-fidelity-panel-head">
             <div>
               <h3 id="rp-mastery-heading">Mastery by topic</h3>
-              <p>{synthetic ? `${period} overview · sample subjects` : "No learning data yet"}</p>
+              <p>{synthetic ? `${period} overview · learning areas` : "No learning data yet"}</p>
             </div>
             <span className="rp-fidelity-panel-metadata">
               {synthetic ? "6 topics" : "0 topics"}
@@ -159,7 +159,7 @@ export function FidelityToday({
                         topic.name === "Calculus" ? "rp-fidelity-bar is-focus" : "rp-fidelity-bar"
                       }
                       style={{ height: `${topic.value}%` }}
-                      aria-label={`${topic.name}: ${topic.value}% sample mastery`}
+                      aria-label={`${topic.name}: ${topic.value}% illustrative mastery`}
                       role="img"
                     />
                   </div>

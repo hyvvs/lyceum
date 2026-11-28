@@ -67,16 +67,22 @@ test("large text, RTL, and high contrast retain legible-sized controls", async (
   expect(Number.parseFloat(size)).toBeGreaterThanOrEqual(24);
 });
 
-test("secondary and ghost button boundaries meet non-text contrast in both themes", async ({
+test("glass secondary rims and text-only ghost actions retain role-appropriate contrast", async ({
   page,
 }) => {
   for (const name of ["secondary", "ghost", "light-secondary", "light-ghost"]) {
     await page.goto(story(name));
     const button = page.getByRole("button", { name: "Continue learning" });
     await expect(button).toBeVisible();
-    const contrast = await button.evaluate((element) => {
+    const contrast = await button.evaluate((element, kind) => {
       const styles = getComputedStyle(element);
-      const rgb = (value: string) => (value.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+      const rgb = (value: string) => {
+        const hex = /^#([\da-f]{6})$/i.exec(value);
+        const digits = hex?.[1];
+        if (digits)
+          return [1, 3, 5].map((start) => Number.parseInt(digits.slice(start - 1, start + 1), 16));
+        return (value.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+      };
       const luminance = (value: string) => {
         const [r = 0, g = 0, b = 0] = rgb(value).map((channel) => {
           const x = channel / 255;
@@ -84,11 +90,13 @@ test("secondary and ghost button boundaries meet non-text contrast in both theme
         });
         return 0.2126 * r + 0.7152 * g + 0.0722 * b;
       };
-      const a = luminance(styles.borderTopColor);
-      const b = luminance(styles.backgroundColor);
+      const a = luminance(kind.includes("ghost") ? styles.color : styles.borderTopColor);
+      const b = luminance(
+        getComputedStyle(document.documentElement).getPropertyValue("--surface-solid").trim(),
+      );
       return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-    });
-    expect(contrast, name).toBeGreaterThanOrEqual(3);
+    }, name);
+    expect(contrast, name).toBeGreaterThanOrEqual(name.includes("ghost") ? 4.5 : 3);
   }
 });
 

@@ -6,6 +6,8 @@ export interface EmptyStateCardProps {
   description: string;
   icon?: ReactNode;
   action?: { label: string; onActivate: () => void; disabled?: boolean; loading?: boolean };
+  /** Real composed secondary control, such as a DialogTrigger, inside the panel. */
+  accessoryAction?: ReactNode;
   className?: string;
 }
 
@@ -15,6 +17,7 @@ export function EmptyStateCard({
   description,
   icon,
   action,
+  accessoryAction,
   className,
 }: EmptyStateCardProps) {
   const titleId = useId();
@@ -28,15 +31,20 @@ export function EmptyStateCard({
         {title}
       </h2>
       <p className="ui-empty-state__description">{description}</p>
-      {action && (
-        <Button
-          className="ui-empty-state__action"
-          onClick={action.onActivate}
-          disabled={action.disabled ?? false}
-          loading={action.loading ?? false}
-        >
-          {action.label}
-        </Button>
+      {(action || accessoryAction) && (
+        <div className="ui-empty-state__actions">
+          {action && (
+            <Button
+              className="ui-empty-state__action"
+              onClick={action.onActivate}
+              disabled={action.disabled ?? false}
+              loading={action.loading ?? false}
+            >
+              {action.label}
+            </Button>
+          )}
+          {accessoryAction}
+        </div>
       )}
     </section>
   );

@@ -25,3 +25,4 @@ export * from "./chip";
 export * from "./avatar";
 export * from "./skeleton-loader";
 export * from "./empty-state-card";
+export * from "./icon";

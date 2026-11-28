@@ -13,6 +13,7 @@ import {
   Dock,
   EmptyStateCard,
   GlassCard,
+  Icon,
   Input,
   ListRow,
   MasteryRing,
@@ -43,11 +44,11 @@ import "./m0-ui-fidelity-shared.css";
 
 function Gallery({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <main className="shared-gallery">
+    <main className="shared-gallery lyceum-luminous-stage">
       <header className="shared-gallery__header glass">
         <div>
           <h1>{title}</h1>
-          <p>Shared components · QA gallery</p>
+          <p>Learning workspace</p>
         </div>
         <Badge>Demo data</Badge>
       </header>
@@ -66,19 +67,27 @@ function OverviewGallery() {
         <StatCard
           label="Due reviews"
           value={12}
-          icon="↻"
+          icon={<Icon name="clock" />}
           trend={{
             samples: [4, 6, 5, 9, 12],
-            description: "Sample reviews increased from 4 to 12",
+            description: "Reviews increased from 4 to 12",
           }}
         />
         <StatCard
           label="Overall mastery"
           value="62%"
-          icon="◎"
-          delta={{ direction: "increase", text: "4 points", context: "vs previous sample" }}
+          icon={<Icon name="spark" />}
+          delta={{ direction: "increase", text: "4 points", context: "since last week" }}
         />
-        <StatCard label="Study streak" value="8 days" icon="◇" />
+        <StatCard
+          label="Study streak"
+          value="8 days"
+          icon={<Icon name="check" />}
+          trend={{
+            samples: [1, 2, 3, 4, 5, 6, 8],
+            description: "Reviewed every day this week",
+          }}
+        />
       </div>
       <div className="shared-gallery__split">
         <BarChart
@@ -132,8 +141,8 @@ function OverviewGallery() {
               }}
             />
           ))}
-          <Button onClick={() => setStarted(true)}>Start sample activity</Button>
-          <output>{started ? `Started sample activity: ${task}` : `Selected: ${task}`}</output>
+          <Button onClick={() => setStarted(true)}>Confirm review</Button>
+          <output>{started ? `Review selected: ${task}` : `Selected: ${task}`}</output>
         </GlassCard>
       </div>
     </Gallery>
@@ -154,10 +163,10 @@ function ControlsGallery() {
         </PillNav>
         <Dock orientation="horizontal" aria-label="Gallery shortcuts">
           <a href="#gallery-form" aria-label="Settings">
-            <span>⚙</span>
+            <Icon name="settings" />
           </a>
           <a href="#gallery-categories" aria-label="Categories">
-            <span>◇</span>
+            <Icon name="book" />
           </a>
         </Dock>
       </div>
@@ -197,19 +206,17 @@ function ControlsGallery() {
                 <SelectItem value="history">History</SelectItem>
               </SelectContent>
             </Select>
-            <Button type="submit">Apply sample preferences</Button>
+            <Button type="submit">Apply preferences</Button>
             <output>
-              {saved
-                ? "Sample preferences applied for this preview."
-                : "Changes remain in this preview."}
+              {saved ? "Preferences updated for this workspace." : "Changes have not been applied."}
             </output>
           </form>
           <Popover
             triggerLabel="About preferences"
             title="Preferences"
-            description="This sample does not save data."
+            description="Preferences are stored only until this page reloads."
           >
-            <p>Changes disappear when the gallery reloads.</p>
+            <p>Changes disappear on reload.</p>
           </Popover>
         </GlassCard>
         <div id="gallery-categories" className="shared-gallery__stack">
@@ -219,10 +226,10 @@ function ControlsGallery() {
               <Chip>Concepts</Chip>
               <Badge tone="warning">12 due</Badge>
             </div>
-            <p>Sample topics and review activities.</p>
+            <p>Chain rule, limits and integration.</p>
           </TintCard>
           <GlassCard className="shared-gallery__stack">
-            <h2>Sample profile</h2>
+            <h2>Account</h2>
             <div className="shared-gallery__inline">
               <Avatar name="Alex Rivera" status="online" />
               <span>Alex Rivera</span>
@@ -232,13 +239,13 @@ function ControlsGallery() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <RoundIconButton
-                    aria-label="Toggle sample bookmark"
+                    aria-label="Toggle bookmark"
                     aria-pressed={marked}
-                    icon={marked ? "★" : "☆"}
+                    icon={<Icon name="star" fill={marked ? "currentColor" : "none"} />}
                     onClick={() => setMarked((value) => !value)}
                   />
                 </TooltipTrigger>
-                <TooltipContent text="Toggle the local sample bookmark" />
+                <TooltipContent text="Toggle bookmark" />
               </Tooltip>
             </TooltipProvider>
             <output>{marked ? "Bookmarked" : "Not bookmarked"}</output>
@@ -255,13 +262,13 @@ function FeedbackGallery() {
   const [notice, setNotice] = useState(false);
   return (
     <Gallery title="Study and feedback">
-      <ToastProvider label="Sample notification">
+      <ToastProvider label="Notifications">
         <div className="shared-gallery__feedback">
           <div className="shared-gallery__stack">
-            <ChatBubble speaker="learner" speakerLabel="Sample learner">
+            <ChatBubble speaker="learner" speakerLabel="Alex">
               <p>How can I remember the main idea?</p>
             </ChatBubble>
-            <ChatBubble speaker="tutor" speakerLabel="Sample tutor">
+            <ChatBubble speaker="tutor" speakerLabel="Lyceum">
               <p>
                 Try explaining it without looking at the original, then compare your explanation
                 with the text.
@@ -269,52 +276,50 @@ function FeedbackGallery() {
             </ChatBubble>
             <GlassCard className="shared-gallery__stack">
               <h2>Review status</h2>
-              {loading ? (
-                <SkeletonLoader label="Waiting for sample review" />
-              ) : (
-                <p>Sample review ready.</p>
-              )}
+              {loading ? <SkeletonLoader label="Loading review" /> : <p>Review ready.</p>}
               <Button variant="secondary" onClick={() => setLoading((value) => !value)}>
-                {loading ? "Finish sample loading" : "Show loading state"}
+                {loading ? "Finish loading" : "Reload review"}
               </Button>
             </GlassCard>
           </div>
           <div className="shared-gallery__stack">
-            <MasteryRing
-              label="Sample concept mastery"
-              estimate={{ value: 0.62, lower: 0.54, upper: 0.7 }}
-            />
+            <MasteryRing label="Chain rule" estimate={{ value: 0.62, lower: 0.54, upper: 0.7 }} />
             <EmptyStateCard
-              title={added ? "Sample source added" : "No sources yet"}
+              title={added ? "Chain rule notes added" : "No sources yet"}
               description={
                 added
-                  ? "The source exists only in this preview."
-                  : "Add an example source to the preview."
+                  ? "Chain rule notes are ready to review."
+                  : "Add chain rule notes to organize your materials."
               }
               action={{
-                label: added ? "Remove sample source" : "Add sample source",
+                label: added ? "Remove notes" : "Add notes",
                 onActivate: () => {
                   setAdded((existing) => !existing);
                   setNotice(!added);
                 },
               }}
+              accessoryAction={
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary">Review details</Button>
+                  </DialogTrigger>
+                  <DialogContent
+                    title="Review integration rules"
+                    description="Key steps for today's practice."
+                  >
+                    <p>Recall the formula, then check each step against your notes.</p>
+                  </DialogContent>
+                </Dialog>
+              }
             />
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="secondary">View sample details</Button>
-              </DialogTrigger>
-              <DialogContent title="Sample review" description="These are fictional study details.">
-                <p>No real learner information is used here.</p>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
         <Toast kind="success" persistent open={notice} onOpenChange={setNotice}>
-          <ToastTitle>Sample source added</ToastTitle>
-          <ToastDescription>Available in this preview only.</ToastDescription>
-          <ToastClose aria-label="Dismiss sample notification">Dismiss</ToastClose>
+          <ToastTitle>Chain rule notes added</ToastTitle>
+          <ToastDescription>Notes are ready to review.</ToastDescription>
+          <ToastClose aria-label="Dismiss notification">Dismiss</ToastClose>
         </Toast>
-        <ToastViewport label="Sample notifications" />
+        <ToastViewport label="Notifications" />
       </ToastProvider>
     </Gallery>
   );

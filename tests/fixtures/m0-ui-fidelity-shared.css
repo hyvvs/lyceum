@@ -1,4 +1,4 @@
-/* Opt-in gallery only. The artwork is never referenced by production CSS. */
+/* Development-only assembly of real shared components; not an application route. */
 .shared-gallery {
   box-sizing: border-box;
   min-height: 100svh;
@@ -39,7 +39,7 @@
 .shared-gallery__feedback {
   display: grid;
   gap: var(--space-5);
-  align-items: start;
+  align-items: stretch;
 }
 .shared-gallery__metrics {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -47,6 +47,19 @@
 .shared-gallery__split,
 .shared-gallery__feedback {
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+.shared-gallery__split > .lyceum-bar-chart {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.shared-gallery__split > .lyceum-bar-chart .lyceum-bar-chart__bars {
+  flex: 1;
+}
+.shared-gallery__split > .lyceum-bar-chart .lyceum-bar-chart__track {
+  height: 100%;
+  flex: 1;
+  min-height: calc(var(--space-7) * 5);
 }
 .shared-gallery__stack {
   display: grid;
@@ -64,25 +77,8 @@
   color: var(--text-2);
   font-size: var(--type-sm);
 }
-/* Keep a reserve for transient menus, tooltips and dialogs. No nested blur. */
-.shared-gallery .shared-gallery__header,
-.shared-gallery .lyceum-stat-card,
-.shared-gallery .lyceum-dock {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background-color: var(--surface-solid);
-}
-.shared-gallery .lyceum-chat-bubble {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-.shared-gallery .lyceum-chat-bubble--tutor {
-  background-color: var(--surface-solid);
-}
-.shared-gallery .lyceum-chat-bubble--learner {
-  background-color: var(--fidelity-button-blue);
-  color: var(--fidelity-button-label);
-}
+/* The optical light field is behind the actual shared surfaces. Never flatten
+   the components to a different material for screenshot convenience. */
 :root[data-transparency="off"] .shared-gallery,
 :root[data-transparency="reduced"] .shared-gallery,
 :root[data-contrast="high"] .shared-gallery {

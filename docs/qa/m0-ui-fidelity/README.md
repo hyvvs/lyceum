@@ -1,5 +1,11 @@
 # M0 UI fidelity — owner-directed Today screen review
 
+## 2026-11-28 — current owner contract and shared-components round
+
+**Current authority:** [`docs/20-ui-fidelity-brief.md`](../../20-ui-fidelity-brief.md). The approved Today remains the only live user route. The owner directed shared primitives first, then **Study session → Sources → Plan → Models → Settings → Practice**, strictly one screen per round with explicit approval between rounds. See the [Round 1 shared-glass implementation and visual/test proof](shared-crystal-round.md) and [full old UI/fixture inventory](shared-round-inventory.md). All earlier sections below are historical and superseded where conflicting. No later screen has been started.
+
+---
+
 ## 2026-11-28 live application integration (supersedes prior Storybook-only scope)
 
 The owner explicitly requested that the approved Today become the **only actual app entry route**, and that obsolete shells and parallel UIs be removed. The old prototype source and its original screenshot commands discussed later in this document have therefore been retired. The historical screenshots and scores below remain evidence of the earlier design-study stage, **not** a current runnable Storybook implementation or a new owner-approved rating.
