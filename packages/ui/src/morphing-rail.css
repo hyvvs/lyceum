@@ -1,0 +1,286 @@
+/*
+ * Separate visual-prototype primitive. All paints and motion parameters flow
+ * from Lyceum tokens; SVG's single connected highlight is spring-driven.
+ * Nothing here changes the already accepted production Today shell.
+ */
+.morphing-rail {
+  --morph-collapsed: calc(var(--space-7) + var(--space-5));
+  --morph-open: calc(var(--space-7) * 5 + var(--space-5));
+  position: absolute;
+  inset-block: var(--space-5);
+  inset-inline-start: var(--space-5);
+  z-index: 4;
+  width: var(--morph-open);
+  min-height: calc(var(--space-7) * 6);
+  isolation: isolate;
+  color: var(--text-1);
+  pointer-events: none;
+}
+.morphing-rail__surface {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(var(--glass-shadow));
+}
+.morphing-rail__backdrop {
+  position: absolute;
+  inset: 0;
+  /* A quiet optical layer, not a tinted gradient or dashboard decoration. */
+  background: color-mix(in srgb, var(--glass-fill-float) 88%, transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  pointer-events: none;
+}
+.morphing-rail__glass {
+  fill: transparent;
+  stroke: var(--glass-highlight);
+  stroke-width: 1.25px;
+}
+.morphing-rail__connected {
+  fill: color-mix(in srgb, var(--text-1) 94%, transparent);
+  stroke: var(--glass-highlight);
+  stroke-width: 1.25px;
+}
+.morphing-rail__disc {
+  position: absolute;
+  top: 0;
+  inset-inline-start: calc(var(--space-4) - var(--space-1));
+  width: var(--target-min);
+  height: var(--target-min);
+  margin-top: calc(var(--target-min) / -2);
+  border: 1px solid var(--glass-highlight);
+  border-radius: var(--radius-pill);
+  background: var(--text-1);
+  pointer-events: none;
+}
+.morphing-rail__contents {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  pointer-events: none;
+}
+.morphing-rail__header,
+.morphing-rail__link,
+.morphing-rail__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  width: calc(var(--morph-collapsed) - var(--space-5));
+  min-height: var(--target-min);
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--text-1);
+  text-align: start;
+}
+.morphing-rail--open .morphing-rail__header,
+.morphing-rail--open .morphing-rail__link,
+.morphing-rail--open .morphing-rail__footer {
+  width: calc(var(--morph-open) - var(--space-7) - var(--space-5));
+}
+.morphing-rail__header {
+  margin-block-end: var(--space-6);
+}
+.morphing-rail__toggle {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--glass-fill-raised) 75%, transparent);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background-color var(--motion-fast), transform var(--motion-fast);
+}
+.morphing-rail__mark {
+  display: grid;
+  place-items: center;
+}
+.morphing-rail__mark svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.morphing-rail__toggle:hover {
+  background: var(--glass-fill-raised);
+}
+.morphing-rail__toggle:active {
+  transform: scale(0.96);
+}
+.morphing-rail__label {
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  visibility: hidden;
+  transition: opacity var(--motion-base) ease-out;
+}
+.morphing-rail--open .morphing-rail__label {
+  opacity: 1;
+  visibility: visible;
+}
+.morphing-rail__identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.morphing-rail__identity strong {
+  font-size: var(--type-body);
+  letter-spacing: -.03em;
+}
+.morphing-rail__identity small {
+  font-size: var(--type-xs);
+  color: var(--text-2);
+}
+.morphing-rail__links {
+  display: grid;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+.morphing-rail__link {
+  position: relative;
+  padding: 0 var(--space-2);
+  background: transparent;
+  font: inherit;
+  font-size: var(--type-sm);
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color var(--motion-fast), transform var(--motion-fast);
+}
+.morphing-rail__link:active {
+  transform: scale(0.98);
+}
+.morphing-rail__link:hover:not([data-active="true"]) {
+  background: var(--glass-fill-raised);
+}
+.morphing-rail__link[data-active="true"] {
+  color: var(--backdrop-solid);
+}
+.morphing-rail__icon {
+  display: grid;
+  place-items: center;
+  width: calc(var(--target-min) - var(--space-4));
+  min-width: calc(var(--target-min) - var(--space-4));
+  height: calc(var(--target-min) - var(--space-4));
+}
+.morphing-rail__icon svg,
+.morphing-rail__utility svg {
+  width: var(--space-5);
+  height: var(--space-5);
+}
+.morphing-rail__footer {
+  margin-top: auto;
+  margin-bottom: var(--space-3);
+  padding-inline: var(--space-4);
+  font-size: var(--type-xs);
+  color: var(--text-2);
+}
+.morphing-rail__footer-dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--positive);
+}
+.morphing-rail__utilities {
+  position: absolute;
+  inset-block: var(--space-3);
+  left: 0;
+  right: auto;
+  width: var(--space-7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  pointer-events: auto;
+}
+.morphing-rail__utilities[aria-hidden="true"] {
+  pointer-events: none;
+}
+.morphing-rail__utility {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--target-min);
+  height: var(--target-min);
+  background: transparent;
+  color: var(--backdrop-solid);
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background-color var(--motion-fast), transform var(--motion-fast);
+}
+.morphing-rail__utility:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.morphing-rail__utility:hover:not(:disabled) {
+  background: var(--glass-fill-raised);
+}
+.morphing-rail__utility:disabled {
+  cursor: default;
+}
+.morphing-rail :is(button):focus-visible {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-1);
+}
+:root[data-motion="off"] .morphing-rail__label,
+:root[data-motion="reduced"] .morphing-rail__label,
+:root[data-motion="off"] .morphing-rail__link,
+:root[data-motion="off"] .morphing-rail__toggle,
+:root[data-motion="off"] .morphing-rail__utility {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .morphing-rail__label {
+    transition: none;
+  }
+}
+:root[data-transparency="off"] .morphing-rail__glass,
+:root[data-contrast="high"] .morphing-rail__glass {
+  fill: var(--surface-solid);
+  stroke: var(--contrast-border);
+}
+:root[data-transparency="off"] .morphing-rail__connected,
+:root[data-contrast="high"] .morphing-rail__connected {
+  fill: var(--text-1);
+  stroke: var(--contrast-border);
+}
+:root[data-transparency="off"] .morphing-rail__backdrop,
+:root[data-contrast="high"] .morphing-rail__backdrop,
+:root[data-transparency="reduced"] .morphing-rail__backdrop {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--surface-solid);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .morphing-rail__backdrop {
+    background: var(--surface-raised-solid);
+  }
+}
+@media (forced-colors: active) {
+  .morphing-rail__glass {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+  .morphing-rail__connected,
+  .morphing-rail__disc {
+    fill: Highlight;
+    stroke: HighlightText;
+  }
+  .morphing-rail__link[data-active="true"] {
+    color: HighlightText;
+  }
+  .morphing-rail__toggle,
+  .morphing-rail__utility {
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+}

@@ -32,6 +32,8 @@ This doc overrides the generic visual direction in `docs/01` section 4. Accessib
 - **Canvas:** panels float with generous gaps; no full-width hard bars. Max content width on large screens, centered.
 - **Responsive:** below 900 px the dock becomes a bottom capsule bar and the top nav collapses to a title plus the command palette. Panels stack in a single column. Touch targets at least 44 px.
 
+**2026-11-28 prototype-only correction:** The layout sketch above records earlier intent and is **not** an accepted V5/V10 visual target. The owner rejected the earlier oversized, dark marketing-like Today render; the existing production shell remains an **unaccepted fidelity baseline** even though its technical foundation is verified. A separate `m0/visual-v5-v10-reference-prototype` branch explores actual photographic spatial depth, a compact usable learning overview, near-opaque reading, and a **single connected selection+utility-spine SVG geometry** instead of detached selected pills. The selected path is controlled by one interruptible shared spring-coordinate state, with mirrored RTL geometry, keyboard/focus semantics and instant off/reduced-motion paths. The outer grid is **not** width-animated. No library, token semantic or production routing/Today replacement is part of this Draft. Compare [reference limitations and V10 repost observations](design-reference/README.md) and [real rendered QA](qa/m0-005-visual-prototype/README.md); original owner video fidelity, physical performance and owner visual acceptance remain pending.
+
 ## 3. Tokens
 
 Implemented in `packages/ui/src/glass.css` (CSS variables and recipes) and `packages/ui/src/motion.ts`. Values are tuned starting points; final values are set by the contrast and performance tests in section 8.
@@ -125,6 +127,8 @@ Library: `motion` (React). Use `LazyMotion` with `domAnimation` (and `m` compone
 4. No motion during active problem-solving except feedback (a correct/incorrect response gets a subtle, brief indication).
 5. No more than about 12 simultaneously animating elements; stagger caps apply.
 6. Respect the frame budget (60 fps on the reference device); a motion that drops frames is removed or simplified.
+
+**Working visual Draft qualification:** JS `requestAnimationFrame` modifies the path's internal SVG geometry and opacity from `spring.smooth` state; this is a deliberately **opt-in technical exception** to the usual compositor-only transform rule for a small single connected navigation shape, needed to test true geometric morphing. It is not a shipping approval: reference-device main-thread cost, Paint/Composite tracing and dropped-frame counts must be independently measured under M0-020 before rollout. Do not use the Draft's 25 fps evidence recordings to claim the product renders at 60 fps; the recording encoder/frame sampler does not measure actual UI rendering throughput.
 
 ## 7. Learning-aware restraint
 

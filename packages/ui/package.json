@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./glass.css": "./src/glass.css"
+    "./glass.css": "./src/glass.css",
+    "./morphing-rail.css": "./src/morphing-rail.css"
   },
   "types": "./src/index.ts",
   "scripts": {

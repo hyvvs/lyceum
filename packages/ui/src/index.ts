@@ -1,4 +1,5 @@
 export * from "./motion";
+export * from "./morphing-rail";
 export * from "./button";
 export * from "./dialog";
 export * from "./tooltip";
