@@ -81,6 +81,7 @@ jobs:
       - run: cargo audit --file apps/desktop/src-tauri/Cargo.lock
       - run: cargo +1.94.0 fetch --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
       - run: cargo deny check licenses advisories sources
+        working-directory: apps/desktop/src-tauri
       - run: node scripts/check-native-rust-policy.mjs --check-target-graph
 `;
 }
@@ -523,6 +524,25 @@ patched = []
         "- run: cargo audit --file apps/desktop/src-tauri/Cargo.lock",
         "- run: cargo audit --file apps/desktop/src-tauri/Cargo.lock\n        shell: echo {0}",
       ),
+      nativeWorkflow().replace("jobs:\n", "defaults:\n  run:\n    shell: echo {0}\njobs:\n"),
+      nativeWorkflow().replace("jobs:\n", "env:\n  CARGO_HOME: /tmp/not-reviewed\njobs:\n"),
+      nativeWorkflow().replace("jobs:\n", "defaults :\n  run:\n    shell: echo {0}\njobs:\n"),
+      nativeWorkflow().replace(
+        "- run: cargo audit --file apps/desktop/src-tauri/Cargo.lock",
+        "- run: cargo audit --file apps/desktop/src-tauri/Cargo.lock\n        env:\n          CARGO_HOME: /tmp/not-reviewed",
+      ),
+      nativeWorkflow().replace(
+        "- run: cargo audit --file apps/desktop/src-tauri/Cargo.lock",
+        "- run: cargo audit --file apps/desktop/src-tauri/Cargo.lock\n        env :\n          CARGO_HOME: /tmp/not-reviewed",
+      ),
+      nativeWorkflow().replace(
+        "- run: node scripts/check-native-rust-policy.mjs --check-target-graph",
+        "- run: node scripts/check-native-rust-policy.mjs --check-target-graph\n        working-directory: apps/desktop/src-tauri",
+      ),
+      nativeWorkflow().replace(
+        "working-directory: apps/desktop/src-tauri",
+        "working-directory: apps/web",
+      ),
     ])
       expect(checkNativeWorkflow(altered)).not.toEqual([]);
     const ci = readFileSync(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8");
@@ -543,6 +563,29 @@ patched = []
       ci.replace("- run: pnpm audit", "- run: pnpm audit\n        if: false"),
       ci.replace("- run: pnpm audit", "- run: pnpm audit\n        'if': false"),
       ci.replace("- run: pnpm audit", "- run: pnpm audit\n        shell: echo {0}"),
+      ci.replace("jobs:\n", "defaults:\n  run:\n    working-directory: apps/web\njobs:\n"),
+      ci.replace("jobs:\n", "'defaults':\n  run:\n    shell: echo {0}\njobs:\n"),
+      ci.replace("jobs:\n", "env:\n  CARGO_HOME: /tmp/not-reviewed\njobs:\n"),
+      ci.replace("jobs:\n", "defaults :\n  run:\n    shell: echo {0}\njobs:\n"),
+      ci.replace("jobs:\n", "'env':\n  NODE_OPTIONS: --require ./skip-audit.js\njobs:\n"),
+      ci.replace(
+        "- run: pnpm audit",
+        "- run: pnpm audit\n        env:\n          NODE_OPTIONS: --require ./skip-audit.js",
+      ),
+      ci.replace(
+        "- run: pnpm audit",
+        "- run: pnpm audit\n        env :\n          NODE_OPTIONS: --require ./skip-audit.js",
+      ),
+      ci.replace("- run: pnpm audit", "- run: pnpm audit\n        working-directory: apps/web"),
+      ci.replace(
+        "run: cargo audit --file apps/desktop/src-tauri/Cargo.lock",
+        "run: cargo audit --file apps/desktop/src-tauri/Cargo.lock\n        working-directory: apps/web",
+      ),
+      ci.replace(
+        "run: cargo deny check licenses advisories sources",
+        "run: cargo deny check licenses advisories sources\n        env:\n          CARGO_HOME: /tmp/not-reviewed",
+      ),
+      ci.replace("working-directory: apps/desktop/src-tauri", "working-directory: apps/web"),
       ci.replace(
         "run: cargo audit --file apps/desktop/src-tauri/Cargo.lock",
         "run: cargo audit --file apps/desktop/src-tauri/Cargo.lock\n        shell: echo {0}",

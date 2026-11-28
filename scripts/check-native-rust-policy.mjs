@@ -565,11 +565,12 @@ function mandatoryJobControls(section, label, conditionalSteps = []) {
   // This intentionally rejects YAML aliases, quoted keys, and new controls
   // rather than attempting to parse the entire GitHub Actions YAML language.
   const jobKeys = new Set();
-  for (const match of section.matchAll(/^ {4}([^\s:]+):/gm)) {
-    if (jobKeys.has(match[1])) errors.push(`${label} duplicate job YAML control: ${match[1]}`);
-    jobKeys.add(match[1]);
-    if (!["name", "runs-on", "timeout-minutes", "steps"].includes(match[1])) {
-      errors.push(`${label} unreviewed job control: ${match[1]}`);
+  for (const match of section.matchAll(/^ {4}(?!\s)([^:\r\n]+):/gm)) {
+    const key = match[1].trim();
+    if (jobKeys.has(key)) errors.push(`${label} duplicate job YAML control: ${key}`);
+    jobKeys.add(key);
+    if (key !== match[1] || !["name", "runs-on", "timeout-minutes", "steps"].includes(key)) {
+      errors.push(`${label} unreviewed job control: ${key}`);
     }
   }
   if (/^ {4}["']|^ {8}["']|^ {4,8}<<:/m.test(section)) {
@@ -582,18 +583,38 @@ function mandatoryJobControls(section, label, conditionalSteps = []) {
       errors.push(`${label} unreviewed initial step property`);
     }
     const seen = new Set([first]);
-    for (const match of step.matchAll(/^ {8}([^\s:]+):/gm)) {
-      if (seen.has(match[1])) errors.push(`${label} duplicate step YAML control: ${match[1]}`);
-      seen.add(match[1]);
+    for (const match of step.matchAll(/^ {8}(?!\s)([^:\r\n]+):/gm)) {
+      const key = match[1].trim();
+      if (seen.has(key)) errors.push(`${label} duplicate step YAML control: ${key}`);
+      seen.add(key);
       if (
-        !["name", "run", "if", "uses", "with", "shell", "working-directory", "env", "id"].includes(
-          match[1],
-        )
+        key !== match[1] ||
+        !["name", "run", "if", "uses", "with", "shell", "working-directory", "id"].includes(key)
       ) {
-        errors.push(`${label} unreviewed step control: ${match[1]}`);
+        errors.push(`${label} unreviewed step control: ${key}`);
       }
     }
     const conditions = [...step.matchAll(/^ {8}if:\s*(.+)$/gm)].map((m) => m[1]);
+    // A per-step environment can change Cargo configuration, wrappers,
+    // NODE_OPTIONS and shell startup. None is required for these reviewed
+    // mandatory jobs, so do not try to enumerate dangerous variable names.
+    if (/^ {8}env:/m.test(step)) {
+      errors.push(`${label} unreviewed environment override on mandatory step`);
+    }
+    const directories = [...step.matchAll(/^ {8}working-directory:\s*(.*)$/gm)].map((m) => m[1]);
+    const exactCargoDeny =
+      step.includes("run: cargo deny check licenses advisories sources\n") ||
+      /run: cargo deny check licenses advisories sources\s*$/.test(step);
+    if (directories.length > 0 && !(label.endsWith("audit") || label === "native Rust policy")) {
+      errors.push(`${label} unreviewed mandatory step working-directory`);
+    } else if (
+      directories.length > 0 &&
+      (!exactCargoDeny || !sameValues(directories, ["apps/desktop/src-tauri"]))
+    ) {
+      errors.push(`${label} mandatory Rust commands must use the reviewed native Cargo directory`);
+    } else if (exactCargoDeny && !sameValues(directories, ["apps/desktop/src-tauri"])) {
+      errors.push(`${label} cargo-deny must read the reviewed native deny.toml`);
+    }
     const shells = [...step.matchAll(/^ {8}shell:\s*(.+)$/gm)].map((m) => m[1]);
     if (
       shells.length > 0 &&
@@ -619,6 +640,24 @@ function mandatoryJobControls(section, label, conditionalSteps = []) {
     if (steps.filter((step) => step.includes(`name: ${name}\n`)).length !== 1) {
       errors.push(`${label} reviewed step ${name} is absent or duplicated`);
     }
+  }
+  return errors;
+}
+
+function checkWorkflowExecutionDefaults(text, label) {
+  const errors = [];
+  // The checked workflow requires repository-root execution, no inherited
+  // custom shell/working directory and no inherited environment. This is a
+  // deliberately narrow static schema check, not a generic YAML security parser.
+  for (const match of text.matchAll(/^([^\s#][^:\r\n]*):/gm)) {
+    const key = match[1].trim();
+    if (["defaults", "env"].includes(key) || /['"]/.test(key)) {
+      errors.push(`${label} unreviewed workflow-level execution override: ${key}`);
+    }
+  }
+  // Reject quoted or merge-key spellings of workflow-level overrides as well.
+  if (/^(?:['"](?:defaults|env)['"]|<<):/m.test(text)) {
+    errors.push(`${label} workflow-level YAML alias/quoted execution defaults are not reviewed`);
   }
   return errors;
 }
@@ -654,7 +693,7 @@ function hasPinnedRustInstaller(section, stepName) {
 
 /** The native workflow belongs to M0-005; fail until it wires this preflight. */
 export function checkNativeWorkflow(text) {
-  const errors = [];
+  const errors = checkWorkflowExecutionDefaults(text, "native CI");
   if (!text.includes('"scripts/**"'))
     errors.push("native CI must trigger on policy script changes");
   const section = workflowJob(text, "rust-dependency-policy");
@@ -682,7 +721,7 @@ export function checkNativeWorkflow(text) {
 }
 
 export function checkGeneralCIWorkflow(text) {
-  const errors = [];
+  const errors = checkWorkflowExecutionDefaults(text, "general CI");
   const lines = text.split(/\r?\n/).map((line) => line.trim());
   for (const job of ["verify", "audit", "secrets"]) {
     const section = workflowJob(text, job);
