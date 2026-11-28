@@ -179,17 +179,56 @@ test("expanded RTL utility spine mirrors to opposite side and does not obscure n
   await expect(rail.getByRole("button", { name: "Sources" })).toBeVisible();
 });
 
-test("named navigation and empty state have no serious or critical axe findings", async ({
+test("all twelve reference workspace variants have no tagged axe violations or horizontal overflow", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  test.setTimeout(90_000);
+  const variants = [
+    "empty-today",
+    "synthetic-today",
+    "synthetic-sources",
+    "reading-surface",
+    "expanded-rail",
+    "light-glass",
+    "solid-fallback",
+    "high-contrast",
+    "reduced-motion",
+    "motion-off",
+    "right-to-left",
+    "double-text",
+  ];
+  for (const variant of variants) {
+    await page.setViewportSize({ width: variant === "double-text" ? 320 : 1440, height: 900 });
+    await page.goto(story(variant));
+    await expect(page.locator(".reference-prototype")).toBeVisible();
+    // Check the settled presentation. An interrupted entrance is independently
+    // covered by the morph/navigation test; axe's contrast algorithm attributes
+    // an animated ancestor's partial opacity to the background, not the glyphs.
+    await expect
+      .poll(() => page.locator(".rp-scene").evaluate((el) => Number(getComputedStyle(el).opacity)))
+      .toBeGreaterThan(0.999);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(results.violations, `Tagged axe violations in ${variant}`).toEqual([]);
+    const horizontal = await page.evaluate(() => ({
+      viewport: window.innerWidth,
+      content: document.documentElement.scrollWidth,
+    }));
+    expect(horizontal.content, `Horizontal overflow in ${variant}`).toBeLessThanOrEqual(
+      horizontal.viewport + 1,
+    );
+    console.log(
+      `REFERENCE_VARIANT_AXE ${variant} violations=0 incomplete=${results.incomplete.map((item) => item.id).join(",") || "none"}`,
+    );
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(story("empty-today"));
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+  await expect(
+    page.getByRole("navigation", { name: "Compact prototype navigation" }),
+  ).toBeVisible();
+  const mobileResult = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
-  expect(
-    results.violations.filter((violation) =>
-      ["serious", "critical"].includes(violation.impact ?? ""),
-    ),
-  ).toEqual([]);
+  expect(mobileResult.violations, "Tagged axe violations in 390px mobile").toEqual([]);
 });

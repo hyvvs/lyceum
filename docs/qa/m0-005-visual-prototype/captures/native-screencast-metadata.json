@@ -1,8 +1,8 @@
 {
   "kind": "Actual QA-only Windows Tauri v2 WebView2 CDP Page.screencastFrame renderer",
   "sourceFrameCount": 334,
-  "distinctSourceFrameCount": 315,
-  "observedSourceSpanSeconds": 5.622,
+  "distinctSourceFrameCount": 314,
+  "observedSourceSpanSeconds": 5.596,
   "encodedFramesPerSecond": 25,
   "containsOperatingSystemDesktop": false,
   "originalOwnerV5V10ReferenceFidelityVerified": false

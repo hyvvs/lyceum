@@ -7,7 +7,8 @@
   --rp-soft-ink: color-mix(in srgb, var(--backdrop-solid) 74%, transparent);
   --rp-hairline: color-mix(in srgb, var(--backdrop-solid) 17%, transparent);
   --rp-pane-fill: color-mix(in srgb, var(--text-1) 73%, transparent);
-  --rp-paper-fill: color-mix(in srgb, var(--text-1) 95%, var(--surface-reading-solid));
+  /* Reading and its outline are intentionally solid for reliable contrast. */
+  --rp-paper-fill: rgb(247 248 250);
   position: relative;
   isolation: isolate;
   min-height: 100svh;
@@ -547,7 +548,10 @@
 
 .rp-reading-aside {
   min-width: 0;
-  padding-top: var(--space-5);
+  /* Contents must stay readable against every location in the photo. */
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--rp-paper-fill);
   color: var(--rp-ink);
 }
 
@@ -603,8 +607,9 @@
   width: 100%;
   min-height: 530px;
   background: var(--rp-paper-fill);
-  -webkit-backdrop-filter: blur(var(--glass-blur-reading));
-  backdrop-filter: blur(var(--glass-blur-reading));
+  /* The focused reading surface is matte: no backdrop composition or blur. */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .rp-paper-top {
@@ -830,7 +835,7 @@
     gap: var(--space-3);
   }
   .rp-reading-aside {
-    padding: var(--space-3) 0;
+    padding: var(--space-4);
   }
   .rp-reading-steps {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1001,7 +1006,7 @@
   --rp-soft-ink: var(--text-2);
   --rp-hairline: color-mix(in srgb, var(--text-1) 17%, transparent);
   --rp-pane-fill: color-mix(in srgb, var(--surface-reading-solid) 81%, transparent);
-  --rp-paper-fill: color-mix(in srgb, var(--surface-reading-solid) 95%, transparent);
+  --rp-paper-fill: var(--surface-reading-solid);
 }
 
 :root[data-transparency="reduced"] .rp-pane,
