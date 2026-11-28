@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "policyOwner": "Repository maintainers",
+  "reviewBy": "2027-02-28",
+  "source": "registry+https://github.com/rust-lang/crates.io-index",
+  "allowedMpl": [
+    {
+      "name": "cssparser",
+      "version": "0.37.0",
+      "checksum": "8c9cdaae01d5ed7882b04d795e7f752f46ff52d2fa3b50a20d28c464510bba98",
+      "parents": ["dom_query@0.28.0", "selectors@0.38.0"]
+    },
+    {
+      "name": "cssparser",
+      "version": "0.38.0",
+      "checksum": "11119743ad110e8c1bdccd930d7f5c30c99e5fc76a7b63ec9807e84eef0c5f59",
+      "parents": ["dom_query@0.30.0", "selectors@0.41.0"]
+    },
+    {
+      "name": "cssparser-macros",
+      "version": "0.7.1",
+      "checksum": "d045de693cb712d0b22c6a64be5b953f67b3ce00ab5ad3dd5d8b441886ab8e1a",
+      "parents": ["cssparser@0.37.0", "cssparser@0.38.0"]
+    },
+    {
+      "name": "dtoa-short",
+      "version": "0.3.5",
+      "checksum": "cd1511a7b6a56299bd043a9c167a6d2bfb37bf84a6dfceaba651168adfb43c87",
+      "parents": ["cssparser@0.37.0", "cssparser@0.38.0"]
+    },
+    {
+      "name": "option-ext",
+      "version": "0.2.0",
+      "checksum": "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d",
+      "parents": ["dirs-sys@0.5.0"]
+    },
+    {
+      "name": "selectors",
+      "version": "0.38.0",
+      "checksum": "8adfa1c298912827b8a28b223b3b874357397ae706e6190acd9bf28cee99114d",
+      "parents": ["dom_query@0.28.0"]
+    },
+    {
+      "name": "selectors",
+      "version": "0.41.0",
+      "checksum": "8322aebea94a6cc288ff884e8a49bdbceef60206c400c6c46d22e62fc4fd91a6",
+      "parents": ["dom_query@0.30.0"]
+    }
+  ],
+  "reviewedIntermediates": [
+    {
+      "name": "dom_query",
+      "version": "0.28.0",
+      "checksum": "fac5fca71e65e94cc718a6e2af65d6e0f9c6027751c2aa562fbb5087fda639bc",
+      "parents": ["tauri-utils@2.10.4"]
+    },
+    {
+      "name": "dom_query",
+      "version": "0.30.0",
+      "checksum": "b35b4f772a1a8b88e5545a67c2d3a62a93d4edccc5a68f2145fe52e39c96d275",
+      "parents": ["wry@0.57.4"]
+    },
+    {
+      "name": "dirs-sys",
+      "version": "0.5.0",
+      "checksum": "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab",
+      "parents": ["dirs@7.0.0"]
+    }
+  ],
+  "temporaryAdvisory": {
+    "id": "RUSTSEC-2024-0370",
+    "classification": "unmaintained",
+    "name": "proc-macro-error",
+    "version": "1.0.4",
+    "checksum": "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c",
+    "parents": ["glib-macros@0.18.5", "gtk3-macros@0.18.2"],
+    "unsupportedTarget": "x86_64-unknown-linux-gnu",
+    "supportedTargets": [
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin"
+    ]
+  }
+}

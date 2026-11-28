@@ -35,7 +35,7 @@ If you skip step 2 you will duplicate or contradict someone else's work.
 13. **Accessibility and performance are gates.** WCAG 2.2 AA and the performance budgets in `docs/01-experience-and-quality-bar.md` apply to every UI change.
     **The UI follows the glass design language (`docs/18-design-language-glass.md`):** use `packages/ui` tokens and motion presets only (no hard-coded colors, blurs, springs, or durations); reading and math surfaces use `glass-reading`; every view has one focal accent; transparency, motion, and contrast settings are honored with finished-looking fallbacks; never use assets from the reference video.
 14. **Tests and evals are part of the change.** No behavior change without tests. No prompt or tutoring-logic change without running the eval suite (`docs/12-testing-and-evaluation.md`).
-15. **No new runtime dependency without justification.** Add a short "Why this dependency" note in the PR, check license (permissive only), maintenance, bundle size, and whether a few lines of code would do.
+15. **No new runtime dependency without justification.** Add a short "Why this dependency" note in the PR, check license (**permissive by default**), maintenance, bundle size, and whether a few lines of code would do. **Only** the seven exact Tauri-transitive MPL-2.0 package/version/source/checksum identities in `scripts/native-rust-policy.json` are eligible for the owner's M0-005 exception, subject to the locked upstream-relationship guard, native all-target audits, `docs/qa/native-rust-dependency-policy-2026-11-27.md` and mandatory pre-distribution human license review. This is not a general copyleft allowance. The separately approved temporary `RUSTSEC-2024-0370` *unmaintained* advisory treatment is valid only for `proc-macro-error@1.0.4` in the unsupported Linux GTK3 chain, with no supported Windows/macOS build/proc-macro inclusion, and must be reviewed by **2027-02-28** or sooner on the stated triggers. It does not waive vulnerabilities, `glib` unsoundness, `chrono` warnings, other advisories, or public-release gates. A change to any exception, version, provenance, graph, applicability, or risk needs another owner decision and separately reviewed rule amendment.
 
 ## 3. Repository map and dependency rules
 
@@ -143,7 +143,7 @@ Agents may be restarted with only a summary of earlier work. Therefore: the repo
 
 ## 13. Changing these rules
 
-Propose edits to this file in a PR titled `docs(agents): ...` with the reason. Rules that CI can enforce should be added to `scripts/check-boundaries.mjs` or the lint config in the same PR.
+Propose edits to this file in a PR titled `docs(agents): ...` with the reason. Rules that CI can enforce should be added to `scripts/check-boundaries.mjs` or the lint config in the same PR. Narrow dependency exceptions require a **separate owner-approved rule PR**, immutable-to-each-lockfile exact-version enforcement, regression tests for unauthorized licenses/advisories/versions, and recorded compliance/review obligations. A green dependency gate is not public-distribution approval.
 
 ## 14. Skills (repeatable workflows and reviews)
 

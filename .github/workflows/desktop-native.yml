@@ -6,6 +6,10 @@ on:
       - "apps/desktop/**"
       - "apps/web/**"
       - "pnpm-lock.yaml"
+      - "scripts/**"
+      - "AGENTS.md"
+      - "docs/qa/native-rust-dependency-policy-2026-11-27.md"
+      - ".github/workflows/ci.yml"
       - ".github/workflows/desktop-native.yml"
   workflow_dispatch:
 
@@ -169,6 +173,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.20.0"
       - name: Install pinned Rust audit toolchain
         run: rustup toolchain install 1.94.0 --profile minimal
       - name: Install exact Rust audit tools
@@ -177,6 +184,10 @@ jobs:
           cargo +1.94.0 install cargo-deny --version 0.19.9 --locked
       - name: All-target RustSec database audit (no suppressed advisories)
         run: cargo audit --file apps/desktop/src-tauri/Cargo.lock
+      - name: Fetch all locked native target families for offline graph verification
+        run: cargo +1.94.0 fetch --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
       - name: Complete Rust license, advisories and source gate
         working-directory: apps/desktop/src-tauri
         run: cargo deny check licenses advisories sources
+      - name: Verify exact exceptions, both canonical RustSec databases and Windows/macOS/Linux target graphs
+        run: node scripts/check-native-rust-policy.mjs --check-target-graph
