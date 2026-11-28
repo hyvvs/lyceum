@@ -7,3 +7,4 @@
 - Animate only transform, opacity, and small-element filter; never animate `backdrop-filter` radius; at most about 6 blurred layers visible; no nested blur.
 - Each component needs Storybook stories for all states (default, hover, focus, disabled, loading, error, empty, long text, RTL, dark, high contrast, 200% text), axe-clean, keyboard operable.
 - Never use assets from `docs/design-reference/` (internal reference only). Backdrops must be original or licensed, with a license file.
+- Dashboards use true glass (dark, mostly transparent). `glass-reading` is only for tutor text, math, and exam items.

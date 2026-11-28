@@ -1,5 +1,7 @@
 # 18. Design Language: Glass and Motion
 
+Where this document and `docs/20-ui-fidelity-brief.md` disagree, docs/20 wins.
+
 Lyceum's visual identity is **calm, layered glass over a soft, atmospheric backdrop**, with **smooth, springy motion** (Framer Motion, now published as `motion`). The reference is the "Glassy Dashboard V5" video (`docs/design-reference/`). We replicate the *style*, never the assets.
 
 This doc overrides the generic visual direction in `docs/01` section 4. Accessibility, performance, and learning-experience rules in `docs/01` still apply and win over aesthetics whenever they conflict (see section 8).
