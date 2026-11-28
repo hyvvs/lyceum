@@ -12,7 +12,7 @@ export interface Preferences {
 }
 
 export const defaults: Preferences = {
-  theme: "system",
+  theme: "dark",
   locale: "en",
   transparency: "full",
 };
@@ -26,7 +26,7 @@ export function normalizePreferences(value: unknown): Preferences {
     theme:
       input.theme === "light" || input.theme === "dark" || input.theme === "high-contrast"
         ? input.theme
-        : "system",
+        : "dark",
     locale: input.locale === "es" ? "es" : "en",
     transparency:
       input.transparency === "reduced" || input.transparency === "off"

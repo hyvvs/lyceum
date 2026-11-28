@@ -64,13 +64,22 @@ describe("WCAG A/AA and generated Storybook acceptance contract", () => {
       "BarChart",
       "MasteryRing",
       "ChatBubble",
+      "Avatar",
+      "Chip",
+      "EmptyStateCard",
+      "Input",
+      "ListRow",
+      "Popover",
+      "SkeletonLoader",
     ]);
     const approved = PRIMITIVE_FAMILIES.slice(7).map((name) => ({
       ...defaultEntry,
       id: `primitives-${name.toLowerCase()}--dark-full`,
       title: `Primitives/${name}`,
     }));
-    expect(expectedStoryStates(approved)).toHaveLength(11);
+    // Eighteen approved families beyond the original seven; Popover must be
+    // scanned twice (open and closed) to protect Escape/focus semantics.
+    expect(expectedStoryStates(approved)).toHaveLength(19);
   });
   test("covers every supported WCAG 2.0/2.1/2.2 A/AA rule tag in installed axe", () => {
     const supported = [...new Set(axe.getRules().flatMap((rule) => rule.tags))]

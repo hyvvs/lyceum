@@ -1,0 +1,96 @@
+/* Development-only assembly of real shared components; not an application route. */
+.shared-gallery {
+  box-sizing: border-box;
+  min-height: 100svh;
+  padding: var(--space-6);
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  background: linear-gradient(var(--backdrop-scrim), var(--backdrop-scrim)),
+    url("../../packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp")
+    var(--fidelity-backdrop-position) / cover no-repeat;
+  color: var(--text-1);
+}
+.shared-gallery__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+}
+.shared-gallery h1,
+.shared-gallery h2,
+.shared-gallery p {
+  margin: 0;
+}
+.shared-gallery h1 {
+  font-size: var(--type-reading);
+}
+.shared-gallery h2 {
+  font-size: var(--type-body);
+}
+.shared-gallery__header p {
+  margin-block-start: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--type-sm);
+}
+.shared-gallery__metrics,
+.shared-gallery__split,
+.shared-gallery__feedback {
+  display: grid;
+  gap: var(--space-5);
+  align-items: stretch;
+}
+.shared-gallery__metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.shared-gallery__split,
+.shared-gallery__feedback {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+.shared-gallery__split > .lyceum-bar-chart {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.shared-gallery__split > .lyceum-bar-chart .lyceum-bar-chart__bars {
+  flex: 1;
+}
+.shared-gallery__split > .lyceum-bar-chart .lyceum-bar-chart__track {
+  height: 100%;
+  flex: 1;
+  min-height: calc(var(--space-7) * 5);
+}
+.shared-gallery__stack {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-4);
+}
+.shared-gallery__navigation,
+.shared-gallery__inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.shared-gallery output {
+  color: var(--text-2);
+  font-size: var(--type-sm);
+}
+/* The optical light field is behind the actual shared surfaces. Never flatten
+   the components to a different material for screenshot convenience. */
+:root[data-transparency="off"] .shared-gallery,
+:root[data-transparency="reduced"] .shared-gallery,
+:root[data-contrast="high"] .shared-gallery {
+  background: var(--backdrop-solid);
+}
+@media (max-width: 900px) {
+  .shared-gallery {
+    padding: var(--space-4);
+  }
+  .shared-gallery__metrics,
+  .shared-gallery__split,
+  .shared-gallery__feedback {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

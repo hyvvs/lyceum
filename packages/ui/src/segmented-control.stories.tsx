@@ -26,15 +26,22 @@ type Story = StoryObj<typeof meta>;
 function ChoiceDemo({
   options: choices = options,
   disabled = false,
+  focus = false,
   dir,
 }: {
   options?: readonly SegmentOption[];
   disabled?: boolean;
+  focus?: boolean;
   dir?: "ltr" | "rtl";
 }) {
   const [value, setValue] = useState(choices[0]?.value ?? "");
   return (
-    <div className="storybook-stack">
+    <div
+      className="storybook-stack"
+      ref={(node) => {
+        if (focus) node?.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.focus();
+      }}
+    >
       <SegmentedControl
         groupLabel="Sample session length"
         name="sample-length"
@@ -50,7 +57,7 @@ function ChoiceDemo({
 }
 export const Default: Story = { render: () => <ChoiceDemo /> };
 export const Hover: Story = { render: () => <ChoiceDemo /> };
-export const Focus: Story = { render: () => <ChoiceDemo /> };
+export const Focus: Story = { render: () => <ChoiceDemo focus /> };
 export const Selected: Story = { render: () => <ChoiceDemo /> };
 export const Disabled: Story = {
   render: () => <ChoiceDemo disabled />,
@@ -88,6 +95,14 @@ export const ErrorState: Story = {
     <div className="storybook-stack">
       <ChoiceDemo />
       <p role="alert">Sample choice was not saved.</p>
+    </div>
+  ),
+};
+export const Loading: Story = {
+  render: () => (
+    <div className="storybook-stack">
+      <ChoiceDemo disabled />
+      <output>Preparing session lengths…</output>
     </div>
   ),
 };

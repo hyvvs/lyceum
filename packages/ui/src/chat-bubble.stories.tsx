@@ -41,7 +41,16 @@ export const Streaming: Story = {
   args: { streaming: true, children: <p>Partial example explanation, still being composed.</p> },
 };
 export const Empty: Story = { args: { children: null } };
-export const Hover: Story = {};
+export const Hover: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Read-only transcript presentation: hover, focus and disabled states belong to consumer controls. Streaming is the loading presentation.",
+      },
+    },
+  },
+};
 export const ErrorState: Story = {
   args: { children: <p>Example message currently unavailable.</p> },
 };

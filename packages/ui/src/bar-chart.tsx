@@ -110,7 +110,7 @@ export function BarChart({
                   <strong>{datum.label}</strong>
                   <span>{datumText(datum.value)}</span>
                   {highlighted && (
-                    <span className="lyceum-bar-chart__highlight">★ {highlightLabel}</span>
+                    <span className="lyceum-bar-chart__highlight">{highlightLabel}</span>
                   )}
                 </p>
               </li>

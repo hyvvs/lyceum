@@ -33,8 +33,106 @@
   --radius-pill: 999px;
   --dialog-max: 36rem;
 
-  --accent: #3b82f6;
-  --text-on-accent: #071524;
+  /*
+   * M0 fidelity source of truth, sampled from the genuine 1440x900 Today
+   * render (docs/qa/m0-ui-fidelity). Keep the *asset URL* in opt-in fixture
+   * CSS only: referencing it here would ship QA art in the ordinary PWA.
+   * Its 8px Gaussian blur is pre-applied to the bundled WebP, NOT runtime
+   * backdrop-filter. Brightness is an explicit neutral factor (1).
+   */
+  --fidelity-backdrop-preblur: 8px;
+  --fidelity-backdrop-brightness: 1;
+  --fidelity-backdrop-position: center 44%;
+  --fidelity-backdrop-scrim: rgb(8 10 16 / 0.58);
+  --fidelity-backdrop-light-scrim: rgb(234 240 245 / 0.55);
+  --fidelity-glass-fill: rgb(255 255 255 / 0.07);
+  --fidelity-glass-blur: 24px;
+  --fidelity-glass-rim: rgb(255 255 255 / 0.14);
+  --fidelity-glass-saturate: 140%;
+  --fidelity-button-blue: #245acc;
+  --fidelity-button-label: #ffffff;
+  --fidelity-muted: rgb(255 255 255 / 0.9);
+  --fidelity-sparkline: rgb(255 255 255 / 0.65);
+  --fidelity-chart-bar: rgb(255 255 255 / 0.4);
+  --fidelity-chart-focus-glow: color-mix(in srgb, var(--fidelity-button-blue) 26%, transparent);
+  --fidelity-header-chip: rgb(8 10 16 / 0.4);
+  --fidelity-rail-fill: rgb(9 12 20 / 0.46);
+  --fidelity-control-fill: rgb(8 10 16 / 0.55);
+  --fidelity-task-fill: rgb(255 255 255 / 0.04);
+  --fidelity-task-marker: rgb(255 255 255 / 0.38);
+  --fidelity-task-marker-current: rgb(255 255 255 / 0.9);
+  --fidelity-backdrop-position-mobile: center 44%;
+  --fidelity-light-muted: #354152;
+  --fidelity-light-secondary: #2d3c4b;
+  --fidelity-light-panel: rgb(255 255 255 / 0.55);
+  --fidelity-light-panel-rim: rgb(255 255 255 / 0.85);
+  --fidelity-light-task: rgb(255 255 255 / 0.22);
+  --fidelity-light-task-hover: rgb(255 255 255 / 0.65);
+  --fidelity-light-bar: rgb(18 49 73 / 0.36);
+  --fidelity-dock-width: 56px;
+  --fidelity-dock-disc: 40px;
+  --fidelity-dock-padding: 6px;
+  --fidelity-card-lift: -4px;
+  --fidelity-card-stagger: 50ms;
+  --fidelity-page-rise: 12px;
+  --fidelity-mode-review: #a4d1d7;
+  --fidelity-mode-learn: #c2b5f2;
+  --fidelity-mode-practice: #d4c08c;
+  --fidelity-mode-repair: #f4a9a9;
+  --fidelity-error-text: #121722;
+  --fidelity-tint-opacity: 0.22;
+  --fidelity-tint-opacity-low: 0.08;
+  --fidelity-skeleton-base: rgb(255 255 255 / 0.08);
+  --fidelity-skeleton-shine: rgb(255 255 255 / 0.16);
+
+  /* Owner's one-material optical system. Layers sit *inside the same surface*,
+     not in nested filtered children. These values are token-controlled. */
+  --crystal-rim: linear-gradient(
+    135deg,
+    rgb(255 255 255 / 0.28),
+    rgb(255 255 255 / 0.09) 35%,
+    rgb(255 255 255 / 0.035) 65%,
+    rgb(255 255 255 / 0.22)
+  );
+  --crystal-sheen: linear-gradient(
+    142deg,
+    rgb(255 255 255 / 0.1),
+    transparent 37%,
+    rgb(255 255 255 / 0.02) 67%,
+    rgb(255 255 255 / 0.06)
+  );
+  --crystal-grain: repeating-linear-gradient(
+    118deg,
+    rgb(255 255 255 / 0.012) 0,
+    transparent 1px,
+    transparent 8px,
+    rgb(255 255 255 / 0.009) 9px,
+    transparent 10px
+  );
+  --crystal-rim-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 0 28px
+    rgb(255 255 255 / 0.035);
+  --crystal-neutral-bar: linear-gradient(180deg, rgb(255 255 255 / 0.58), rgb(255 255 255 / 0.17));
+  --crystal-blue-bar: linear-gradient(
+    180deg,
+    rgb(74 128 239 / 1),
+    var(--fidelity-button-blue) 74%,
+    rgb(29 64 152 / 0.9)
+  );
+  --crystal-blue-glow: rgb(36 90 204 / 0.26);
+  --crystal-blue-fill: linear-gradient(145deg, rgb(66 119 227 / 0.92), rgb(36 90 204 / 0.86));
+  --crystal-gridline: rgb(255 255 255 / 0.095);
+  --crystal-ring-progress: rgb(255 255 255 / 0.87);
+  --crystal-ring-glow: rgb(255 255 255 / 0.19);
+  --crystal-control-fill: rgb(255 255 255 / 0.09);
+  --crystal-control-hover: rgb(255 255 255 / 0.16);
+  --crystal-neutral-underlay: rgb(9 13 21 / 0.48);
+  --crystal-reading-layer: rgb(14 20 31 / 0.72);
+  --crystal-light-warm: rgb(255 213 151 / 0.18);
+  --crystal-light-cool: rgb(174 211 255 / 0.16);
+  --crystal-light-white: rgb(255 255 255 / 0.12);
+
+  --accent: var(--fidelity-button-blue);
+  --text-on-accent: var(--fidelity-button-label);
   --focus-ring: #bee5ff;
   --border-control: 2px;
   --positive: #34d399;
@@ -43,7 +141,9 @@
   --conceptual: #a78bfa;
 
   --text-1: rgb(255 255 255 / 1);
-  --text-2: rgb(255 255 255 / 0.72);
+  /* The actual owner backdrop is bright in places even after the scrim.
+   * Use the sampled 90%-white secondary token, not a guessed 72% wash. */
+  --text-2: var(--fidelity-muted);
   --text-3: rgb(255 255 255 / 0.78);
   --backdrop-solid: #0b0f17;
   --surface-solid: #101722;
@@ -53,18 +153,18 @@
   --contrast-border: #b9d6f3;
 
   /* Backdrop scrim is only a starting point; pixel contrast must be tested on every image. */
-  --backdrop-scrim: rgb(8 10 16 / 0.45);
+  --backdrop-scrim: var(--fidelity-backdrop-scrim);
 
-  --glass-fill: rgb(255 255 255 / 0.07);
+  --glass-fill: var(--fidelity-glass-fill);
   --glass-fill-raised: rgb(255 255 255 / 0.11);
   --glass-fill-float: rgb(255 255 255 / 0.09);
   --glass-reading-fill: rgb(14 18 28 / 0.88);
   --glass-border: rgb(255 255 255 / 0.12);
   --glass-border-raised: rgb(255 255 255 / 0.18);
-  --glass-highlight: rgb(255 255 255 / 0.14);
+  --glass-highlight: var(--fidelity-glass-rim);
   --glass-shadow: 0 12px 32px rgb(0 0 0 / 0.3);
   --glass-shadow-raised: 0 16px 40px rgb(0 0 0 / 0.36);
-  --glass-blur: 24px;
+  --glass-blur: var(--fidelity-glass-blur);
   --glass-blur-float: 32px;
   --glass-blur-reading: 16px;
 }
@@ -72,6 +172,13 @@
 :root[data-theme="light"] {
   color-scheme: light;
   --focus-ring: #16467e;
+  /* Semantic labels must pass WCAG text contrast on the actual pale surface,
+   * not inherit neon dark-theme indicators. Sample ratios on #f5f8fc:
+   * positive 5.66, caution 5.87, danger 6.95, conceptual 6.24. */
+  --positive: #167145;
+  --caution: #875600;
+  --danger: #a61d2d;
+  --conceptual: #6e42bb;
   --text-1: rgb(15 20 30 / 1);
   --text-2: rgb(15 20 30 / 0.72);
   --text-3: rgb(15 20 30 / 0.78);
@@ -98,6 +205,10 @@
   :root:is(:not([data-theme]), [data-theme="auto"]) {
     color-scheme: light;
     --focus-ring: #16467e;
+    --positive: #167145;
+    --caution: #875600;
+    --danger: #a61d2d;
+    --conceptual: #6e42bb;
     --text-1: rgb(15 20 30 / 1);
     --text-2: rgb(15 20 30 / 0.72);
     --text-3: rgb(15 20 30 / 0.78);
@@ -1485,5 +1596,1454 @@
     flex: 0 0 auto;
     width: 100%;
     min-width: 0;
+  }
+}
+
+/*
+ * M0 fidelity v2: one shared crystal material system for all components.
+ * Each component is a single material boundary; children must not create
+ * another backdrop-filter. Every value flows from the tokens above.
+ */
+.lyceum-glass-card,
+.lyceum-tint-card,
+.lyceum-stat-card {
+  transition: transform var(--motion-base) ease-out;
+}
+.lyceum-glass-card:hover,
+.lyceum-tint-card:hover,
+.lyceum-stat-card:hover {
+  transform: translateY(var(--fidelity-card-lift));
+  border-color: var(--glass-border-raised);
+}
+.lyceum-glass-card:focus-within,
+.lyceum-tint-card:focus-within {
+  border-color: var(--focus-ring);
+}
+
+.glass-tint {
+  background: linear-gradient(
+      145deg,
+      rgb(var(--tint, 36 90 204) / var(--fidelity-tint-opacity)),
+      rgb(var(--tint, 36 90 204) / var(--fidelity-tint-opacity-low))
+    ), var(--glass-fill);
+}
+.lyceum-tint-card[data-hue="blue"] {
+  --tint: 36 90 204;
+}
+.lyceum-tint-card[data-hue="amber"] {
+  --tint: 205 150 65;
+}
+.lyceum-tint-card[data-hue="purple"] {
+  --tint: 143 112 206;
+}
+.lyceum-tint-card[data-hue="green"] {
+  --tint: 68 164 131;
+}
+.lyceum-tint-card[data-hue="red"] {
+  --tint: 206 99 100;
+}
+
+.lyceum-pill-nav {
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill-float);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-pill-nav > a {
+  min-height: var(--target-min);
+  padding-inline: var(--space-4);
+  font-size: var(--type-sm);
+  font-weight: 630;
+}
+.lyceum-pill-nav > a[aria-current="page"],
+.lyceum-pill-nav > a[data-active="true"] {
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border);
+  color: var(--text-1);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-pill-nav > a:hover:not([aria-current="page"]) {
+  background: var(--glass-fill-raised);
+}
+
+/* Single disc travels between links without requiring duplicate per-link
+   white circles. Native links remain >=44px accessible hit targets. */
+.lyceum-dock[data-orientation="vertical"] {
+  position: relative;
+  width: var(--fidelity-dock-width);
+  min-width: var(--fidelity-dock-width);
+  padding: var(--fidelity-dock-padding);
+  align-items: center;
+  gap: var(--space-2);
+}
+.lyceum-dock[data-orientation="vertical"] > a {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 var(--target-min);
+  width: var(--target-min);
+  height: var(--target-min);
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-1);
+}
+.lyceum-dock[data-orientation="vertical"] > a:hover {
+  background: var(--glass-fill-raised);
+}
+.lyceum-dock[data-orientation="vertical"] > a[aria-current="page"] {
+  /* Fallback is a solid white disc even when :has() is unsupported, or when
+   * there are more destinations than the shared-disc geometry can index. */
+  background: var(--text-1);
+  color: var(--backdrop-solid);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-dock[data-orientation="vertical"]::before {
+  content: "";
+  display: none;
+  position: absolute;
+  z-index: 0;
+  inset-inline-start: calc(
+    var(--fidelity-dock-padding) +
+    (var(--target-min) - var(--fidelity-dock-disc)) /
+    2
+  );
+  inset-block-start: calc(
+    var(--fidelity-dock-padding) +
+    (var(--target-min) - var(--fidelity-dock-disc)) /
+    2
+  );
+  width: var(--fidelity-dock-disc);
+  height: var(--fidelity-dock-disc);
+  border-radius: var(--radius-pill);
+  background: var(--text-1);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  transform: translateY(calc(var(--dock-active-index, 0) * (var(--target-min) + var(--space-2))));
+  transition: transform var(--motion-base) cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+@supports selector(:has(*)) {
+  .lyceum-dock[data-orientation="vertical"]:has(
+      > a:nth-of-type(-n + 12)[aria-current="page"]
+    )::before {
+    display: block;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(-n + 12)[aria-current="page"])
+    > a[aria-current="page"] {
+    background: transparent;
+    box-shadow: none;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(1)[aria-current="page"]) {
+    --dock-active-index: 0;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(2)[aria-current="page"]) {
+    --dock-active-index: 1;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(3)[aria-current="page"]) {
+    --dock-active-index: 2;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(4)[aria-current="page"]) {
+    --dock-active-index: 3;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(5)[aria-current="page"]) {
+    --dock-active-index: 4;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(6)[aria-current="page"]) {
+    --dock-active-index: 5;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(7)[aria-current="page"]) {
+    --dock-active-index: 6;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(8)[aria-current="page"]) {
+    --dock-active-index: 7;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(9)[aria-current="page"]) {
+    --dock-active-index: 8;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(10)[aria-current="page"]) {
+    --dock-active-index: 9;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(11)[aria-current="page"]) {
+    --dock-active-index: 10;
+  }
+  .lyceum-dock[data-orientation="vertical"]:has(> a:nth-of-type(12)[aria-current="page"]) {
+    --dock-active-index: 11;
+  }
+}
+
+.lyceum-round-icon-button {
+  border: 1px solid var(--glass-border-raised);
+  background: var(--glass-fill-float);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-round-icon-button:hover:not(:disabled):not([aria-disabled="true"]),
+.lyceum-round-icon-button[aria-pressed="true"] {
+  border-color: var(--glass-border-raised);
+  background: var(--glass-fill-raised);
+}
+.lyceum-round-icon-button__badge {
+  border-color: var(--backdrop-solid);
+  background: var(--danger);
+  color: var(--fidelity-error-text);
+}
+
+.lyceum-segmented-control__options {
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-color: var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill);
+}
+.lyceum-segmented-control__input:checked + .lyceum-segmented-control__label {
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border-raised);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-tabs__list {
+  border: 1px solid var(--glass-border-raised);
+  background: var(--glass-fill);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-tabs__trigger[data-state="active"] {
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border-raised);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+.lyceum-button[data-variant="primary"] {
+  background: var(--fidelity-button-blue);
+  color: var(--fidelity-button-label);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-button[data-variant="primary"]:hover:not([disabled]):not([aria-disabled="true"]) {
+  filter: none;
+  transform: translateY(var(--fidelity-card-lift));
+}
+.lyceum-button[data-variant="danger"] {
+  color: var(--fidelity-error-text);
+}
+.lyceum-button {
+  transition: transform var(--motion-base) ease-out;
+}
+.lyceum-button:active:not([disabled]):not([aria-disabled="true"]) {
+  transform: scale(0.98);
+}
+
+.lyceum-select__trigger {
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border-raised);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-select__trigger:hover:not(:disabled) {
+  background: var(--glass-fill-float);
+}
+.lyceum-select__content {
+  /* Portal: near-opaque on purpose, not a second blurred material. */
+  background: var(--surface-float-solid);
+  border-color: var(--glass-border-raised);
+  box-shadow: var(--glass-shadow-raised);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-contrast="high"] .lyceum-select__content {
+  background: var(--surface-solid);
+  border-color: var(--contrast-border);
+  box-shadow: none;
+}
+.lyceum-dialog {
+  border-color: var(--glass-border-raised);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shadow-raised), inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-tooltip {
+  border-color: var(--glass-border-raised);
+  background: var(--surface-float-solid);
+  box-shadow: var(--glass-shadow-raised);
+}
+.lyceum-toast {
+  border-radius: var(--radius-card);
+  background: var(--glass-fill-float);
+  box-shadow: var(--glass-shadow-raised), inset 0 1px 0 var(--glass-highlight);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+.lyceum-toast__action,
+.lyceum-toast__close {
+  border-color: var(--glass-border-raised);
+}
+
+.lyceum-stat-card {
+  border-color: var(--glass-border-raised);
+}
+.lyceum-stat-card__icon {
+  min-width: var(--space-6);
+  min-height: var(--space-6);
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border-raised);
+}
+.lyceum-stat-card__value {
+  font-size: clamp(1.75rem, 2vw, 2rem);
+  font-weight: 670;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+.lyceum-stat-card__delta {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--fidelity-task-fill);
+  font-size: var(--type-xs);
+}
+.lyceum-stat-card__delta[data-direction="increase"] {
+  color: var(--positive);
+  border-color: var(--positive);
+}
+.lyceum-stat-card__delta[data-direction="decrease"] {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.lyceum-stat-card__sparkline polyline {
+  stroke: var(--fidelity-sparkline);
+}
+.lyceum-stat-card:has(.lyceum-stat-card__delta[data-direction="increase"])
+  .lyceum-stat-card__sparkline
+  polyline {
+  stroke: var(--positive);
+}
+.lyceum-stat-card:has(.lyceum-stat-card__delta[data-direction="decrease"])
+  .lyceum-stat-card__sparkline
+  polyline {
+  stroke: var(--danger);
+}
+
+.lyceum-bar-chart__track {
+  padding: 0;
+  border: none;
+  background: var(--fidelity-task-fill);
+}
+.lyceum-bar-chart__bar {
+  border: none;
+  border-radius: var(--radius-control) var(--radius-control) var(--space-1) var(--space-1);
+  background: var(--fidelity-chart-bar);
+  transform-origin: bottom;
+  animation: lyceum-fidelity-grow var(--motion-slow) ease-out both;
+}
+.lyceum-bar-chart__item[data-highlighted="true"] .lyceum-bar-chart__bar {
+  background: var(--accent);
+}
+@keyframes lyceum-fidelity-grow {
+  from {
+    transform: scaleY(0.03);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.lyceum-mastery-ring__track {
+  stroke: var(--glass-border-raised);
+}
+.lyceum-mastery-ring__progress {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dashoffset: 0;
+}
+.lyceum-chat-bubble--learner {
+  background: var(--fidelity-button-blue);
+  border-color: var(--fidelity-button-blue);
+  color: var(--fidelity-button-label);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.lyceum-chat-bubble--learner .lyceum-chat-bubble__speaker,
+.lyceum-chat-bubble--learner .lyceum-chat-bubble__content {
+  color: var(--fidelity-button-label);
+}
+.lyceum-chat-bubble--tutor {
+  border-color: var(--glass-border-raised);
+}
+
+/* Respect existing owner modes. Never let a light-theme glass override
+   re-enable transparency after an explicit solid/reduced/contrast choice. */
+:root[data-transparency="off"]
+  :is(
+    .lyceum-pill-nav,
+    .lyceum-round-icon-button,
+    .lyceum-segmented-control__options,
+    .lyceum-select__trigger,
+    .lyceum-tabs__list,
+    .lyceum-toast
+  ),
+:root[data-transparency="reduced"]
+  :is(
+    .lyceum-pill-nav,
+    .lyceum-round-icon-button,
+    .lyceum-segmented-control__options,
+    .lyceum-select__trigger,
+    .lyceum-tabs__list,
+    .lyceum-toast
+  ),
+:root[data-contrast="high"]
+  :is(
+    .lyceum-pill-nav,
+    .lyceum-round-icon-button,
+    .lyceum-segmented-control__options,
+    .lyceum-select__trigger,
+    .lyceum-tabs__list,
+    .lyceum-toast
+  ) {
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-transparency="off"] .lyceum-glass-card:hover,
+:root[data-contrast="high"] .lyceum-glass-card:hover {
+  box-shadow: none;
+}
+:root[data-motion="off"]
+  :is(.lyceum-glass-card, .lyceum-tint-card, .lyceum-stat-card, .lyceum-button),
+:root[data-motion="reduced"]
+  :is(.lyceum-glass-card, .lyceum-tint-card, .lyceum-stat-card, .lyceum-button) {
+  transition: none;
+  transform: none;
+}
+:root[data-motion="off"] .lyceum-dock::before,
+:root[data-motion="reduced"] .lyceum-dock::before {
+  transition: none;
+}
+:root[data-motion="off"] .lyceum-bar-chart__bar,
+:root[data-motion="reduced"] .lyceum-bar-chart__bar {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"])
+    :is(.lyceum-glass-card, .lyceum-tint-card, .lyceum-stat-card, .lyceum-button) {
+    transition: none;
+    transform: none;
+  }
+  :root:not([data-motion="full"]) .lyceum-dock::before {
+    transition: none;
+  }
+  :root:not([data-motion="full"]) .lyceum-bar-chart__bar {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .lyceum-pill-nav,
+  .lyceum-dock,
+  .lyceum-round-icon-button,
+  .lyceum-segmented-control__options,
+  .lyceum-tabs__list,
+  .lyceum-select__trigger,
+  .lyceum-toast,
+  .lyceum-stat-card {
+    background: Canvas;
+    border-color: CanvasText;
+    color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .lyceum-chat-bubble--learner,
+  .lyceum-button[data-variant="primary"] {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+  .lyceum-chat-bubble--learner .lyceum-chat-bubble__speaker {
+    color: HighlightText;
+  }
+  .lyceum-dock[data-orientation="vertical"]::before {
+    background: Highlight;
+    border: var(--border-control) solid Highlight;
+  }
+  .lyceum-dock[data-orientation="vertical"] > a[aria-current="page"] {
+    color: HighlightText;
+  }
+}
+
+/* New shared fidelity primitives, deliberately free of nested blur. */
+.ui-list-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--target-min);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-control);
+  background: var(--fidelity-task-fill);
+  color: var(--text-1);
+  font: inherit;
+  text-align: start;
+}
+button.ui-list-row {
+  cursor: pointer;
+  transition: background-color var(--motion-fast) ease-out, transform var(--motion-base) ease-out;
+}
+button.ui-list-row:hover:not(:disabled),
+button.ui-list-row[data-selected="true"] {
+  background: var(--glass-fill-raised);
+  border-color: var(--glass-border-raised);
+  transform: translateY(var(--fidelity-card-lift));
+}
+button.ui-list-row:disabled,
+button.ui-list-row[data-loading="true"] {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+.ui-list-row__marker {
+  display: block;
+  flex: 0 0 var(--space-1);
+  height: var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--text-2);
+}
+.ui-list-row__marker[data-mode="review"] {
+  background: var(--fidelity-mode-review);
+}
+.ui-list-row__marker[data-mode="learn"] {
+  background: var(--fidelity-mode-learn);
+}
+.ui-list-row__marker[data-mode="practice"] {
+  background: var(--fidelity-mode-practice);
+}
+.ui-list-row__marker[data-mode="repair"] {
+  background: var(--fidelity-mode-repair);
+}
+.ui-list-row__content {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ui-list-row__title {
+  font-size: var(--type-sm);
+  font-weight: 650;
+}
+.ui-list-row__detail {
+  font-size: var(--type-xs);
+  color: var(--text-2);
+}
+.ui-list-row__meta {
+  display: inline-flex;
+  flex: none;
+  margin-inline-start: auto;
+  font-size: var(--type-xs);
+  color: var(--text-2);
+}
+
+.ui-input-field {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2);
+  color: var(--text-1);
+}
+.ui-input-label {
+  font-size: var(--type-sm);
+  font-weight: 640;
+}
+.ui-input {
+  box-sizing: border-box;
+  display: block;
+  min-width: 0;
+  width: 100%;
+  min-height: var(--target-min);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-control) solid var(--glass-border-raised);
+  border-radius: var(--radius-control);
+  color: var(--text-1);
+  background: var(--glass-fill-raised);
+  font-family: var(--font-sans);
+  font-size: var(--type-sm);
+  line-height: 1.45;
+}
+.ui-input::placeholder {
+  color: var(--text-2);
+}
+.ui-input:hover:not(:disabled) {
+  border-color: var(--contrast-border);
+}
+.ui-input:focus-visible {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-1);
+}
+.ui-input:disabled,
+.ui-input[aria-busy="true"] {
+  cursor: not-allowed;
+  opacity: 0.74;
+}
+.ui-input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.ui-input-message {
+  margin: 0;
+  font-size: var(--type-xs);
+  color: var(--text-2);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.ui-input-message[data-error="true"] {
+  color: var(--danger);
+}
+
+.ui-popover-trigger {
+  max-width: 100%;
+}
+.ui-popover-anchor {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.ui-popover-content {
+  box-sizing: border-box;
+  /* Radix renders into document.body. Geometry is viewport-relative, so
+   * the portal must use fixed coordinates even on scrolled desktop pages. */
+  position: fixed;
+  z-index: 125;
+  inset: auto;
+  top: var(--space-3);
+  left: var(--space-3);
+  width: min(25rem, calc(100vw - var(--space-3) - var(--space-3)));
+  max-height: calc(100dvh - var(--space-3) - var(--space-3));
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-4);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  transform: none;
+  background: var(--surface-float-solid);
+  border: var(--border-control) solid var(--glass-border-raised);
+  color: var(--text-1);
+  box-shadow: var(--glass-shadow-raised);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.ui-popover-content [role="heading"],
+.ui-popover-content h2 {
+  margin: 0;
+  font-size: var(--type-reading);
+}
+.ui-popover-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.ui-popover-heading > button {
+  flex: none;
+}
+.ui-popover-content p {
+  margin: 0;
+  color: var(--text-2);
+  line-height: var(--line-height-reading);
+}
+.ui-popover-content:focus-visible {
+  outline: var(--border-control) solid var(--focus-ring);
+  outline-offset: var(--space-1);
+}
+
+.ui-chip,
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill-raised);
+  color: var(--text-1);
+  font-size: var(--type-xs);
+  font-weight: 630;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ui-badge {
+  min-width: var(--space-5);
+  padding-inline: var(--space-2);
+  font-weight: 750;
+}
+:is(.ui-chip, .ui-badge)[data-tone="positive"] {
+  border-color: var(--positive);
+  color: var(--positive);
+}
+:is(.ui-chip, .ui-badge)[data-tone="warning"] {
+  border-color: var(--caution);
+  color: var(--caution);
+}
+:is(.ui-chip, .ui-badge)[data-tone="danger"] {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+:is(.ui-chip, .ui-badge)[data-tone="accent"] {
+  border-color: var(--accent);
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--accent) 25%, var(--surface-solid));
+}
+
+.ui-avatar {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--target-min);
+  height: var(--target-min);
+  border: 1px solid var(--glass-border-raised);
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill-raised);
+  color: var(--text-1);
+  font-size: var(--type-sm);
+  font-weight: 700;
+}
+.ui-avatar__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.ui-avatar__status {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  width: var(--space-3);
+  height: var(--space-3);
+  border: var(--border-control) solid var(--backdrop-solid);
+  border-radius: var(--radius-pill);
+  background: var(--text-2);
+}
+.ui-avatar__status::after {
+  content: "•";
+  color: var(--backdrop-solid);
+  font-size: var(--type-xs);
+  font-weight: 850;
+  line-height: 1;
+}
+.ui-avatar__status[data-status="online"] {
+  background: var(--positive);
+}
+.ui-avatar__status[data-status="online"]::after {
+  content: "✓";
+}
+.ui-avatar__status[data-status="busy"] {
+  background: var(--caution);
+}
+.ui-avatar__status[data-status="busy"]::after {
+  content: "!";
+}
+.ui-avatar__status[data-status="offline"] {
+  background: var(--text-2);
+}
+.ui-avatar__status[data-status="offline"]::after {
+  content: "–";
+}
+
+.ui-skeleton {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  background: var(--glass-fill);
+  color: var(--text-2);
+  font-size: var(--type-sm);
+}
+.ui-skeleton__line {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  height: var(--space-4);
+  width: 100%;
+  border-radius: var(--radius-chip);
+  background: var(--fidelity-skeleton-base);
+}
+.ui-skeleton__line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--fidelity-skeleton-shine);
+  opacity: 0;
+  animation: lyceum-skeleton-pulse var(--motion-slow) ease-in-out infinite alternate;
+}
+.ui-skeleton__line[data-width="medium"] {
+  width: 70%;
+}
+.ui-skeleton__line[data-width="short"] {
+  width: 42%;
+}
+.ui-skeleton__line[data-width="full"] {
+  width: 100%;
+}
+@keyframes lyceum-skeleton-pulse {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ui-empty-state {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--space-3);
+  min-height: 12rem;
+  max-width: 100%;
+  padding: var(--space-6);
+  color: var(--text-1);
+}
+.ui-empty-state__title {
+  margin: 0;
+  font-size: var(--type-reading);
+  font-weight: 680;
+}
+.ui-empty-state__description {
+  margin: 0;
+  font-size: var(--type-sm);
+  line-height: var(--line-height-reading);
+  color: var(--text-2);
+}
+.ui-empty-state__action {
+  margin-block-start: var(--space-2);
+}
+
+:root[data-transparency="off"]
+  :is(.ui-list-row, .ui-input, .ui-chip, .ui-badge, .ui-avatar, .ui-skeleton),
+:root[data-transparency="reduced"]
+  :is(.ui-list-row, .ui-input, .ui-chip, .ui-badge, .ui-avatar, .ui-skeleton),
+:root[data-contrast="high"]
+  :is(.ui-list-row, .ui-input, .ui-chip, .ui-badge, .ui-avatar, .ui-skeleton) {
+  background: var(--surface-solid);
+}
+:root[data-transparency="off"] .ui-popover-content,
+:root[data-transparency="reduced"] .ui-popover-content,
+:root[data-contrast="high"] .ui-popover-content {
+  background: var(--surface-float-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-motion="off"] .ui-list-row,
+:root[data-motion="reduced"] .ui-list-row {
+  transition: none;
+  transform: none;
+}
+:root[data-motion="off"] .ui-skeleton__line::after,
+:root[data-motion="reduced"] .ui-skeleton__line::after {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .ui-list-row {
+    transition: none;
+    transform: none;
+  }
+  :root:not([data-motion="full"]) .ui-skeleton__line::after {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  :is(
+      .ui-list-row,
+      .ui-input,
+      .ui-chip,
+      .ui-badge,
+      .ui-avatar,
+      .ui-skeleton,
+      .ui-empty-state,
+      .ui-popover-content
+    ) {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .ui-list-row__marker {
+    background: Highlight !important;
+  }
+  :is(.ui-chip, .ui-badge)[data-tone] {
+    border-color: CanvasText;
+    color: CanvasText;
+  }
+  .ui-input:focus-visible {
+    outline-color: Highlight;
+  }
+  .ui-avatar__status {
+    border-color: Canvas;
+    background: Highlight;
+  }
+  .ui-skeleton__line {
+    background: CanvasText;
+  }
+}
+
+/*
+ * Owner-directed crystal elevation round. Same material recipe and optical
+ * layers everywhere; the custom --crystal-base changes depth, never family.
+ * Gradients sit within each surface's background to avoid nested blur layers.
+ * The luminous field is opt-in for future production screens: Today is frozen.
+ */
+.lyceum-luminous-stage {
+  position: relative;
+  isolation: isolate;
+}
+.lyceum-luminous-stage::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: 0;
+  background: radial-gradient(ellipse at 14% 22%, var(--crystal-light-warm), transparent 47%),
+    radial-gradient(ellipse at 80% 28%, var(--crystal-light-cool), transparent 48%),
+    linear-gradient(113deg, transparent 17%, var(--crystal-light-white) 42%, transparent 64%);
+}
+
+.glass,
+.glass-raised,
+.glass-float,
+.glass-reading,
+.glass-tint {
+  --crystal-base: var(--glass-fill);
+  border: 1px solid transparent;
+  background: var(--crystal-sheen) padding-box, var(--crystal-grain) padding-box,
+    linear-gradient(var(--crystal-base), var(--crystal-base)) padding-box,
+    linear-gradient(var(--crystal-neutral-underlay), var(--crystal-neutral-underlay)) padding-box,
+    var(--crystal-rim) border-box;
+  box-shadow: var(--glass-shadow), var(--crystal-rim-shadow);
+}
+.glass-raised {
+  --crystal-base: var(--glass-fill-raised);
+  box-shadow: var(--glass-shadow-raised), var(--crystal-rim-shadow);
+}
+.glass-float {
+  --crystal-base: var(--glass-fill-float);
+  box-shadow: var(--glass-shadow-raised), var(--crystal-rim-shadow);
+}
+.glass-reading {
+  --crystal-base: var(--crystal-reading-layer);
+}
+.glass-tint {
+  background: linear-gradient(
+      145deg,
+      rgb(var(--tint, 36 90 204) / var(--fidelity-tint-opacity)),
+      rgb(var(--tint, 36 90 204) / var(--fidelity-tint-opacity-low))
+    )
+    padding-box, var(--crystal-sheen) padding-box, var(--crystal-grain) padding-box,
+    linear-gradient(var(--glass-fill), var(--glass-fill)) padding-box,
+    linear-gradient(var(--crystal-neutral-underlay), var(--crystal-neutral-underlay)) padding-box,
+    var(--crystal-rim) border-box;
+}
+
+/* Buttons, toolbars and inputs share the surface optics, differentiated by role. */
+.lyceum-button {
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--crystal-blue-fill) padding-box, var(--crystal-rim) border-box;
+  box-shadow: 0 10px 26px var(--crystal-blue-glow), var(--crystal-rim-shadow);
+  transition: transform var(--motion-fast) ease-out, box-shadow var(--motion-base) ease-out;
+}
+.lyceum-button:hover:not([disabled]):not([aria-disabled="true"]) {
+  filter: none;
+  transform: translateY(var(--fidelity-card-lift));
+}
+.lyceum-button[data-variant="secondary"],
+.lyceum-round-icon-button,
+.lyceum-segmented-control__options,
+.lyceum-tabs__list,
+.lyceum-select__trigger,
+.lyceum-pill-nav,
+.ui-input,
+.ui-list-row,
+.ui-chip,
+.ui-badge,
+.ui-avatar {
+  border: 1px solid transparent;
+  background: var(--crystal-sheen) padding-box, var(--crystal-grain) padding-box,
+    linear-gradient(var(--crystal-control-fill), var(--crystal-control-fill)) padding-box,
+    linear-gradient(var(--crystal-neutral-underlay), var(--crystal-neutral-underlay)) padding-box,
+    var(--crystal-rim) border-box;
+  box-shadow: var(--crystal-rim-shadow);
+  color: var(--text-1);
+}
+.lyceum-button[data-variant="secondary"] {
+  border: 1px solid var(--contrast-border);
+  border-radius: var(--radius-control);
+  box-shadow: var(--crystal-rim-shadow), var(--glass-shadow);
+}
+.lyceum-button[data-variant="ghost"] {
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-chip);
+}
+.lyceum-button[data-variant="ghost"]:hover:not(:disabled) {
+  background: var(--crystal-control-hover);
+}
+.lyceum-button[data-variant="danger"] {
+  background: linear-gradient(135deg, var(--glass-fill-raised), var(--glass-fill)) padding-box,
+    linear-gradient(var(--crystal-neutral-underlay), var(--crystal-neutral-underlay)) padding-box,
+    var(--crystal-rim) border-box;
+  color: var(--danger);
+  box-shadow: var(--crystal-rim-shadow);
+}
+.lyceum-round-icon-button:hover:not(:disabled):not([aria-disabled="true"]),
+.lyceum-round-icon-button[aria-pressed="true"],
+.lyceum-segmented-control__input:checked + .lyceum-segmented-control__label,
+.lyceum-tabs__trigger[data-state="active"],
+.lyceum-select__trigger[data-state="open"] {
+  background: var(--crystal-control-hover);
+  border-color: var(--glass-border-raised);
+  box-shadow: var(--crystal-rim-shadow);
+}
+.lyceum-segmented-control__label {
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+}
+.lyceum-segmented-control__options {
+  border-radius: var(--radius-pill);
+  gap: var(--space-1);
+  padding: var(--space-1);
+}
+.lyceum-round-icon-button__icon svg,
+.lyceum-stat-card__icon svg,
+.ui-empty-state svg,
+.ui-avatar svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.7;
+}
+.lyceum-round-icon-button {
+  border-radius: var(--radius-pill);
+  transition: transform var(--motion-fast) ease-out, box-shadow var(--motion-base) ease-out;
+}
+.lyceum-round-icon-button:hover:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(var(--fidelity-card-lift));
+}
+
+.lyceum-dialog,
+.lyceum-tooltip,
+.lyceum-select__content,
+.lyceum-toast,
+.ui-popover-content {
+  border: 1px solid transparent;
+  background: var(--crystal-sheen) padding-box, var(--crystal-grain) padding-box,
+    linear-gradient(var(--crystal-reading-layer), var(--crystal-reading-layer)) padding-box,
+    linear-gradient(var(--crystal-neutral-underlay), var(--crystal-neutral-underlay)) padding-box,
+    var(--crystal-rim) border-box;
+  box-shadow: var(--glass-shadow-raised), var(--crystal-rim-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur-reading)) saturate(var(--fidelity-glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-reading)) saturate(var(--fidelity-glass-saturate));
+}
+.lyceum-toast {
+  background: var(--crystal-sheen) padding-box, var(--crystal-grain) padding-box,
+    linear-gradient(var(--glass-fill-float), var(--glass-fill-float)) padding-box,
+    linear-gradient(var(--crystal-neutral-underlay), var(--crystal-neutral-underlay)) padding-box,
+    var(--crystal-rim) border-box;
+}
+/* A portalled Select must never use another compositor blur over an already
+   blurred dialog. The opaque backing still carries rim, light and grain. */
+.lyceum-select__content {
+  background-color: var(--surface-reading-solid);
+  background-image: var(--crystal-sheen), var(--crystal-grain), var(--crystal-rim);
+  background-clip: padding-box, padding-box, border-box;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.lyceum-chat-bubble--tutor {
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-card) var(--radius-chip);
+}
+.lyceum-chat-bubble--learner {
+  background: var(--crystal-sheen) padding-box, var(--crystal-blue-fill) padding-box,
+    var(--crystal-rim) border-box;
+  border: 1px solid transparent;
+  border-radius: var(--radius-card) var(--radius-card) var(--radius-chip) var(--radius-card);
+  box-shadow: var(--glass-shadow), var(--crystal-rim-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur-reading));
+  backdrop-filter: blur(var(--glass-blur-reading));
+}
+.lyceum-chat-bubble__streaming {
+  background: var(--crystal-control-fill);
+  border-color: var(--glass-border);
+}
+
+/* Compact, premium data hierarchy: peer cards, paired label+value and quiet trends. */
+.lyceum-stat-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 172px;
+}
+.lyceum-stat-card__heading {
+  min-width: 0;
+}
+.lyceum-stat-card h3 {
+  font-size: var(--type-sm);
+  font-weight: 550;
+  color: var(--text-2);
+}
+.lyceum-stat-card__value {
+  margin: 0;
+  font-size: clamp(var(--type-reading), 2.3vw, 2rem);
+  font-weight: 650;
+  white-space: nowrap;
+}
+.lyceum-stat-card__delta,
+.lyceum-stat-card__trend {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.lyceum-stat-card__delta {
+  justify-self: start;
+  border-color: var(--glass-border);
+  color: var(--text-2);
+  background: var(--crystal-control-fill);
+}
+.lyceum-stat-card__delta[data-direction="increase"],
+.lyceum-stat-card__delta[data-direction="decrease"] {
+  border-color: var(--glass-border);
+  color: var(--text-2);
+}
+.lyceum-stat-card__delta[data-direction="increase"] > span:first-child {
+  color: var(--positive);
+}
+.lyceum-stat-card__delta[data-direction="decrease"] > span:first-child {
+  color: var(--danger);
+}
+.lyceum-stat-card__icon {
+  min-width: var(--space-6);
+  min-height: var(--space-6);
+}
+.lyceum-stat-card__sparkline polyline {
+  stroke: var(--fidelity-sparkline);
+}
+.lyceum-stat-card__sparkline {
+  height: var(--space-6);
+}
+.lyceum-stat-card:has(.lyceum-stat-card__delta[data-direction="increase"])
+  .lyceum-stat-card__sparkline
+  polyline,
+.lyceum-stat-card:has(.lyceum-stat-card__delta[data-direction="decrease"])
+  .lyceum-stat-card__sparkline
+  polyline {
+  stroke: var(--fidelity-sparkline);
+}
+.lyceum-bar-chart__scale {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  white-space: nowrap;
+}
+.lyceum-bar-chart__bars {
+  gap: var(--space-4);
+}
+.lyceum-bar-chart__track {
+  border: 0;
+  background: repeating-linear-gradient(to top, var(--crystal-gridline) 0 1px, transparent 1px 48px);
+}
+.lyceum-bar-chart__bar {
+  background: var(--crystal-neutral-bar);
+  border: none;
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-bar-chart__item[data-highlighted="true"] .lyceum-bar-chart__bar {
+  background: var(--crystal-blue-bar);
+  box-shadow: 0 0 24px var(--crystal-blue-glow), inset 0 1px 0 var(--glass-highlight);
+}
+.lyceum-bar-chart__datum {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+  font-size: var(--type-xs);
+}
+.lyceum-bar-chart__datum strong {
+  font-weight: 600;
+}
+.lyceum-bar-chart__highlight {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.lyceum-mastery-ring__visual circle {
+  transform-origin: 50px 50px;
+  stroke-linecap: round;
+}
+.lyceum-mastery-ring__progress {
+  stroke: var(--crystal-ring-progress);
+  filter: drop-shadow(0 0 6px var(--crystal-ring-glow));
+}
+.lyceum-mastery-ring__uncertainty {
+  stroke: var(--text-2);
+  filter: drop-shadow(0 0 4px var(--crystal-ring-glow));
+}
+.lyceum-mastery-ring[data-highlighted="true"] .lyceum-mastery-ring__progress {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 6px var(--crystal-blue-glow));
+}
+.lyceum-mastery-ring__readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.lyceum-mastery-ring__value {
+  font-weight: 650;
+  margin: 0;
+}
+.lyceum-mastery-ring__interval {
+  font-size: var(--type-xs);
+}
+.ui-empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-2);
+}
+.ui-empty-state__actions .ui-empty-state__action {
+  margin-block-start: 0;
+}
+
+/* Optical mode fallbacks must remain opaque, with useful light/dark hierarchy. */
+:root[data-theme="light"] {
+  --crystal-neutral-underlay: rgb(255 255 255 / 0.34);
+  --crystal-reading-layer: rgb(255 255 255 / 0.74);
+  --crystal-ring-progress: rgb(16 42 67 / 0.85);
+  --crystal-neutral-bar: linear-gradient(180deg, rgb(20 50 80 / 0.46), rgb(20 50 80 / 0.16));
+}
+@media (prefers-color-scheme: light) {
+  :root:is(:not([data-theme]), [data-theme="auto"]) {
+    --crystal-neutral-underlay: rgb(255 255 255 / 0.34);
+    --crystal-reading-layer: rgb(255 255 255 / 0.74);
+    --crystal-ring-progress: rgb(16 42 67 / 0.85);
+    --crystal-neutral-bar: linear-gradient(180deg, rgb(20 50 80 / 0.46), rgb(20 50 80 / 0.16));
+  }
+}
+:root[data-transparency="off"]
+  :is(
+    .glass,
+    .glass-raised,
+    .glass-float,
+    .glass-reading,
+    .glass-tint,
+    .lyceum-button[data-variant="secondary"],
+    .lyceum-round-icon-button,
+    .lyceum-segmented-control__options,
+    .lyceum-tabs__list,
+    .lyceum-select__trigger,
+    .lyceum-pill-nav,
+    .ui-input,
+    .ui-list-row,
+    .ui-chip,
+    .ui-badge,
+    .ui-avatar,
+    .lyceum-dialog,
+    .lyceum-tooltip,
+    .lyceum-select__content,
+    .lyceum-toast,
+    .ui-popover-content
+  ),
+:root[data-transparency="reduced"]
+  :is(
+    .glass,
+    .glass-raised,
+    .glass-float,
+    .glass-reading,
+    .glass-tint,
+    .lyceum-button[data-variant="secondary"],
+    .lyceum-round-icon-button,
+    .lyceum-segmented-control__options,
+    .lyceum-tabs__list,
+    .lyceum-select__trigger,
+    .lyceum-pill-nav,
+    .ui-input,
+    .ui-list-row,
+    .ui-chip,
+    .ui-badge,
+    .ui-avatar,
+    .lyceum-dialog,
+    .lyceum-tooltip,
+    .lyceum-select__content,
+    .lyceum-toast,
+    .ui-popover-content
+  ),
+:root[data-contrast="high"]
+  :is(
+    .glass,
+    .glass-raised,
+    .glass-float,
+    .glass-reading,
+    .glass-tint,
+    .lyceum-button[data-variant="secondary"],
+    .lyceum-round-icon-button,
+    .lyceum-segmented-control__options,
+    .lyceum-tabs__list,
+    .lyceum-select__trigger,
+    .lyceum-pill-nav,
+    .ui-input,
+    .ui-list-row,
+    .ui-chip,
+    .ui-badge,
+    .ui-avatar,
+    .lyceum-dialog,
+    .lyceum-tooltip,
+    .lyceum-select__content,
+    .lyceum-toast,
+    .ui-popover-content
+  ) {
+  background: var(--surface-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* The opaque fallback preserves near/raised/float/reading depth instead of
+   collapsing everything into the same solid. This is an accessibility mode. */
+:root[data-transparency="off"] .glass-raised,
+:root[data-transparency="reduced"] .glass-raised,
+:root[data-contrast="high"] .glass-raised {
+  background: var(--surface-raised-solid);
+}
+:root[data-transparency="off"] .glass-float,
+:root[data-transparency="reduced"] .glass-float,
+:root[data-contrast="high"] .glass-float {
+  background: var(--surface-float-solid);
+}
+:root[data-transparency="off"] .lyceum-button[data-variant="secondary"],
+:root[data-transparency="reduced"] .lyceum-button[data-variant="secondary"],
+:root[data-contrast="high"] .lyceum-button[data-variant="secondary"] {
+  background: var(--surface-raised-solid);
+}
+:root[data-transparency="off"]
+  :is(.glass-reading, .lyceum-dialog, .lyceum-tooltip, .ui-popover-content),
+:root[data-transparency="reduced"]
+  :is(.glass-reading, .lyceum-dialog, .lyceum-tooltip, .ui-popover-content),
+:root[data-contrast="high"]
+  :is(.glass-reading, .lyceum-dialog, .lyceum-tooltip, .ui-popover-content) {
+  background: var(--surface-reading-solid);
+}
+:root[data-contrast="high"] .lyceum-select__content {
+  background: var(--surface-raised-solid);
+  border: var(--border-control) solid var(--contrast-border);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :is(
+      .glass,
+      .glass-raised,
+      .glass-float,
+      .glass-reading,
+      .glass-tint,
+      .lyceum-dialog,
+      .lyceum-tooltip,
+      .ui-popover-content
+    ) {
+    background: var(--surface-solid);
+  }
+  .glass-raised,
+  .lyceum-toast {
+    background: var(--surface-raised-solid);
+  }
+  .glass-float {
+    background: var(--surface-float-solid);
+  }
+  .glass-reading,
+  .lyceum-select__content,
+  .lyceum-dialog,
+  .lyceum-tooltip,
+  .ui-popover-content {
+    background: var(--surface-reading-solid);
+  }
+  .lyceum-chat-bubble--learner {
+    background: var(--crystal-blue-fill);
+  }
+}
+@media (forced-colors: active) {
+  :is(
+      .glass,
+      .glass-raised,
+      .glass-float,
+      .glass-reading,
+      .glass-tint,
+      .lyceum-button,
+      .lyceum-round-icon-button,
+      .lyceum-segmented-control__options,
+      .lyceum-tabs__list,
+      .lyceum-select__trigger,
+      .lyceum-pill-nav,
+      .ui-input,
+      .ui-list-row,
+      .ui-chip,
+      .ui-badge,
+      .ui-avatar,
+      .lyceum-dialog,
+      .lyceum-tooltip,
+      .lyceum-select__content,
+      .lyceum-toast,
+      .ui-popover-content
+    ) {
+    background: Canvas;
+    border-color: CanvasText;
+    color: CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .lyceum-button[data-variant="primary"],
+  .lyceum-chat-bubble--learner {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+  .lyceum-bar-chart__bar,
+  .lyceum-bar-chart__item[data-highlighted="true"] .lyceum-bar-chart__bar {
+    background: Highlight;
+    border: 1px solid Highlight;
+    box-shadow: none;
+  }
+  .lyceum-bar-chart__item[data-zero="true"] .lyceum-bar-chart__bar {
+    border-width: 0;
+    background: transparent;
+  }
+  .lyceum-mastery-ring__track {
+    stroke: GrayText;
+  }
+  .lyceum-mastery-ring__uncertainty {
+    stroke: CanvasText;
+    filter: none;
+  }
+  .lyceum-mastery-ring__progress,
+  .lyceum-mastery-ring[data-highlighted="true"] .lyceum-mastery-ring__progress {
+    stroke: Highlight;
+    filter: none;
+  }
+}
+:root[data-motion="off"] :is(.lyceum-button, .lyceum-round-icon-button),
+:root[data-motion="reduced"] :is(.lyceum-button, .lyceum-round-icon-button) {
+  transition: none;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) :is(.lyceum-button, .lyceum-round-icon-button) {
+    transition: none;
+    transform: none;
   }
 }

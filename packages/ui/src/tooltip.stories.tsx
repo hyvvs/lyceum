@@ -87,6 +87,7 @@ export const LongDoubleText: Story = {
 export const IconOnly: Story = { render: () => <TooltipDemo state="icon" /> };
 export const RTL: Story = { render: () => <TooltipDemo dir="rtl" /> };
 export const Light: Story = { globals: { theme: "light" }, render: () => <TooltipDemo /> };
+export const Dark: Story = { globals: { theme: "dark" }, render: () => <TooltipDemo /> };
 export const HighContrast: Story = {
   globals: { contrast: "high", transparency: "off" },
   render: () => <TooltipDemo />,

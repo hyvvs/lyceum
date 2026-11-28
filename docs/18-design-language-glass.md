@@ -1,5 +1,7 @@
 # 18. Design Language: Glass and Motion
 
+Where this document and `docs/20-ui-fidelity-brief.md` disagree, docs/20 wins.
+
 Lyceum's visual identity is **calm, layered glass over a soft, atmospheric backdrop**, with **smooth, springy motion** (Framer Motion, now published as `motion`). The reference is the "Glassy Dashboard V5" video (`docs/design-reference/`). We replicate the *style*, never the assets.
 
 This doc overrides the generic visual direction in `docs/01` section 4. Accessibility, performance, and learning-experience rules in `docs/01` still apply and win over aesthetics whenever they conflict (see section 8).
@@ -31,6 +33,10 @@ This doc overrides the generic visual direction in `docs/01` section 4. Accessib
 - **Left dock:** a vertical capsule of icon buttons. The active item is a solid bright disc (the shared-element indicator slides between items using a layout animation). Hover shows a tooltip label. Dock icons gently scale on hover (magnify effect limited to neighbors).
 - **Canvas:** panels float with generous gaps; no full-width hard bars. Max content width on large screens, centered.
 - **Responsive:** below 900 px the dock becomes a bottom capsule bar and the top nav collapses to a title plus the command palette. Panels stack in a single column. Touch targets at least 44 px.
+
+**2026-11-28 prototype-only correction:** The layout sketch above records earlier intent and is **not** an accepted V5/V10 visual target. The owner rejected the earlier oversized, dark marketing-like Today render; the existing production shell remains an **unaccepted fidelity baseline** even though its technical foundation is verified. A separate `m0/visual-v5-v10-reference-prototype` branch explores actual photographic spatial depth, a compact usable learning overview, near-opaque reading, and a **single connected selection+utility-spine SVG geometry** instead of detached selected pills. The selected path is controlled by one interruptible shared spring-coordinate state, with mirrored RTL geometry, keyboard/focus semantics and instant off/reduced-motion paths. The outer grid is **not** width-animated. No library, token semantic or production routing/Today replacement is part of this Draft. Compare [reference limitations and V10 repost observations](design-reference/README.md) and [real rendered QA](qa/m0-005-visual-prototype/README.md); original owner video fidelity, physical performance and owner visual acceptance remain pending.
+
+**Later controlling owner direction — complete Crystal Desk visual replacement (2026-11-28):** The first photographed floating-card concept above was **also rejected**. This history is preserved to explain why earlier captures and photographic composition are no longer current; do **not** treat it as a prescribed layout. A new **isolated** Storybook/WebView2 visual study replaces the photo with its own static studio-light CSS field, gives Today one useful learning-goal draft and a truthful adjacent activity state, joins the reading workspace into a restrained crystal material system, and retains the tested single SVG-connected spring rail. Glass material is required by this owner and overrides generic anti-glass style-linter defaults; ordinary UI remains familiar, functional and readable, and long-form study stays solid matte. The previously licensed local interior remains a historical fixture asset but is not rendered by the newest CSS. Only freshly captured screenshots and recordings of this new source can be used for owner inspection. This is not authorization to change production shell architecture or to claim verified V5/V10 equivalence.
 
 ## 3. Tokens
 
@@ -125,6 +131,8 @@ Library: `motion` (React). Use `LazyMotion` with `domAnimation` (and `m` compone
 4. No motion during active problem-solving except feedback (a correct/incorrect response gets a subtle, brief indication).
 5. No more than about 12 simultaneously animating elements; stagger caps apply.
 6. Respect the frame budget (60 fps on the reference device); a motion that drops frames is removed or simplified.
+
+**Working visual Draft qualification:** JS `requestAnimationFrame` modifies the path's internal SVG geometry and opacity from `spring.smooth` state; this is a deliberately **opt-in technical exception** to the usual compositor-only transform rule for a small single connected navigation shape, needed to test true geometric morphing. It is not a shipping approval: reference-device main-thread cost, Paint/Composite tracing and dropped-frame counts must be independently measured under M0-020 before rollout. Do not use the Draft's 25 fps evidence recordings to claim the product renders at 60 fps; the recording encoder/frame sampler does not measure actual UI rendering throughput.
 
 ## 7. Learning-aware restraint
 

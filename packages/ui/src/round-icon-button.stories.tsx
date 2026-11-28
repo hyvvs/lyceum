@@ -22,7 +22,7 @@ export const StatusDot: Story = {
 };
 export const Pressed: Story = { args: { "aria-pressed": true } };
 export const Hover: Story = {};
-export const Focus: Story = {};
+export const Focus: Story = { args: { autoFocus: true } };
 export const Disabled: Story = { args: { disabled: true } };
 export const Loading: Story = { args: { loading: true } };
 export const ErrorAction: Story = {

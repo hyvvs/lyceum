@@ -33,12 +33,17 @@ test("B5b BarChart has a single non-color highlighted bar and truthful accessibl
   await page.goto(story("barchart", "highlighted"));
   const chart = page.getByRole("figure", { name: "Synthetic weekly activity" });
   await expect(chart).toBeVisible();
-  await expect(chart.getByText("Scale: 0–10 sample items")).toBeVisible();
+  await expect(chart.locator(".lyceum-bar-chart__scale")).toHaveText("Scale: 0–10 sample items");
+  await expect(chart.locator(".lyceum-bar-chart__scale")).toHaveCSS("clip-path", "inset(50%)");
   const items = chart.locator("li");
   await expect(items).toHaveCount(3);
   await expect(items.nth(0)).toContainText("3 sample items");
   await expect(items.nth(1)).toContainText("8 sample items");
-  await expect(items.nth(1)).toContainText("★ Highlighted");
+  await expect(items.nth(1)).toContainText("Highlighted");
+  await expect(items.nth(1).locator(".lyceum-bar-chart__highlight")).toHaveCSS(
+    "clip-path",
+    "inset(50%)",
+  );
   await expect(chart.locator('[data-highlighted="true"]')).toHaveCount(1);
   await expect(chart.locator(".lyceum-bar-chart__track").first()).toHaveAttribute(
     "aria-hidden",
@@ -94,7 +99,7 @@ test("B5b rendered MasteryRing uncertainty halo reflects the supplied partial in
   expect(halo.attr).not.toBeNull();
   expect(halo.computed).not.toBe("none");
   const firstDash = Number.parseFloat(halo.computed.split(/[ ,]/)[0] ?? "");
-  const expected = (0.77 - 0.47) * 2 * Math.PI * 40;
+  const expected = (0.77 - 0.47) * 2 * Math.PI * 43;
   expect(Math.abs(firstDash - expected)).toBeLessThan(1);
 });
 

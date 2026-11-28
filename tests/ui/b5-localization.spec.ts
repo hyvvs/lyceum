@@ -53,7 +53,7 @@ test("B5 BarChart Spanish fractional values, bounded scale, units and highlight 
   await expect(bars).toHaveCount(3);
   await expect(bars.nth(0)).toContainText("0 artículos");
   await expect(bars.nth(1)).toContainText("1,25 artículos");
-  await expect(bars.nth(1)).toContainText("★ Destacado");
+  await expect(bars.nth(1)).toContainText("Destacado");
   await expect(bars.nth(2)).toContainText("2,5 artículos");
   await expect(chart.locator('[data-highlighted="true"]')).toHaveCount(1);
   await expect(chart.locator('[data-zero="true"]')).toHaveCount(1);
@@ -72,7 +72,8 @@ test("B5 BarChart Spanish fractional values, bounded scale, units and highlight 
   const empty = page.getByRole("figure", { name: "Frecuencias ficticias" });
   await expect(empty.getByText("Sin datos todavía")).toBeVisible();
   await expect(empty.locator("li")).toHaveCount(0);
-  await expect(empty.getByText("Escala: 0–10,5 artículos")).toBeVisible();
+  await expect(empty.locator(".lyceum-bar-chart__scale")).toHaveText("Escala: 0–10,5 artículos");
+  await expect(empty.locator(".lyceum-bar-chart__scale")).toHaveCSS("clip-path", "inset(50%)");
 });
 
 test("B5 MasteryRing has Spanish percent/interval text and unchanged actual SVG uncertainty", async ({
@@ -97,7 +98,7 @@ test("B5 MasteryRing has Spanish percent/interval text and unchanged actual SVG 
     attr: node.getAttribute("stroke-dasharray"),
   }));
   expect(halo.computed).not.toBe("none");
-  expect(Number.parseFloat(halo.computed)).toBeCloseTo((0.775 - 0.475) * 2 * Math.PI * 40, 1);
+  expect(Number.parseFloat(halo.computed)).toBeCloseTo((0.775 - 0.475) * 2 * Math.PI * 43, 1);
   expect(halo.attr).not.toBeNull();
   await saveEvidence(ring, "mastery-es-interval.png");
 });

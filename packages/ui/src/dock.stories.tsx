@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Dock } from "./dock";
+import { RoundIconButton } from "./round-icon-button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 import { VisuallyHidden } from "./visually-hidden";
 
@@ -8,11 +9,13 @@ function DockDemo({
   single = false,
   empty = false,
   long = false,
+  focus = false,
 }: {
   orientation?: "horizontal" | "vertical";
   single?: boolean;
   empty?: boolean;
   long?: boolean;
+  focus?: boolean;
 }) {
   return (
     <TooltipProvider>
@@ -20,7 +23,10 @@ function DockDemo({
         aria-label="Quick navigation"
         orientation={orientation}
         ref={(node) => {
-          if (node) node.dataset.refProof = "attached";
+          if (node) {
+            node.dataset.refProof = "attached";
+            if (focus) node.querySelector<HTMLAnchorElement>("a[href]")?.focus();
+          }
         }}
       >
         {!empty &&
@@ -59,13 +65,38 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 export const Hover: Story = {};
-export const Focus: Story = {};
+export const Focus: Story = { args: { focus: true } };
 export const Horizontal: Story = { args: { orientation: "horizontal" } };
 export const Vertical: Story = { args: { orientation: "vertical" } };
 export const Empty: Story = { args: { empty: true } };
 export const Single: Story = { args: { single: true } };
 export const Multiple: Story = {};
 export const LongText: Story = { args: { long: true } };
+export const Disabled: Story = {
+  render: () => (
+    <Dock aria-label="Quick navigation">
+      <RoundIconButton
+        disabled
+        aria-label="Settings unavailable"
+        icon={<span aria-hidden="true">⚙</span>}
+      />
+    </Dock>
+  ),
+};
+export const Loading: Story = {
+  render: () => (
+    <Dock aria-label="Quick navigation" aria-busy="true">
+      <output>Preparing destinations…</output>
+    </Dock>
+  ),
+};
+export const ErrorState: Story = {
+  render: () => (
+    <Dock aria-label="Quick navigation">
+      <p role="alert">Destinations could not load.</p>
+    </Dock>
+  ),
+};
 export const RTL: Story = {
   render: (args) => (
     <div dir="rtl">

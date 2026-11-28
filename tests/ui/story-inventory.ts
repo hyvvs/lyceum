@@ -29,6 +29,13 @@ export const PRIMITIVE_FAMILIES = [
   "BarChart",
   "MasteryRing",
   "ChatBubble",
+  "Avatar",
+  "Chip",
+  "EmptyStateCard",
+  "Input",
+  "ListRow",
+  "Popover",
+  "SkeletonLoader",
 ] as const;
 
 interface StorySource {

@@ -7,6 +7,8 @@
     <meta name="theme-color" content="#101722" />
     <title>Lyceum · Your learning space</title>
     <link rel="icon" href="/icons/icon-192.png" type="image/png" />
+    <!-- Migration: retire any historic Workbox worker before the app renders. -->
+    <script src="/sw-reset-v2.js" defer></script>
     <!-- Synchronous same-origin script before CSS paint; no inline script or network requests. -->
     <script src="/theme-bootstrap.js"></script>
   </head>

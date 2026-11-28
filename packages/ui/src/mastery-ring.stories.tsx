@@ -30,7 +30,32 @@ export const NarrowInterval: Story = {
   args: { estimate: { value: 0.5, lower: 0.49, upper: 0.51 } },
 };
 export const Unknown: Story = { args: { estimate: null } };
-export const Hover: Story = {};
+export const Hover: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Read-only figure: no interactive hover, focus or disabled state. Unknown represents the empty assessment state.",
+      },
+    },
+  },
+};
+export const Loading: Story = {
+  render: (args) => (
+    <div className="storybook-stack" aria-busy="true">
+      <MasteryRing {...args} estimate={null} unassessedLabel="Awaiting assessment" />
+      <output>Loading sample estimate…</output>
+    </div>
+  ),
+};
+export const ErrorState: Story = {
+  render: (args) => (
+    <div className="storybook-stack">
+      <MasteryRing {...args} estimate={null} unassessedLabel="Estimate unavailable" />
+      <p role="alert">The sample estimate could not be loaded.</p>
+    </div>
+  ),
+};
 export const LongText: Story = {
   args: { label: "A long synthetic concept description, with uncertainty from external data" },
 };

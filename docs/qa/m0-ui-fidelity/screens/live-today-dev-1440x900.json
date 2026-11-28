@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "errors": [],
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "title": "Today · Lyceum",
+  "heading": "Today",
+  "liveEntry": "today",
+  "oldShellNodes": 0,
+  "statCards": 4,
+  "chartBars": 6,
+  "backdrop": "url(\"http://127.0.0.1:5173/@fs/A:/lyceum/packages/ui/assets/backdrops/cole-course-of-empire-preblur.webp\")",
+  "serviceWorker": {
+    "controlled": false,
+    "registrations": []
+  },
+  "cacheKeys": [],
+  "bodyScrollWidth": 1440,
+  "greeting": "Good evening, Alex"
+}

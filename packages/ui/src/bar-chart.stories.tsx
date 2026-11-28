@@ -43,7 +43,32 @@ export const Zero: Story = {
   },
 };
 export const Empty: Story = { args: { data: [] } };
-export const Hover: Story = {};
+export const Hover: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Static figure with visible data labels: no interactive hover, focus or disabled state.",
+      },
+    },
+  },
+};
+export const Loading: Story = {
+  render: (args) => (
+    <div className="storybook-stack" aria-busy="true">
+      <BarChart {...args} data={[]} emptyLabel="Awaiting sample data" />
+      <output>Loading sample activity…</output>
+    </div>
+  ),
+};
+export const ErrorState: Story = {
+  render: (args) => (
+    <div className="storybook-stack">
+      <BarChart {...args} data={[]} emptyLabel="Activity unavailable" />
+      <p role="alert">The sample activity could not be loaded.</p>
+    </div>
+  ),
+};
 export const LongText: Story = {
   args: {
     data: [
