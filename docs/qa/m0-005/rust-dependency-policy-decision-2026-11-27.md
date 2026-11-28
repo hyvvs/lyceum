@@ -1,0 +1,50 @@
+# M0-005 Rust dependency policy — historical owner decision proposal (SUPERSEDED)
+
+**2026-11-28 superseding owner decision:** narrow Option B was approved **only** for exactly seven locked MPL-2.0 versions and one temporary Linux-only `RUSTSEC-2024-0370` unmaintained exception, with checksum/source/ancestry/target/expiry controls and strict pre-release MPL compliance obligations. The separate [canonical accepted policy and tracked legal inventory](../native-rust-dependency-policy-2026-11-27.md) was merged in [PR #32](https://github.com/hyvvs/lyceum/pull/32) at exact protected-main SHA **bc178cf612f96c42f3b3169ab8cb3c1dc247935b**; [merged-main run 46090239997](https://github.com/hyvvs/lyceum/actions/runs/46090239997) passed all three applicable CI jobs. The desktop Draft PR #31 integrates the precise exceptions and independent native checks **after** that protected-main verification. No global MPL permission, other advisory ignore, native PR #31 merge, legal certification or public distribution is authorized. The original unapproved proposal, 2026-11-27 failures and option analysis below remain intact as historical evidence, not current decision status.
+
+**Historical status (2026-11-27; superseded by the decision above):** BLOCKED, no waiver and no policy amendment. Analysis of locked `apps/desktop/src-tauri/Cargo.lock` on existing Draft PR #31, code HEAD `4f3d3e6abe6f1d78714ceff44099d39584dacf81`. Hosted Rust policy job [140486414824](https://github.com/hyvvs/lyceum/actions/runs/45993331232/job/140486414824) failed `cargo-deny 0.19.9 check licenses advisories sources` (exit 5); `cargo-audit 0.23.0` independently completed with no known *vulnerability* findings but three other advisories. `deny.toml` then required permissive licenses across the **entire lockfile/all targets** and had no ignored advisory IDs. Both rules were unchanged at that historical checkpoint.
+
+## Exact seven rejected MPL-2.0 versions and locked parent chains
+
+| Locked package | Why present, from `cargo tree --locked --target all -i` | Platform note |
+| --- | --- | --- |
+| `cssparser@0.37.0` | `dom_query@0.28.0` → `tauri-utils@2.10.4` → `tauri-build@2.7.6` / `tauri-codegen@2.7.6` / `tauri-macros@2.7.6` → `tauri@2.12.7` | Includes build-time dependency graph |
+| `selectors@0.38.0` | `dom_query@0.28.0` → `tauri-utils@2.10.4` | Includes build-time dependency graph |
+| `cssparser@0.38.0` | `dom_query@0.30.0` → `wry@0.57.4` → `tauri-runtime-wry@2.12.5` → Tauri | Pinned Wry's `dom_query` dependency is Android-specific; absent from Windows x64/macOS ARM64 target trees, present for Android ARM64 |
+| `selectors@0.41.0` | `dom_query@0.30.0` → Wry → Tauri | Same Android-specific path |
+| `cssparser-macros@0.7.1` | Both versions of `cssparser` | Shared source license |
+| `dtoa-short@0.3.5` | Both versions of `cssparser` | Shared source license |
+| `option-ext@0.2.0` | `dirs-sys@0.5.0` → `dirs@7.0.0` → Tauri, Tauri Build, Wry | Also present through Tauri's platform/build paths on Windows and macOS |
+
+`keyring@3.6.3` is **not** an upstream parent of these seven. Replacing credential storage does not solve the licensing conflict. The pinned `dom_query` manifests depend on CSS parser/selector crates directly; merely switching that crate's optional `mini_selector` feature does not establish a permissive-only graph. `cargo-deny` intentionally checks all lockfile targets even when the app currently supports only macOS and Windows.
+
+## RustSec advisories — separate from the seven license failures
+
+| Advisory | Locked dependency | Classification / applicability |
+| --- | --- | --- |
+| [RUSTSEC-2024-0370](https://rustsec.org/advisories/RUSTSEC-2024-0370.html) | `proc-macro-error@1.0.4` | **Unmaintained**, not an identified exploitable CVE. `glib-macros@0.18.5` and `gtk3-macros@0.18.2` require it through legacy Linux GTK3/GLib used by Wry/Tauri/Tao/Muda/WebKitGTK. Absent from Windows x64 target tree; no Linux app support claimed. `cargo-deny` treats this as an error. |
+| [RUSTSEC-2026-0543](https://rustsec.org/advisories/RUSTSEC-2026-0543.html) | `chrono@0.4.45` | **Unmaintained** informational lockfile warning, not an identified vulnerability. `cargo tree --locked --target all -i chrono@0.4.45` finds no currently active reverse dependency; that does not erase the lockfile audit finding. RustSec suggests `jiff` or `time`, not a verified Tauri drop-in. |
+| [RUSTSEC-2024-0429](https://rustsec.org/advisories/RUSTSEC-2024-0429.html) | `glib@0.18.5` | **Unsound** behavior in `VariantStrIter` iterator implementations, Linux GTK/GLib graph. A safety advisory, not equivalent to a confirmed exploitable attack against supported Windows/macOS binaries; do not dismiss the unsoundness. Affected versions are `>=0.15.0, <0.20.0`; moving the pinned GTK3 ecosystem to `glib >=0.20` is not a demonstrated compatible update. |
+
+The former `proc-macro-error2` maintained-fork recommendation is **stale**: [RUSTSEC-2026-0173](https://rustsec.org/advisories/RUSTSEC-2026-0173.html) also calls it unmaintained. RustSec mentions alternatives `manyhow` and `proc-macro2-diagnostics`, but neither is verified as a drop-in for the locked GTK3 macros. Target exclusion is not an authorized workaround for the repository's all-target policy.
+
+## Actual MPL obligations vs repository policy
+
+MPL-2.0 is a file-level **weak-copyleft** license, **not** a permissive license. Mozilla's [full license](https://www.mozilla.org/en-US/MPL/2.0/) §§3.1–3.4 and [official FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/) describe the distinction: when distributing an executable incorporating MPL-covered code, make the corresponding MPL-covered source (including modifications and **new files containing covered code**) available by reasonable means in a timely manner at no more than the cost of distribution, tell recipients where to obtain it, preserve notices, and do not restrict source-form MPL rights in additional terms. Independently authored Lyceum files **that contain no MPL code** do not automatically become MPL files. Using a build-time library **without distributing its covered code** need not impose the same binary-distribution obligations; actual generated output must be assessed. This is engineering/compliance background, **not legal approval**.
+
+The project's separate, stricter `AGENTS.md` §2.15 + `deny.toml` rule forbids these MPL licenses irrespective of whether MPL obligations could be met. License compatibility is **not** permission to change that rule. Distribution would require a real license/source/notice inventory and appropriate legal review if the owner explicitly amends it.
+
+## Compatible alternatives investigated and feasibility
+
+1. **Keep current supported Tauri/Wry versions, replace all nonpermissive crates upstream.** Possible in principle but no validated drop-in solution for the full seven. `dirs-sys`/ `option-ext` might be replaced by an independently authored standard-library implementation; `dtoa-short` may have permissively licensed formatting equivalents such as `ryu`, requiring numeric equivalence testing; the two `dom_query` branches require a meaningful selector/CSS parsing change beyond a one-line Cargo override. Changing upstream Tauri/Wry internals or forking the stack would be significant architecture/dependency work needing explicit prior authorization and maintained security/compatibility validation.
+2. **Update to a compatible maintained Tauri/Wry release that genuinely removes all these dependencies.** No such release has been verified for the locked v2 stack. A speculative major/alpha upgrade is **not** an acceptable bypass; it risks native security and both OS targets. An upstream removal/migration needs an actual lockfile tree, license audit, functional tests and independent review.
+3. **Linux legacy macro migration.** A source fix in the Linux GTK3 macro ecosystem could replace `proc-macro-error` with modern Rust diagnostics, but this is separate from MPL and not a verified drop-in. Moving to GTK4 or replacing the native backend is not a scoped M0-005 fix. Existing Linux-unsupported status does not remove the crate from the currently required full lockfile policy.
+4. **Not acceptable without owner policy change:** silently adding `MPL-2.0` to a global allowance, ignoring `RUSTSEC-2024-0370`, narrowing `cargo-deny` to Windows/macOS, disabling CI or claiming `cargo-audit` passing makes licensing green.
+
+## Narrow owner decision required
+
+**Option A — preserve strict permissive-only/full-target policy (current default).** Leave PR #31 in Draft/blocked state for full technical acceptance and merge; pursue upstream or independently approved source-level substitutions and retest all 7 licenses plus the GTK/GLib advisory chain. No estimated resolution or acceptable release claim exists today.
+
+**Option B — separately approve a specific policy amendment** recognizing *only* the seven named/versioned MPL-2.0 crates after an explicit human license-compliance assessment, with documented source/notice distribution obligations and a future-revisit trigger. The full-target source checks and all other licenses remain strict. **Independently** decide how to handle `proc-macro-error@1.0.4` and the separate `glib`/ `chrono` advisories (e.g., upstream migration plan and tightly scoped, owner-accepted temporary treatment). Option B necessarily changes the repository's **permissive-only** rule and is **NOT** authorized by the current instruction. Under `AGENTS.md` §13, an agent-rule change requires its own justified **`docs(agents): ...` PR** with applicable CI enforcement changes; an ADR or informal note alone is not sufficient. No policy amendment belongs in the native warning fix.
+
+**Requested decision:** keep A as the default; if the owner wishes B, obtain explicit written approval of the **exact policy exception, compliance conditions, advisory treatment and scope** before changing any policy file, dependency or CI. Neither option converts deferred reference-device first-paint, human accessibility/AT, extended privacy or signed-installation evidence into PASS.

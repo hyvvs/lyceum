@@ -7,7 +7,8 @@ coverage
 !.env.example
 *.log
 .DS_Store
-src-tauri/target
+/apps/desktop/src-tauri/target/
+/apps/desktop/src-tauri/gen/
 storybook-static
 playwright-report
 test-results

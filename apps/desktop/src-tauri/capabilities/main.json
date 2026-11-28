@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.tauri.app/capability/2",
+  "identifier": "main",
+  "description": "Only the bundled local main window. No plugin, filesystem, shell, remote URL or HTTP permissions.",
+  "local": true,
+  "windows": ["main"],
+  "permissions": []
+}

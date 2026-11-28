@@ -36,6 +36,9 @@ jobs:
         run: pnpm test:ui
       - name: Build real M0-004 web shell
         run: pnpm web:build
+      - name: Assert browser PWA artifacts are present
+        run: |
+          node -e "const fs=require('node:fs'); for (const file of ['apps/web/dist/sw.js','apps/web/dist/manifest.webmanifest']) if (!fs.existsSync(file)) throw new Error('Missing browser PWA artifact: '+file)"
       - name: Test production web routes, worker and offline PWA
         run: pnpm test:web
 
@@ -53,9 +56,9 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit
-      # There is no desktop Cargo project on protected main yet. When M0-005
-      # adds one, run every Rust gate here, in addition to the native workflow.
-      # This keeps normal three-job CI protecting the rule during transition.
+      # These full Rust gates activate whenever desktop Cargo is present in the
+      # checked-out revision (including PR #31), alongside desktop-native CI.
+      # No dependency audit or security finding is suppressed by this condition.
       - name: Install pinned native Rust audit toolchain
         if: ${{ hashFiles('apps/desktop/src-tauri/Cargo.toml') != '' }}
         run: rustup toolchain install 1.94.0 --profile minimal

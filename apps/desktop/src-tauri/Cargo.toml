@@ -1,0 +1,32 @@
+[package]
+name = "lyceum-desktop"
+version = "0.0.0"
+description = "Lyceum local-first desktop shell"
+edition = "2021"
+rust-version = "1.90"
+license = "MIT OR Apache-2.0"
+build = "build.rs"
+
+[lib]
+name = "lyceum_native"
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[features]
+native-smoke = []
+
+[build-dependencies]
+tauri-build = { version = "=2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.7", features = ["custom-protocol"] }
+keyring = { version = "=3.6.3", default-features = false, features = ["apple-native", "windows-native"] }
+reqwest = { version = "=0.12.24", default-features = false, features = ["rustls-tls"] }
+serde = { version = "=1.0.228", features = ["derive"] }
+tokio = { version = "=1.54.1", features = ["time", "sync", "macros"] }
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = "=0.39.1"
+windows = { version = "=0.62.2", features = ["Win32_System_Com"] }
+
+[dev-dependencies]
+serde_json = "=1.0.149"

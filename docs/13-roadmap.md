@@ -2,6 +2,8 @@
 
 Milestones are ordered by dependency and by risk reduction, not by calendar. Each milestone has a goal, deliverables, acceptance criteria, and exit gates. **A milestone is done only when every acceptance criterion and gate passes.** Sizes are relative (S, M, L, XL) to help planning; calendar estimates depend on team size and are deliberately omitted.
 
+**Owner-approved development/acceptance sequencing (2026-11-27):** Manual accessibility acceptance (20 original cases) and actual M0-012 human pedagogy research are **OWNER-APPROVED DEFERRED / NOT RUN** for a dedicated pre-release validation phase; they are **not** PASS, N/A, waived release criteria or blockers for otherwise authorized technical development through M0–M9. The existing automated-verified M0-003 design, M0-004 web and M0-017 glass implementations are accepted **as development foundations**, not as completed task cards. M0-005 Tauri desktop implementation is explicitly authorized next. Apply dependency-aware sequencing based on *real technical interfaces, automated checks, security and architecture* while keeping these human requirements open in the [single consolidated deferred-acceptance register](qa/deferred-acceptance-register-2026-11-27.md) and their original evidence matrices. Never mark a task or milestone done or release the product on the strength of this deferral.
+
 ```
 M0 Foundations ─► M1 Engine core ─► M2 Model gateway ─► M3 Math profile ─► M4 Learning loop (ALPHA)
                                                                    │

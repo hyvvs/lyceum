@@ -2,6 +2,8 @@
 
 Roadmap reference: `docs/13-roadmap.md` M0. Spec references per card.
 
+**Superseding owner development authorization (2026-11-27):** The owner accepts the M0-003/M0-004/M0-017 implementations as **technical foundations** and authorizes M0–M9 dependency-aware development, **starting M0-005**, without waiting for the original **20 human/manual accessibility cases** or actual M0-012 pedagogy study. These are **OWNER-APPROVED DEFERRED / NOT RUN**, not PASS or N/A; see the [one consolidated register](../docs/qa/deferred-acceptance-register-2026-11-27.md) and existing canonical execution matrix. This overrides *prior development sequencing prohibitions only*, not incomplete technical work, automatic/security/architecture checks, independent reviews, accepted ADRs, human consent/provider/privacy restrictions, genuine release gates or the original acceptance criteria. M0-003/004/012/017 remain `[~]`; a development foundation is not a completed card. Historical scope notes below remain evidence of their prior decisions, not current bans on subsequent technical work.
+
 ### [x] M0-001 Repo bootstrap and CI
 Package: root · Depends on: none · Context: AGENTS.md sections 3 to 5, docs/14 section 8
 Requirements: GitHub Actions workflow running install (frozen), boundaries, typecheck, lint, tests; Renovate config; CODEOWNERS; issue templates; pinned action versions; `pnpm audit` and secret scan jobs.
@@ -29,11 +31,12 @@ Acceptance: installable PWA; offline reload works; engine worker round-trip test
 
 **Current owner authorization (Independent Audit #22, 2026-11-25; supersedes the above *draft-only* limit for PR #18 specifically):** The owner **ACCEPTED ADR-0010**, approved the exact **temporary scoped** `workbox-build@7.4.1>glob: 14.0.3` override (with mandatory compatible-upstream removal/retest trigger), and authorized a **controlled squash merge of PR #18 as a pre-release application foundation only** after a documentation-only acceptance amendment and successful new exact-head Verify, unrestricted Dependency audit and Secret scan. The merge is **not** M0-004 milestone completion: **M0-003 `[~]`, M0-004 `[~]`**, manual actual AT/native Windows forced-colors/axe-incomplete signoffs, bounded Dialog composition restriction and accepted ADR-0009 FocusScope deferral remain. This does not authorize public release, WCAG certification, starting M0-005/other dependent milestones or claiming M0-017–M0-020 visual/motion/imagery/WebView gates. The bottom mobile capsule's possible obstruction of **unfocused** reading text requires visible-text, natural keyboard focus and bottom-safe-area testing on the **first real reading-intensive consumer**; current shell automation does not certify arbitrary reading content. See the [Audit #22 accepted ADR](../docs/adr/0010-m0-004-web-shell-bootstrap.md) and [manual tester handoff](../docs/qa/m0-004-manual-accessibility-handoff-2026-11-25.md). The prior Audit #19/#20 paragraph is historical scope evidence, not the latest merge restriction.
 
-### [ ] M0-005 Desktop shell
+### [~] M0-005 Desktop shell
 Package: apps/desktop · Depends on: M0-004 · Context: docs/02, docs/03 section 7
 Requirements: Tauri v2 wrapping apps/web; Rust commands for keychain set/get/delete (never return secrets to logs), native HTTP request passthrough with allowlist, app data directory; capability/permission config minimal.
 Acceptance: builds on macOS and one other OS in CI; keychain round-trip test; app starts to themed hello screen under 2.5 s on reference device.
 Ask first if: adding Tauri plugins.
+**Development authorization (2026-11-27):** owner explicitly approved M0-005 technical implementation on top of the existing verified M0-004 development foundation without awaiting the 20 deferred manual cases. This does not imply macOS/Windows native build, OS keychain, startup timing or release acceptance before actual evidence. Keep task `[~]` until the real Tauri commands, OS builds, tests, least-privilege capabilities and reference-device startup criterion have been independently verified. No new Tauri plugin is implicitly approved, and no human/manual result is auto-passed.
 
 ### [x] M0-006 Storage port and in-memory implementation
 Package: packages/core (port), new packages/storage · Depends on: M0-001 · Context: docs/09, docs/02 section 5

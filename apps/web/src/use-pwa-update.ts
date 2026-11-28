@@ -8,7 +8,12 @@ export function usePwaUpdate(): { needsRefresh: boolean; update: () => void } {
   const controllerCleanup = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
+    if (
+      !import.meta.env.PROD ||
+      import.meta.env.MODE === "desktop" ||
+      !("serviceWorker" in navigator)
+    )
+      return;
     let active = true;
     let detachListeners: (() => void) | null = null;
     void navigator.serviceWorker
