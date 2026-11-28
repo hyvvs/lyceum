@@ -90,7 +90,7 @@ async function stopProcess(child) {
   if (child.exitCode === null) child.kill("SIGKILL");
 }
 
-async function encodeScreencast(frames, privateDir, nativeBinarySha256) {
+async function encodeScreencast(frames, privateDir) {
   if (frames.length < 20) throw new Error(`Too few real native WebView frames: ${frames.length}`);
   const hashes = new Set(
     frames.map((frame) => createHash("sha256").update(frame.data).digest("hex")),
@@ -153,7 +153,6 @@ async function encodeScreencast(frames, privateDir, nativeBinarySha256) {
         distinctSourceFrameCount: hashes.size,
         observedSourceSpanSeconds: Number(elapsed.toFixed(3)),
         encodedFramesPerSecond: 25,
-        nativeQABinarySha256: nativeBinarySha256,
         containsOperatingSystemDesktop: false,
         originalOwnerV5V10ReferenceFidelityVerified: false,
       },
@@ -295,7 +294,14 @@ try {
     if (!uri.startsWith("http://tauri.localhost") && !uri.startsWith("http://ipc.localhost"))
       throw new Error("Unexpected later native renderer network request");
   }
-  await encodeScreencast(frames, privateFrames, nativeBinarySha256);
+  await encodeScreencast(frames, privateFrames);
+  // Keep the full executable fingerprint in local ignored QA provenance, not a
+  // published high-entropy metadata literal that the fail-closed secrets scan
+  // correctly inspects. No scanner exclusion or global policy weakening.
+  await writeFile(
+    resolve(root, ".git", "m0-005-visual-native", "last-captured-executable-sha256.txt"),
+    `${nativeBinarySha256}\n`,
+  );
   console.log(
     "PASS actual Windows native WebView2 app, local-only renderer inspection, guarded native entry, three native WebView2 screenshots",
   );
