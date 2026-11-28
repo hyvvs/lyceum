@@ -1,8 +1,28 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 
 const story = (variant: string) =>
   `/iframe.html?id=visual-prototypes-m0-005-reference-workspace--${variant}&viewMode=story`;
+
+// Storybook's own accessibility addon may still be finishing an axe pass
+// when our independently tagged, fail-closed Playwright scan starts. Axe
+// prohibits two simultaneous runs in one frame. A narrowly bounded retry
+// waits for that engine mutex; no WCAG tags are removed, no violations are
+// filtered, and a persistent busy state still fails the test.
+async function analyzeTaggedAxe(page: Page, name: string) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      return await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+        .analyze();
+    } catch (error) {
+      if (!String(error).includes("Axe is already running") || attempt === 3) throw error;
+      console.warn(`REFERENCE_AXE_BUSY_RETRY ${name} attempt=${attempt + 1}`);
+      await page.waitForTimeout(250 * (attempt + 1));
+    }
+  }
+  throw new Error(`Tagged axe scan did not return results for ${name}`);
+}
 
 test("prototype starts honestly empty, never inventing learner progress", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -10,9 +30,8 @@ test("prototype starts honestly empty, never inventing learner progress", async 
   await expect(page.getByRole("heading", { level: 1, name: "Today" })).toBeVisible();
   await expect(page.getByText("EMPTY STATE · NO LEARNER DATA")).toBeVisible();
   await expect(page.getByRole("heading", { name: "What would you like to learn?" })).toBeVisible();
-  await expect(
-    page.getByText("Nothing is due. Your space stays quiet until you choose a goal."),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nothing is due." })).toBeVisible();
+  await expect(page.getByText("Your space stays quiet until you choose a goal.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Explore setup" })).toBeVisible();
   await expect(page.getByText("Example plan")).toHaveCount(0);
 
@@ -28,6 +47,25 @@ test("prototype starts honestly empty, never inventing learner progress", async 
   await expect(page.getByText("EMPTY STATE · NO LEARNER DATA")).toBeVisible();
   await expect(page.getByText("Example plan")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Give the idea some distance" })).toBeVisible();
+});
+
+test("an unsaved learning-goal draft carries into Setup and clears on Reset", async ({ page }) => {
+  await page.goto(story("empty-today"));
+  const draft = page.getByRole("textbox", { name: "Your learning goal" });
+  await expect(draft).toBeVisible();
+  await draft.fill("Understand tidal forces");
+  await page.getByRole("button", { name: "Explore setup" }).click();
+  await expect(page.getByText("Unsaved goal draft:")).toBeVisible();
+  await expect(page.getByText("Understand tidal forces")).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Prototype scenes" })
+    .getByRole("button", { name: "Today" })
+    .click();
+  await expect(draft).toHaveValue("Understand tidal forces");
+  await page.getByRole("button", { name: "Reset prototype" }).click();
+  await expect(draft).toHaveValue("");
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Your learning goal" })).toHaveValue("");
 });
 
 test("phone layout uses real navigation and keeps the canvas inside 390px", async ({ page }) => {
@@ -48,6 +86,55 @@ test("phone layout uses real navigation and keeps the canvas inside 390px", asyn
   expect(size.content).toBeLessThanOrEqual(size.width + 1);
 });
 
+test("phone's last activity row can scroll clear of the fixed navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(story("empty-today"));
+  await expect(page.getByText("Review queue")).toBeVisible();
+  await expect
+    .poll(() => page.locator(".rp-scene").evaluate((el) => Number(getComputedStyle(el).opacity)))
+    .toBeGreaterThan(0.999);
+  await page.evaluate(() => window.scrollTo(0, document.scrollingElement?.scrollHeight ?? 0));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  const positions = await page.evaluate(() => {
+    const last = document.querySelector(".rp-activity-list > div:last-child");
+    const dock = document.querySelector(".rp-mobile-navigation");
+    if (!last || !dock) throw new Error("Phone activity or dock missing");
+    return {
+      lastBottom: last.getBoundingClientRect().bottom,
+      dockTop: dock.getBoundingClientRect().top,
+      viewportHeight: window.innerHeight,
+    };
+  });
+  expect(positions.lastBottom).toBeLessThanOrEqual(positions.dockTop - 4);
+  expect(positions.dockTop).toBeLessThan(positions.viewportHeight);
+});
+
+test("expanded rail remains separate from the workspace at intermediate desktop widths", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto(story("expanded-rail"));
+  await expect(page.locator(".rp-morphing-rail")).toBeVisible();
+  await expect(page.locator(".rp-main")).toBeVisible();
+  await expect
+    .poll(() => page.locator(".rp-scene").evaluate((el) => Number(getComputedStyle(el).opacity)))
+    .toBeGreaterThan(0.999);
+  const positions = await page.evaluate(() => {
+    const rail = document.querySelector(".rp-morphing-rail");
+    const main = document.querySelector(".rp-main");
+    if (!rail || !main) throw new Error("Expanded desktop rail or workspace missing");
+    return {
+      railRight: rail.getBoundingClientRect().right,
+      mainLeft: main.getBoundingClientRect().left,
+      viewportWidth: window.innerWidth,
+      documentWidth: document.documentElement.scrollWidth,
+    };
+  });
+  expect(positions.railRight).toBeLessThanOrEqual(positions.mainLeft - 4);
+  expect(positions.documentWidth).toBeLessThanOrEqual(positions.viewportWidth + 1);
+  await expect(page.getByRole("textbox", { name: "Your learning goal" })).toBeVisible();
+});
+
 test("short 200% text view keeps reading controls reachable without horizontal overflow", async ({
   page,
 }) => {
@@ -61,8 +148,62 @@ test("short 200% text view keeps reading controls reachable without horizontal o
   const continueButton = page.getByRole("button", { name: "Continue" });
   await continueButton.scrollIntoViewIfNeeded();
   await expect(continueButton).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, document.scrollingElement?.scrollHeight ?? 0));
+  const clearance = await page.evaluate(() => {
+    const continueControl = Array.from(document.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("Continue"),
+    );
+    const dock = document.querySelector(".rp-mobile-navigation");
+    if (!continueControl || !dock) throw new Error("Reading control or phone dock missing");
+    return {
+      continueBottom: continueControl.getBoundingClientRect().bottom,
+      dockTop: dock.getBoundingClientRect().top,
+    };
+  });
+  expect(clearance.continueBottom).toBeLessThan(clearance.dockTop - 4);
   await continueButton.click();
   await expect(page.getByRole("heading", { name: "Give the idea some distance" })).toBeVisible();
+});
+
+test("reflection toggle always points at an existing collapsible explanation", async ({ page }) => {
+  await page.goto(story("reading-surface"));
+  const toggle = page.getByRole("button", { name: "Reflection prompt" });
+  const content = page.locator("#rp-reflection-content");
+  await expect(toggle).toHaveAttribute("aria-controls", "rp-reflection-content");
+  await expect(content).toHaveCount(1);
+  await expect(content).toBeHidden();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(content).toBeVisible();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(content).toHaveCount(1);
+  await expect(content).toBeHidden();
+});
+
+test("solid and high-contrast phone chrome does not rely on translucent blur", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const variant of ["solid-fallback", "high-contrast"]) {
+    await page.goto(story(variant));
+    await expect(
+      page.getByRole("navigation", { name: "Compact prototype navigation" }),
+    ).toBeVisible();
+    const styles = await page.evaluate(() => {
+      const dock = document.querySelector(".rp-mobile-navigation");
+      const switcher = document.querySelector(".rp-data-switch");
+      if (!dock || !switcher) throw new Error("Chrome fallback missing");
+      return {
+        dockBlur: getComputedStyle(dock).backdropFilter,
+        switchBlur: getComputedStyle(switcher).backdropFilter,
+        dockColor: getComputedStyle(dock).backgroundColor,
+        switchColor: getComputedStyle(switcher).backgroundColor,
+      };
+    });
+    expect(styles.dockBlur).toBe("none");
+    expect(styles.switchBlur).toBe("none");
+    expect(styles.dockColor).toBe("rgb(255, 255, 255)");
+    expect(styles.switchColor).toBe("rgb(255, 255, 255)");
+  }
 });
 
 test("one connected selection morphs through open, successive targets, reverse, and collapse", async ({
@@ -177,6 +318,19 @@ test("expanded RTL utility spine mirrors to opposite side and does not obscure n
   expect(Math.abs(positions.utilityX - positions.expectedSpineCenter)).toBeLessThan(8);
   expect(positions.separation).toBeGreaterThan(80);
   await expect(rail.getByRole("button", { name: "Sources" })).toBeVisible();
+  const copy = await page.locator(".rp-today").evaluate((element) => {
+    const title = element.querySelector("h2");
+    const input = element.querySelector("input");
+    if (!title || !input) throw new Error("RTL Today content missing");
+    return {
+      lensDisplay: getComputedStyle(element, "::before").display,
+      englishCopyBidi: getComputedStyle(title).unicodeBidi,
+      inputDirection: input.dir,
+    };
+  });
+  expect(copy.lensDisplay).toBe("none");
+  expect(copy.englishCopyBidi).toBe("plaintext");
+  expect(copy.inputDirection).toBe("auto");
 });
 
 test("all twelve reference workspace variants have no tagged axe violations or horizontal overflow", async ({
@@ -207,9 +361,7 @@ test("all twelve reference workspace variants have no tagged axe violations or h
     await expect
       .poll(() => page.locator(".rp-scene").evaluate((el) => Number(getComputedStyle(el).opacity)))
       .toBeGreaterThan(0.999);
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-      .analyze();
+    const results = await analyzeTaggedAxe(page, variant);
     expect(results.violations, `Tagged axe violations in ${variant}`).toEqual([]);
     const horizontal = await page.evaluate(() => ({
       viewport: window.innerWidth,
@@ -227,8 +379,9 @@ test("all twelve reference workspace variants have no tagged axe violations or h
   await expect(
     page.getByRole("navigation", { name: "Compact prototype navigation" }),
   ).toBeVisible();
-  const mobileResult = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-    .analyze();
+  await expect
+    .poll(() => page.locator(".rp-scene").evaluate((el) => Number(getComputedStyle(el).opacity)))
+    .toBeGreaterThan(0.999);
+  const mobileResult = await analyzeTaggedAxe(page, "mobile-390");
   expect(mobileResult.violations, "Tagged axe violations in 390px mobile").toEqual([]);
 });

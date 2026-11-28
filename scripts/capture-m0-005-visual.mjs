@@ -126,7 +126,15 @@ async function main() {
     { id: "motion-off", file: "11-motion-off.png", size: [1440, 900] },
     { id: "right-to-left", file: "12-rtl.png", size: [1440, 900] },
     { id: "empty-today", file: "13-mobile.png", size: [390, 844] },
+    {
+      id: "empty-today",
+      file: "13-mobile-full.png",
+      size: [390, 844],
+      fullPage: true,
+    },
     { id: "double-text", file: "14-short-200-text.png", size: [320, 256] },
+    { id: "expanded-rail", file: "18-intermediate-expanded.png", size: [1024, 768] },
+    { id: "empty-today", file: "19-tablet.png", size: [768, 1024] },
   ];
   for (const still of stills) {
     const view = await browser.newContext({
@@ -142,12 +150,12 @@ async function main() {
     // connected SVG spine even though its settled state is correctly aligned.
     // The real-time video above keeps every intermediate frame intact.
     await delay(820);
-    await screenshot(sample, still.file, still.size[1] === 256);
+    await screenshot(sample, still.file, still.fullPage === true || still.size[1] === 256);
     await view.close();
   }
   if (errors.length > 0) throw new Error(`Prototype page exceptions: ${errors.join("; ")}`);
   console.log(
-    `Captured unaccelerated interactive WebM and 14 genuine Chromium PNGs in ${directory}`,
+    `Captured unaccelerated interactive WebM and ${7 + stills.length} genuine Chromium PNGs in ${directory}`,
   );
 }
 

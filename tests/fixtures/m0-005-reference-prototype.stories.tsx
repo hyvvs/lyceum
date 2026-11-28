@@ -97,6 +97,7 @@ export function ReferencePrototype({
   const [selectedPlan, setSelectedPlan] = useState(0);
   const [readingStep, setReadingStep] = useState(0);
   const [showReflection, setShowReflection] = useState(false);
+  const [goalDraft, setGoalDraft] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const focusNextScene = useRef(false);
   const synthetic = mode === "synthetic";
@@ -122,6 +123,7 @@ export function ReferencePrototype({
     setSelectedPlan(0);
     setReadingStep(0);
     setShowReflection(false);
+    setGoalDraft("");
     navigate("today");
   }
 
@@ -232,61 +234,102 @@ export function ReferencePrototype({
 
             <div className="rp-scene" key={scene}>
               {scene === "today" && (
-                <GlassPanel
-                  className={synthetic ? "rp-pane rp-today rp-today--sample" : "rp-pane rp-today"}
-                  aria-labelledby="rp-next-heading"
-                >
-                  <div className="rp-today-content">
-                    <p className="rp-pane-kicker">
-                      {synthetic ? "Your sample day" : "Your first step"}
-                    </p>
-                    <h2 id="rp-next-heading">
-                      {synthetic ? currentPlan.headline : "What would you like to learn?"}
-                    </h2>
-                    <p className="rp-pane-copy">
-                      {synthetic
-                        ? currentPlan.description
-                        : "Begin with a goal that matters to you. There are no sessions, materials or reviews here yet."}
-                    </p>
-                    <button
-                      type="button"
-                      className="rp-primary-action"
-                      onClick={() => {
-                        if (synthetic) openExampleReading(currentPlan.readingStep);
-                        else navigate("setup");
-                      }}
-                    >
-                      <span>{synthetic ? "Open sample reading" : "Explore setup"}</span>
-                      <Icon name="arrow" />
-                    </button>
-                  </div>
-                  {synthetic ? (
-                    <fieldset className="rp-plan-list">
-                      <legend>Example plan</legend>
-                      {examplePlan.map(({ label }, index) => (
-                        <button
-                          key={label}
-                          type="button"
-                          aria-pressed={selectedPlan === index}
-                          className={
-                            selectedPlan === index ? "rp-plan-row is-selected" : "rp-plan-row"
-                          }
-                          onClick={() => setSelectedPlan(index)}
-                        >
-                          <span className="rp-plan-marker" aria-hidden="true" />
-                          <span>{label}</span>
-                        </button>
-                      ))}
-                      <p className="rp-plan-note">
-                        Examples only. No learning progress is recorded.
+                <div className="rp-desk-grid">
+                  <GlassPanel
+                    className={synthetic ? "rp-pane rp-today rp-today--sample" : "rp-pane rp-today"}
+                    aria-labelledby="rp-next-heading"
+                  >
+                    <div className="rp-today-content">
+                      <p className="rp-pane-kicker">
+                        {synthetic ? "Your sample day" : "Your first step"}
                       </p>
-                    </fieldset>
-                  ) : (
-                    <p className="rp-today-footnote">
-                      Nothing is due. Your space stays quiet until you choose a goal.
-                    </p>
-                  )}
-                </GlassPanel>
+                      <h2 id="rp-next-heading">
+                        {synthetic ? currentPlan.headline : "What would you like to learn?"}
+                      </h2>
+                      <p className="rp-pane-copy">
+                        {synthetic
+                          ? currentPlan.description
+                          : "Begin with a goal that matters to you. There are no sessions, materials or reviews here yet."}
+                      </p>
+                      {!synthetic && (
+                        <div className="rp-goal-draft">
+                          <label htmlFor="rp-goal">Your learning goal</label>
+                          <input
+                            id="rp-goal"
+                            type="text"
+                            value={goalDraft}
+                            maxLength={160}
+                            placeholder="What do you want to understand?"
+                            dir="auto"
+                            autoComplete="off"
+                            onChange={(event) => setGoalDraft(event.target.value)}
+                          />
+                          <p>Draft only. Nothing is saved in this visual preview.</p>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="rp-primary-action"
+                        onClick={() => {
+                          if (synthetic) openExampleReading(currentPlan.readingStep);
+                          else navigate("setup");
+                        }}
+                      >
+                        <span>{synthetic ? "Open sample reading" : "Explore setup"}</span>
+                        <Icon name="arrow" />
+                      </button>
+                    </div>
+                  </GlassPanel>
+                  <GlassPanel
+                    className="rp-context"
+                    aria-label={synthetic ? "Sample plan" : "Learning activity"}
+                  >
+                    {synthetic ? (
+                      <fieldset className="rp-plan-list">
+                        <legend>Example plan</legend>
+                        {examplePlan.map(({ label }, index) => (
+                          <button
+                            key={label}
+                            type="button"
+                            aria-pressed={selectedPlan === index}
+                            className={
+                              selectedPlan === index ? "rp-plan-row is-selected" : "rp-plan-row"
+                            }
+                            onClick={() => setSelectedPlan(index)}
+                          >
+                            <span className="rp-plan-marker" aria-hidden="true" />
+                            <span>{label}</span>
+                          </button>
+                        ))}
+                        <p className="rp-plan-note">
+                          Examples only. No learning progress is recorded.
+                        </p>
+                      </fieldset>
+                    ) : (
+                      <>
+                        <p className="rp-pane-kicker">Your activity</p>
+                        <h3>Nothing is due.</h3>
+                        <p className="rp-today-footnote">
+                          Your space stays quiet until you choose a goal.
+                        </p>
+                        <dl className="rp-activity-list">
+                          <div>
+                            <dt>Learning sessions</dt>
+                            <dd>Not started</dd>
+                          </div>
+                          <div>
+                            <dt>Source library</dt>
+                            <dd>Empty</dd>
+                          </div>
+                          <div>
+                            <dt>Review queue</dt>
+                            <dd>Nothing due</dd>
+                          </div>
+                        </dl>
+                      </>
+                    )}
+                  </GlassPanel>
+                </div>
               )}
 
               {scene === "sources" && (
@@ -393,11 +436,9 @@ export function ReferencePrototype({
                         <span>Reflection prompt</span>
                         <Icon name="chevron" />
                       </button>
-                      {showReflection && (
-                        <p id="rp-reflection-content">
-                          Without looking back, how would you explain the main idea in one sentence?
-                        </p>
-                      )}
+                      <p id="rp-reflection-content" hidden={!showReflection}>
+                        Without looking back, how would you explain the main idea in one sentence?
+                      </p>
                     </div>
                     <div className="rp-reading-controls">
                       <button
@@ -438,6 +479,11 @@ export function ReferencePrototype({
                     In Lyceum, you choose a learning goal and connect a model you trust. This design
                     preview doesn't create accounts, connect providers or save learner information.
                   </p>
+                  {goalDraft.trim() && (
+                    <p className="rp-goal-summary">
+                      Unsaved goal draft: <strong>{goalDraft.trim()}</strong>
+                    </p>
+                  )}
                   <div className="rp-setup-actions">
                     <button
                       type="button"
